@@ -6,19 +6,113 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct ContentView: View {
+    @StateObject private var viewModel = MacroViewModel()
+    @State private var inputText = ""
+    @State private var showSettings = false
+    
+    // Fetch request for today's logs
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \FoodEntity.timestamp, ascending: false)],
+        animation: .default)
+    private var foods: FetchedResults<FoodEntity>
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationView {
+            VStack {
+                // Input Area
+                HStack {
+                    TextField("Describe meal (e.g. 2 eggs, 1 slice toast)...", text: $inputText)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(viewModel.isLoading)
+                    
+                    Button(action: {
+                        Task {
+                            await viewModel.processFoodEntry(text: inputText)
+                            inputText = ""
+                        }
+                    }) {
+                        if viewModel.isLoading {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                        }
+                    }
+                    .disabled(inputText.isEmpty || viewModel.isLoading)
+                }
+                .padding()
+                
+                if let error = viewModel.errorMessage {
+                    Text(error).foregroundColor(.red).font(.caption)
+                }
+
+                // List
+                List {
+                    ForEach(foods) { food in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(food.name ?? "Unknown").font(.headline)
+                                Text("\(Int(food.weightGrams))g").font(.caption).foregroundColor(.gray)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing) {
+                                Text("\(Int(food.calories)) kcal").bold()
+                                Text("P: \(Int(food.protein))g  C: \(Int(food.carbs))g  F: \(Int(food.fat))g")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteItems)
+                }
+            }
+            .navigationTitle("Macro Tracker")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showSettings.toggle() }) {
+                        Image(systemName: "gear")
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
         }
-        .padding()
+    }
+    
+    private func deleteItems(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { foods[$0] }.forEach(PersistenceController.shared.container.viewContext.delete)
+            PersistenceController.shared.save()
+        }
     }
 }
 
-#Preview {
-    ContentView()
+struct SettingsView: View {
+    @AppStorage("google_api_key") var googleKey: String = ""
+    @AppStorage("usda_api_key") var usdaKey: String = ""
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("API Keys")) {
+                    SecureField("Google Gemini Key", text: $googleKey)
+                    SecureField("USDA API Key", text: $usdaKey)
+                }
+                
+                Section(header: Text("Links")) {
+                    Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+                    Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
+                }
+            }
+            .navigationTitle("Settings")
+            .toolbar {
+                Button("Done") { presentationMode.wrappedValue.dismiss() }
+            }
+        }
+    }
 }

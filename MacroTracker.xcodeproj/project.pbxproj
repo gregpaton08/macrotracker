@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		940AE6632F27F0C9006A01D1 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6622F27F0C9006A01D1 /* ViewModel.swift */; };
+		940AE6652F27F0F2006A01D1 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6642F27F0F2006A01D1 /* Models.swift */; };
+		940AE6672F27F114006A01D1 /* APIClients.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6662F27F114006A01D1 /* APIClients.swift */; };
+		940AE6692F27F128006A01D1 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6682F27F128006A01D1 /* Persistence.swift */; };
+		940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -34,6 +39,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		940AE6622F27F0C9006A01D1 /* ViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
+		940AE6642F27F0F2006A01D1 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		940AE6662F27F114006A01D1 /* APIClients.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClients.swift; sourceTree = "<group>"; };
+		940AE6682F27F128006A01D1 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MacroTracker.xcdatamodel; sourceTree = "<group>"; };
+		9444E0382F27F345007F24A8 /* MacroTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacroTracker.entitlements; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -94,10 +105,16 @@
 		94AFB0C12F26F51100ED36F8 /* MacroTracker */ = {
 			isa = PBXGroup;
 			children = (
+				9444E0382F27F345007F24A8 /* MacroTracker.entitlements */,
+				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
 				94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */,
 				94AFB0C42F26F51100ED36F8 /* ContentView.swift */,
 				94AFB0C62F26F51300ED36F8 /* Assets.xcassets */,
 				94AFB0C82F26F51300ED36F8 /* Preview Content */,
+				940AE6642F27F0F2006A01D1 /* Models.swift */,
+				940AE6662F27F114006A01D1 /* APIClients.swift */,
+				940AE6682F27F128006A01D1 /* Persistence.swift */,
+				940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
@@ -258,7 +275,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
+				940AE6652F27F0F2006A01D1 /* Models.swift in Sources */,
+				940AE6672F27F114006A01D1 /* APIClients.swift in Sources */,
+				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
+				940AE6632F27F0C9006A01D1 /* ViewModel.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
+				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,6 +441,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MacroTracker/MacroTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MacroTracker/Preview Content\"";
@@ -448,6 +471,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MacroTracker/MacroTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MacroTracker/Preview Content\"";
@@ -588,6 +612,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */,
+			);
+			currentVersion = 940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */;
+			name = MacroTracker.xcdatamodeld;
+			path = /Users/gpaton/code/MacroTracker/MacroTracker/MacroTracker.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 94AFB0B72F26F51100ED36F8 /* Project object */;
 }
