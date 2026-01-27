@@ -45,6 +45,7 @@
 		940AE6682F27F128006A01D1 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MacroTracker.xcdatamodel; sourceTree = "<group>"; };
 		9444E0382F27F345007F24A8 /* MacroTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacroTracker.entitlements; sourceTree = "<group>"; };
+		9444E0392F2839C8007F24A8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -85,6 +86,7 @@
 		94AFB0B62F26F51100ED36F8 = {
 			isa = PBXGroup;
 			children = (
+				9444E0392F2839C8007F24A8 /* README.md */,
 				94AFB0C12F26F51100ED36F8 /* MacroTracker */,
 				94AFB0D22F26F51400ED36F8 /* MacroTrackerTests */,
 				94AFB0DC2F26F51400ED36F8 /* MacroTrackerUITests */,

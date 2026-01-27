@@ -32,6 +32,8 @@ class MacroViewModel: ObservableObject {
                 // 2. Ask USDA for data per 100g
                 if let nutrients = try await usdaClient.fetchNutrients(query: item.search_term, apiKey: usdaKey) {
                     
+                    print("nutrients = \(nutrients)")
+                    
                     // 3. Calculate actual values based on weight
                     let ratio = item.estimated_weight_grams / 100.0
                     
@@ -55,7 +57,8 @@ class MacroViewModel: ObservableObject {
             PersistenceController.shared.save()
             
         } catch {
-            errorMessage = "Error: \(error.localizedDescription)"
+            print("processFoodEntry failed: \(error)")
+            errorMessage = "Error: \(error.localizedDescription) \(error)"
         }
         
         isLoading = false
