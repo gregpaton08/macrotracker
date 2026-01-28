@@ -7,17 +7,6 @@
 
 import Foundation
 
-// MARK: - Internal App Models
-struct FoodItem: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let calories: Double
-    let protein: Double
-    let fat: Double
-    let carbs: Double
-    let weightGrams: Double
-}
-
 // MARK: - Gemini API Request/Response
 struct GeminiRequest: Codable {
     struct Content: Codable { var parts: [Part] }
@@ -36,28 +25,29 @@ struct GeminiResponse: Codable {
     let candidates: [Candidate]?
 }
 
-// The JSON Schema we force Gemini to return
+// The Strict Schema for Gemini
 struct ParsedFoodIntent: Codable {
     let items: [ParsedItem]
     
     struct ParsedItem: Codable {
-        let search_term: String // Optimized for USDA search (e.g., "Raw Apple")
-        let estimated_weight_grams: Double // AI handles the unit conversion logic
+        let search_term: String
+        let estimated_weight_grams: Double
     }
 }
 
-// MARK: - USDA API Response
+// MARK: - USDA API Response (Defensive Version)
 struct USDAFoodSearchResponse: Codable {
-    let foods: [USDAFood]
+    // OPTIONAL: Prevents crash if USDA returns an error object instead of food list
+    let foods: [USDAFood]?
 }
 
 struct USDAFood: Codable {
-    let fdcId: Int
-    let description: String
-    let foodNutrients: [USDANutrient]
+    let fdcId: Int?
+    let description: String?
+    let foodNutrients: [USDANutrient]?
 }
 
 struct USDANutrient: Codable {
-    let nutrientId: Int
-    let value: Double // Per 100g usually
+    let nutrientId: Int?
+    let value: Double? // OPTIONAL: Sometimes null in USDA database
 }

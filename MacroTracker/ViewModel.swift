@@ -1,4 +1,3 @@
-
 import SwiftUI
 import CoreData
 
@@ -7,7 +6,6 @@ class MacroViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // BYOK Storage
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("usda_api_key") var usdaKey: String = ""
     
@@ -25,40 +23,29 @@ class MacroViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            // 1. Ask Gemini to parse text
             let parsedItems = try await geminiClient.parseInput(userText: text, apiKey: googleKey)
             
             for item in parsedItems {
-                // 2. Ask USDA for data per 100g
                 if let nutrients = try await usdaClient.fetchNutrients(query: item.search_term, apiKey: usdaKey) {
                     
-                    print("nutrients = \(nutrients)")
-                    
-                    // 3. Calculate actual values based on weight
                     let ratio = item.estimated_weight_grams / 100.0
                     
-                    let actualProtein = nutrients.protein * ratio
-                    let actualFat = nutrients.fat * ratio
-                    let actualCarbs = nutrients.carbs * ratio
-                    let actualKcal = nutrients.kcal * ratio
-                    
-                    // 4. Save to Core Data
                     let newFood = FoodEntity(context: viewContext)
                     newFood.timestamp = Date()
                     newFood.name = item.search_term.capitalized
                     newFood.weightGrams = item.estimated_weight_grams
-                    newFood.protein = actualProtein
-                    newFood.fat = actualFat
-                    newFood.carbs = actualCarbs
-                    newFood.calories = actualKcal
+                    newFood.protein = nutrients.protein * ratio
+                    newFood.fat = nutrients.fat * ratio
+                    newFood.carbs = nutrients.carbs * ratio
+                    newFood.calories = nutrients.kcal * ratio
                 }
             }
-            
             PersistenceController.shared.save()
+            Logger.log("Successfully saved food items.", category: .coreData, level: .success)
             
         } catch {
-            print("processFoodEntry failed: \(error)")
-            errorMessage = "Error: \(error.localizedDescription) \(error)"
+            errorMessage = "Error: \(error.localizedDescription)"
+            Logger.log("Processing Failed: \(error)", category: .ui, level: .error)
         }
         
         isLoading = false

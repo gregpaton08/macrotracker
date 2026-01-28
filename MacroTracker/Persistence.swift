@@ -13,19 +13,21 @@ struct PersistenceController {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "MacroTracker") // Make sure your .xcdatamodeld matches this name
+        // Ensure your .xcdatamodeld file is named "MacroTracker"
+        container = NSPersistentCloudKitContainer(name: "MacroTracker")
         
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
         
-        // Enable CloudKit mirroring
+        // Enable automatic iCloud syncing
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
         container.loadPersistentStores { (storeDescription, error) in
             if let error = error as NSError? {
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+                // In production, handle this error appropriately
+                Logger.log("CoreData Error: \(error), \(error.userInfo)", category: .coreData, level: .error)
             }
         }
     }
@@ -33,7 +35,11 @@ struct PersistenceController {
     func save() {
         let context = container.viewContext
         if context.hasChanges {
-            try? context.save()
+            do {
+                try context.save()
+            } catch {
+                Logger.log("Save Failed: \(error.localizedDescription)", category: .coreData, level: .error)
+            }
         }
     }
 }

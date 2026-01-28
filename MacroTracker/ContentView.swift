@@ -13,7 +13,6 @@ struct ContentView: View {
     @State private var inputText = ""
     @State private var showSettings = false
     
-    // Fetch request for today's logs
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \FoodEntity.timestamp, ascending: false)],
         animation: .default)
@@ -22,9 +21,8 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                // Input Area
                 HStack {
-                    TextField("Describe meal (e.g. 2 eggs, 1 slice toast)...", text: $inputText)
+                    TextField("Describe meal...", text: $inputText)
                         .textFieldStyle(.roundedBorder)
                         .disabled(viewModel.isLoading)
                     
@@ -34,12 +32,7 @@ struct ContentView: View {
                             inputText = ""
                         }
                     }) {
-                        if viewModel.isLoading {
-                            ProgressView()
-                        } else {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.title2)
-                        }
+                        if viewModel.isLoading { ProgressView() } else { Image(systemName: "arrow.up.circle.fill").font(.title2) }
                     }
                     .disabled(inputText.isEmpty || viewModel.isLoading)
                 }
@@ -49,7 +42,6 @@ struct ContentView: View {
                     Text(error).foregroundColor(.red).font(.caption)
                 }
 
-                // List
                 List {
                     ForEach(foods) { food in
                         HStack {
@@ -60,9 +52,8 @@ struct ContentView: View {
                             Spacer()
                             VStack(alignment: .trailing) {
                                 Text("\(Int(food.calories)) kcal").bold()
-                                Text("P: \(Int(food.protein))g  C: \(Int(food.carbs))g  F: \(Int(food.fat))g")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                Text("P: \(Int(food.protein)) C: \(Int(food.carbs)) F: \(Int(food.fat))")
+                                    .font(.caption).foregroundColor(.secondary)
                             }
                         }
                     }
@@ -71,15 +62,9 @@ struct ContentView: View {
             }
             .navigationTitle("Macro Tracker")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showSettings.toggle() }) {
-                        Image(systemName: "gear")
-                    }
-                }
+                Button(action: { showSettings.toggle() }) { Image(systemName: "gear") }
             }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
         }
     }
     
@@ -103,16 +88,16 @@ struct SettingsView: View {
                     SecureField("Google Gemini Key", text: $googleKey)
                     SecureField("USDA API Key", text: $usdaKey)
                 }
-                
+                Section(header: Text("Diagnostics")) {
+                    NavigationLink("View Debug Logs", destination: LogViewer())
+                }
                 Section(header: Text("Links")) {
                     Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
                     Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
                 }
             }
             .navigationTitle("Settings")
-            .toolbar {
-                Button("Done") { presentationMode.wrappedValue.dismiss() }
-            }
+            .toolbar { Button("Done") { presentationMode.wrappedValue.dismiss() } }
         }
     }
 }
