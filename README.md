@@ -28,6 +28,8 @@ half an omelette with bacon and american cheese from a diner
 
 A chicken and cheese quesadilla with a lot of chicken. The entire thing weighed 685 grams
 
+10 cocktail weenies. The sauce is bbq sauce and grape jelly.
+
 
 Analyze this food log: "half an omelette with bacon and american cheese from a diner".
 Return ONLY valid JSON. Do not use Markdown formatting.

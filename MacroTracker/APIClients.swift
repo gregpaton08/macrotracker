@@ -15,7 +15,7 @@ var parentLogger = Logging.Logger(label: "com.gregpaton08")
 class GeminiClient {
     private let session = URLSession.shared
     
-    private let useDummyData = true
+    private let useDummyData = false
     let logger: Logging.Logger
     
     init() {
@@ -26,7 +26,7 @@ class GeminiClient {
     }
     
     // Recursive function with retry logic
-    func parseInput(userText: String, apiKey: String, attempt: Int = 1) async throws -> [ParsedFoodIntent.ParsedItem] {
+    func parseInput(userText: String, apiKey: String) async throws -> [ParsedFoodIntent.ParsedItem] {
         if useDummyData {
             return [
                 ParsedFoodIntent.ParsedItem(search_term: "honey", estimated_weight_grams: 61.0),
@@ -40,7 +40,7 @@ class GeminiClient {
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         
-        logger.debug("Parsing: '\(userText)' (Attempt \(attempt))")
+        logger.debug("Parsing: '\(userText)'")
         
         let prompt = """
         Analyze this food description for earching the USDA database for macronutrients: "\(userText)".
@@ -64,13 +64,17 @@ class GeminiClient {
 //        Logger.logResponse(data: data, response: response, error: nil, category: .gemini)
         
         if let httpResponse = response as? HTTPURLResponse {
-            if httpResponse.statusCode == 429 && attempt <= 3 {
-                let delay = UInt64(pow(2.0, Double(attempt))) * 1_000_000_000
-                self.logger.warning("Rate Limit. Sleeping \(delay/1_000_000_000)s...")
-                try await Task.sleep(nanoseconds: delay)
-                return try await parseInput(userText: userText, apiKey: apiKey, attempt: attempt + 1)
+            if httpResponse.statusCode == 429 {
+                self.logger.warning("Rate Limited.")
+                return []
             }
-            if httpResponse.statusCode != 200 { throw URLError(.badServerResponse) }
+            if httpResponse.statusCode != 200 {
+                self.logger.error("Received HTTP response: \(httpResponse.statusCode)")
+                if let str = String(data: data, encoding: .utf8) {
+                    self.logger.error("Body: \(str)")
+                }
+                throw URLError(.badServerResponse)
+            }
         }
         
         // Clean and Decode
@@ -115,7 +119,7 @@ class USDAClient {
         
         guard let url = URL(string: urlString) else { return nil }
         let (data, response) = try await URLSession.shared.data(from: url)
-        Logger.logResponse(data: data, response: response, error: nil, category: .usda)
+//        Logger.logResponse(data: data, response: response, error: nil, category: .usda)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return nil }
         
@@ -126,11 +130,15 @@ class USDAClient {
             return nil
         }
         
+//        self.logger.debug("foods: \(foods)")
+        
         let nutrients = food.foodNutrients ?? []
         let p = nutrients.first(where: { $0.nutrientId == PROTEIN_ID })?.value ?? 0
         let f = nutrients.first(where: { $0.nutrientId == FAT_ID })?.value ?? 0
         let c = nutrients.first(where: { $0.nutrientId == CARBS_ID })?.value ?? 0
         let k = nutrients.first(where: { $0.nutrientId == KCAL_ID })?.value ?? 0
+        
+        self.logger.debug("F/C/P : \(f)/\(c)/\(p)")
         
         return (p, f, c, k)
     }
