@@ -11,6 +11,10 @@ import Logging
 
 var parentLogger = Logging.Logger(label: "com.gregpaton08")
 
+struct ApiResponse: Codable {
+    let message: String
+}
+
 // MARK: - Gemini Client
 class GeminiClient {
     private let session = URLSession.shared
@@ -70,8 +74,13 @@ class GeminiClient {
             }
             if httpResponse.statusCode != 200 {
                 self.logger.error("Received HTTP response: \(httpResponse.statusCode)")
-                if let str = String(data: data, encoding: .utf8) {
-                    self.logger.error("Body: \(str)")
+                
+                do {
+                    let decodedData = try JSONDecoder().decode(ApiResponse.self, from: data)
+                    let userInfo: [String: Any] = [NSLocalizedDescriptionKey: decodedData.message]
+                    throw URLError(.badServerResponse, userInfo: userInfo)
+                } catch {
+                    print("Failed to decode JSON body")
                 }
                 throw URLError(.badServerResponse)
             }
@@ -115,11 +124,10 @@ class USDAClient {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "https://api.nal.usda.gov/fdc/v1/foods/search?query=\(encodedQuery)&dataType=Foundation,SR%20Legacy&pageSize=1&api_key=\(apiKey)"
         
-        Logger.log("Searching USDA: \(query)", category: .usda)
+        self.logger.debug("Searching USDA: \(query)")
         
         guard let url = URL(string: urlString) else { return nil }
         let (data, response) = try await URLSession.shared.data(from: url)
-//        Logger.logResponse(data: data, response: response, error: nil, category: .usda)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return nil }
         
@@ -129,8 +137,6 @@ class USDAClient {
             Logger.log("No results for \(query)", category: .usda, level: .warn)
             return nil
         }
-        
-//        self.logger.debug("foods: \(foods)")
         
         let nutrients = food.foodNutrients ?? []
         let p = nutrients.first(where: { $0.nutrientId == PROTEIN_ID })?.value ?? 0
