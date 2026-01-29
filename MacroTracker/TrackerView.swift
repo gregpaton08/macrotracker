@@ -78,23 +78,56 @@ struct TrackerView: View {
 }
 
 struct SettingsView: View {
+    // API Keys
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("usda_api_key") var usdaKey: String = ""
+    
+    // Macro Goals (Default values provided)
+    @AppStorage("goal_p_min") var pMin: Double = 150
+    @AppStorage("goal_p_max") var pMax: Double = 180
+    
+    @AppStorage("goal_c_min") var cMin: Double = 200
+    @AppStorage("goal_c_max") var cMax: Double = 300
+    
+    @AppStorage("goal_f_min") var fMin: Double = 60
+    @AppStorage("goal_f_max") var fMax: Double = 80
+    
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text("Protein Goals (g)")) {
+                    HStack {
+                        TextField("Min", value: $pMin, format: .number).keyboardType(.numberPad)
+                        Text("-")
+                        TextField("Max", value: $pMax, format: .number).keyboardType(.numberPad)
+                    }
+                }
+                
+                Section(header: Text("Carb Goals (g)")) {
+                    HStack {
+                        TextField("Min", value: $cMin, format: .number).keyboardType(.numberPad)
+                        Text("-")
+                        TextField("Max", value: $cMax, format: .number).keyboardType(.numberPad)
+                    }
+                }
+                
+                Section(header: Text("Fat Goals (g)")) {
+                    HStack {
+                        TextField("Min", value: $fMin, format: .number).keyboardType(.numberPad)
+                        Text("-")
+                        TextField("Max", value: $fMax, format: .number).keyboardType(.numberPad)
+                    }
+                }
+                
                 Section(header: Text("API Keys")) {
                     SecureField("Google Gemini Key", text: $googleKey)
                     SecureField("USDA API Key", text: $usdaKey)
                 }
+                
                 Section(header: Text("Diagnostics")) {
                     NavigationLink("View Debug Logs", destination: LogViewer())
-                }
-                Section(header: Text("Links")) {
-                    Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                    Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
                 }
             }
             .navigationTitle("Settings")

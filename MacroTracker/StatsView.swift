@@ -64,7 +64,14 @@ struct StatsView: View {
 struct DailyChartContent: View {
     @FetchRequest var todaysFoods: FetchedResults<FoodEntity>
     
-    // We initialize the FetchRequest inside init based on the passed date
+    // Read Goals from Storage
+    @AppStorage("goal_p_min") var pMin: Double = 150
+    @AppStorage("goal_p_max") var pMax: Double = 180
+    @AppStorage("goal_c_min") var cMin: Double = 200
+    @AppStorage("goal_c_max") var cMax: Double = 300
+    @AppStorage("goal_f_min") var fMin: Double = 60
+    @AppStorage("goal_f_max") var fMax: Double = 80
+    
     init(date: Date) {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
@@ -77,6 +84,7 @@ struct DailyChartContent: View {
         )
     }
     
+    // Actual Data
     var totals: [MacroData] {
         let p = todaysFoods.reduce(0) { $0 + $1.protein }
         let c = todaysFoods.reduce(0) { $0 + $1.carbs }
@@ -86,6 +94,15 @@ struct DailyChartContent: View {
             MacroData(type: "Protein", grams: p, color: .blue),
             MacroData(type: "Carbs", grams: c, color: .green),
             MacroData(type: "Fat", grams: f, color: .red)
+        ]
+    }
+    
+    // Target Zones Data
+    var targets: [MacroTarget] {
+        [
+            MacroTarget(type: "Protein", min: pMin, max: pMax),
+            MacroTarget(type: "Carbs", min: cMin, max: cMax),
+            MacroTarget(type: "Fat", min: fMin, max: fMax)
         ]
     }
     
@@ -108,12 +125,24 @@ struct DailyChartContent: View {
             .padding(.bottom, 20)
             
             // Chart
-            if todaysFoods.isEmpty {
-                Spacer()
-                Text("No data for this day").foregroundColor(.gray)
-                Spacer()
-            } else {
-                Chart(totals) { item in
+            Chart {
+                // 1. Draw Target Zones (Background Layer)
+                ForEach(targets) { target in
+                    RectangleMark(
+                        x: .value("Macro", target.type),
+                        yStart: .value("Min", target.min),
+                        yEnd: .value("Max", target.max)
+                    )
+                    .foregroundStyle(.gray.opacity(0.15)) // Subtle background box
+                    .annotation(position: .overlay, alignment: .bottom) {
+                        Text("Goal")
+                            .font(.caption2)
+                            .foregroundColor(.gray.opacity(0.8))
+                    }
+                }
+                
+                // 2. Draw Actual Bars (Foreground Layer)
+                ForEach(totals) { item in
                     BarMark(
                         x: .value("Macro", item.type),
                         y: .value("Grams", item.grams)
@@ -125,9 +154,9 @@ struct DailyChartContent: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .frame(height: 300)
-                .padding()
             }
+            .frame(height: 300)
+            .padding()
             
             Spacer()
         }
@@ -141,4 +170,12 @@ struct MacroData: Identifiable {
     let type: String
     let grams: Double
     let color: Color
+}
+
+// New Helper Struct for Targets
+struct MacroTarget: Identifiable {
+    let id = UUID()
+    let type: String
+    let min: Double
+    let max: Double
 }
