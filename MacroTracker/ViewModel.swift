@@ -23,6 +23,15 @@ class MacroViewModel: ObservableObject {
         errorMessage = nil
         
         do {
+            // 1. Create the PARENT Meal
+            let newMeal = MealEntity(context: viewContext)
+            newMeal.id = UUID()
+            newMeal.timestamp = Date()
+            newMeal.summary = text.capitalized // Store the original prompt
+            
+            var mealP = 0.0, mealF = 0.0, mealC = 0.0, mealKcal = 0.0
+            
+            // 2. Parse Items
             let parsedItems = try await geminiClient.parseInput(userText: text, apiKey: googleKey)
             
             for item in parsedItems {
@@ -30,18 +39,41 @@ class MacroViewModel: ObservableObject {
                     
                     let ratio = item.estimated_weight_grams / 100.0
                     
+                    // 3. Create CHILD Ingredient
                     let newFood = FoodEntity(context: viewContext)
-                    newFood.timestamp = Date()
+                    newFood.timestamp = Date() // Keep timestamp for stats
                     newFood.name = item.search_term.capitalized
                     newFood.weightGrams = item.estimated_weight_grams
-                    newFood.protein = nutrients.protein * ratio
-                    newFood.fat = nutrients.fat * ratio
-                    newFood.carbs = nutrients.carbs * ratio
-                    newFood.calories = nutrients.kcal * ratio
+                    
+                    let p = nutrients.protein * ratio
+                    let f = nutrients.fat * ratio
+                    let c = nutrients.carbs * ratio
+                    let k = nutrients.kcal * ratio
+                    
+                    newFood.protein = p
+                    newFood.fat = f
+                    newFood.carbs = c
+                    newFood.calories = k
+                    
+                    // 4. Link to Parent
+                    newFood.meal = newMeal
+                    
+                    // Accumulate Totals for the Parent
+                    mealP += p
+                    mealF += f
+                    mealC += c
+                    mealKcal += k
                 }
             }
+            
+            // 5. Set Parent Totals
+            newMeal.totalProtein = mealP
+            newMeal.totalFat = mealF
+            newMeal.totalCarbs = mealC
+            newMeal.totalCalories = mealKcal
+            
             PersistenceController.shared.save()
-            Logger.log("Successfully saved food items.", category: .coreData, level: .success)
+            Logger.log("Saved Meal with \(parsedItems.count) ingredients", category: .coreData, level: .success)
             
         } catch {
             errorMessage = "Error: \(error.localizedDescription)"

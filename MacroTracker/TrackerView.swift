@@ -4,24 +4,26 @@
 //
 //  Created by Gregory Paton on 1/28/26.
 //
+// This is the main view where you enter in food you ate and it shows a history of food items.
 
 import SwiftUI
 import CoreData
 
-// ⚠️ THIS IS YOUR OLD "ContentView" RENAMED
 struct TrackerView: View {
     @StateObject private var viewModel = MacroViewModel()
     @State private var inputText = ""
     @State private var showSettings = false
     
+    // UPDATED: Fetch Meals, not individual foods
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \FoodEntity.timestamp, ascending: false)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: false)],
         animation: .default)
-    private var foods: FetchedResults<FoodEntity>
+    private var meals: FetchedResults<MealEntity>
 
     var body: some View {
         NavigationView {
             VStack {
+                // Input Area
                 HStack {
                     TextField("Describe meal...", text: $inputText)
                         .textFieldStyle(.roundedBorder)
@@ -43,18 +45,25 @@ struct TrackerView: View {
                     Text(error).foregroundColor(.red).font(.caption)
                 }
 
+                // UPDATED: Hierarchical List
                 List {
-                    ForEach(foods) { food in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(food.name ?? "Unknown").font(.headline)
-                                Text("\(Int(food.weightGrams))g").font(.caption).foregroundColor(.gray)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing) {
-                                Text("\(Int(food.calories)) kcal").bold()
-                                Text("P: \(Int(food.protein)) C: \(Int(food.carbs)) F: \(Int(food.fat))")
-                                    .font(.caption).foregroundColor(.secondary)
+                    ForEach(meals) { meal in
+                        NavigationLink(destination: MealDetailView(meal: meal)) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(meal.summary ?? "Untitled Meal")
+                                        .font(.headline)
+                                    Text(meal.timestamp ?? Date(), style: .time)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing) {
+                                    Text("\(Int(meal.totalCalories)) kcal").bold()
+                                    Text("P:\(Int(meal.totalProtein)) C:\(Int(meal.totalCarbs)) F:\(Int(meal.totalFat))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
                     }
@@ -71,7 +80,7 @@ struct TrackerView: View {
     
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            offsets.map { foods[$0] }.forEach(PersistenceController.shared.container.viewContext.delete)
+            offsets.map { meals[$0] }.forEach(PersistenceController.shared.container.viewContext.delete)
             PersistenceController.shared.save()
         }
     }
