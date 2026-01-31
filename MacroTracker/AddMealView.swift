@@ -26,38 +26,14 @@ struct AddMealView: View {
     // Autocomplete State
     @State private var showSuggestions = false
     
-    let units = ["grams", "ounces", "cups", "slices", "pieces", "whole"]
+    // Unit options for the picker
+    let units = ["grams", "ounces", "cups", "slices", "pieces", "whole", "ml", "tbsp", "tsp"]
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Food Details")) {
-                    // Description Field with Autocomplete Logic
-                    VStack(alignment: .leading, spacing: 0) {
-                        TextField("Description (e.g. Oatmeal)", text: $description)
-                            .onChange(of: description) { newValue in
-                                showSuggestions = !newValue.isEmpty
-                            }
-                        
-                        // THE AUTOCOMPLETE DROPDOWN
-                        if showSuggestions {
-                            AutocompleteList(query: description) { selectedMeal in
-                                // Auto-fill Logic
-                                self.description = selectedMeal.name ?? ""
-                                self.portionSize = selectedMeal.portionSize ?? ""
-                                self.selectedUnit = selectedMeal.unit ?? "grams"
-                                self.protein = String(format: "%.1f", selectedMeal.protein)
-                                self.fat = String(format: "%.1f", selectedMeal.fat)
-                                self.carbs = String(format: "%.1f", selectedMeal.carbs)
-                                self.calories = String(format: "%.0f", selectedMeal.calories)
-                                
-                                // Hide suggestions and keyboard
-                                self.showSuggestions = false
-                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                            }
-                        }
-                    }
-                    
+                    // 1. Portion & Unit
                     HStack {
                         TextField("Portion", text: $portionSize)
                             .keyboardType(.decimalPad)
@@ -67,6 +43,25 @@ struct AddMealView: View {
                             }
                         }
                         .labelsHidden()
+                    }
+                    
+                    // 2. Description (Smart Parsing Input)
+                    VStack(alignment: .leading, spacing: 0) {
+                        TextField("Description (e.g. 150g Chicken)", text: $description)
+                            .onChange(of: description) { newValue in
+                                showSuggestions = !newValue.isEmpty
+                                // LIVE PARSE TRIGGER
+                                attemptRealtimeParse(newValue)
+                            }
+                        
+                        if showSuggestions {
+                            AutocompleteList(query: description) { selectedMeal in
+                                applyCachedMeal(selectedMeal)
+                                self.description = selectedMeal.name ?? ""
+                                self.showSuggestions = false
+                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            }
+                        }
                     }
                 }
                 
@@ -107,6 +102,61 @@ struct AddMealView: View {
         }
     }
     
+    // MARK: - 1. Live Parse Logic
+    private func attemptRealtimeParse(_ text: String) {
+        // Use your existing Regex Parser
+        guard let result = LocalParser.parse(text) else { return }
+        
+        // Update Portion Field
+        // Only update if it's different to avoid cursor fighting,
+        // though SwiftUI handles this reasonably well.
+        let newPortion = String(format: "%.0f", result.qty) // Assuming integer for cleanliness, or %.1f
+        if portionSize != newPortion {
+            portionSize = newPortion
+        }
+        
+        // Update Unit Field (Normalize "g" -> "grams")
+        if let rawUnit = result.unit {
+            if let normalized = normalizeUnit(rawUnit) {
+                selectedUnit = normalized
+            }
+        }
+    }
+    
+    // Helper to map parser output to Picker tags
+    private func normalizeUnit(_ input: String) -> String? {
+        let map: [String: String] = [
+            "g": "grams", "gram": "grams", "grams": "grams",
+            "oz": "ounces", "ounce": "ounces", "ounces": "ounces",
+            "cup": "cups", "cups": "cups",
+            "ml": "ml", "l": "l",
+            "lb": "lbs", "lbs": "lbs",
+            "tbsp": "tbsp", "tsp": "tsp"
+        ]
+        return map[input.lowercased()]
+    }
+    
+    // MARK: - Cached Meal Logic (Unchanged)
+    private func applyCachedMeal(_ cached: CachedMealEntity) {
+        let cachedPortion = Double(cached.portionSize ?? "0") ?? 0
+        let currentPortion = Double(self.portionSize) ?? 0
+        
+        if currentPortion > 0, cachedPortion > 0, cached.unit == self.selectedUnit {
+            let ratio = currentPortion / cachedPortion
+            self.protein = String(format: "%.1f", cached.protein * ratio)
+            self.fat = String(format: "%.1f", cached.fat * ratio)
+            self.carbs = String(format: "%.1f", cached.carbs * ratio)
+            self.calories = String(format: "%.0f", cached.calories * ratio)
+        } else {
+            self.portionSize = cached.portionSize ?? ""
+            self.selectedUnit = cached.unit ?? "grams"
+            self.protein = String(format: "%.1f", cached.protein)
+            self.fat = String(format: "%.1f", cached.fat)
+            self.carbs = String(format: "%.1f", cached.carbs)
+            self.calories = String(format: "%.0f", cached.calories)
+        }
+    }
+    
     private func performAutoFill() {
         let fullQuery = "\(portionSize) \(selectedUnit) \(description)"
         Task {
@@ -119,6 +169,7 @@ struct AddMealView: View {
         }
     }
     
+    // MARK: - 2. Save Logic (Clean Up Name)
     private func saveMeal() {
         let p = Double(protein) ?? 0.0
         let c = Double(carbs) ?? 0.0
@@ -126,16 +177,20 @@ struct AddMealView: View {
         let k = Double(calories) ?? 0.0
         let w = (Double(portionSize) ?? 0)
         
-        // 1. Save to Core Data (Actual Log)
+        // Final Clean: If description is still "152g Banana", strip it to "Banana"
+        var finalName = description
+        if let result = LocalParser.parse(description) {
+            finalName = result.foodName.capitalized
+        }
+        
         viewModel.saveMeal(
-            description: description,
+            description: finalName, // Save the CLEAN name
             p: p, f: f, c: c, kcal: k,
             weight: w > 0 ? w : 100
         )
         
-        // 2. Save to Cache (Learn this meal)
         MealCacheManager.shared.cacheMeal(
-            name: description,
+            name: finalName, // Cache the CLEAN name
             p: p, f: f, c: c, k: k,
             portion: portionSize,
             unit: selectedUnit
