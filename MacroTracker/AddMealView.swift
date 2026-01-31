@@ -26,8 +26,19 @@ struct AddMealView: View {
     // Autocomplete State
     @State private var showSuggestions = false
     
-    // Unit options for the picker
+    // Internal State: Track which cached meal we are currently "linked" to
+    @State private var activeCachedMeal: CachedMealEntity? = nil
+    
     let units = ["grams", "ounces", "cups", "slices", "pieces", "whole", "ml", "tbsp", "tsp"]
+    
+    // MARK: - Smart Query Logic
+    // This strips "130g" from "130g Banana" so autocomplete finds "Banana"
+    var cleanQuery: String {
+        if let result = LocalParser.parse(description), !result.foodName.isEmpty {
+            return result.foodName
+        }
+        return description
+    }
     
     var body: some View {
         NavigationView {
@@ -37,27 +48,51 @@ struct AddMealView: View {
                     HStack {
                         TextField("Portion", text: $portionSize)
                             .keyboardType(.decimalPad)
+                            .onChange(of: portionSize) { _ in recalculateMacros() }
+                        
                         Picker("Unit", selection: $selectedUnit) {
                             ForEach(units, id: \.self) { unit in
                                 Text(unit).tag(unit)
                             }
                         }
                         .labelsHidden()
+                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
                     }
                     
-                    // 2. Description (Smart Parsing Input)
+                    // 2. Description (Smart Parsing + Autocomplete)
                     VStack(alignment: .leading, spacing: 0) {
                         TextField("Description (e.g. 150g Chicken)", text: $description)
                             .onChange(of: description) { newValue in
                                 showSuggestions = !newValue.isEmpty
-                                // LIVE PARSE TRIGGER
                                 attemptRealtimeParse(newValue)
+                                
+                                // Reset active link if text diverges significantly
+                                if let active = activeCachedMeal, active.name != cleanQuery {
+                                    // Optional: You could nullify activeCachedMeal here if strict
+                                }
                             }
                         
-                        if showSuggestions {
-                            AutocompleteList(query: description) { selectedMeal in
+                        // UPDATED: Use 'cleanQuery' instead of 'description'
+                        if showSuggestions && !cleanQuery.isEmpty {
+                            AutocompleteList(query: cleanQuery) { selectedMeal in
+                                // 1. Set Link
+                                self.activeCachedMeal = selectedMeal
+                                
+                                // 2. Apply Data
                                 applyCachedMeal(selectedMeal)
-                                self.description = selectedMeal.name ?? ""
+                                
+                                // 3. Cleanup UI
+                                // Note: We only replace the NAME part if parsing succeeded
+                                // This keeps "130g" in the text box if the user typed it
+                                if let result = LocalParser.parse(description) {
+                                    // Reconstruct "130g Banana" using the standardized name from cache
+                                    // This fixes typos (e.g. "130g bnn" -> "130g Banana")
+                                    let prefix = description.prefix(upTo: description.range(of: result.foodName)?.lowerBound ?? description.endIndex)
+                                    self.description = "\(prefix)\(selectedMeal.name ?? "")"
+                                } else {
+                                    self.description = selectedMeal.name ?? ""
+                                }
+                                
                                 self.showSuggestions = false
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
@@ -102,28 +137,46 @@ struct AddMealView: View {
         }
     }
     
-    // MARK: - 1. Live Parse Logic
+    // MARK: - Logic
+    
+    private func recalculateMacros() {
+        guard let cached = activeCachedMeal else { return }
+        applyCachedMeal(cached)
+    }
+    
     private func attemptRealtimeParse(_ text: String) {
-        // Use your existing Regex Parser
         guard let result = LocalParser.parse(text) else { return }
         
-        // Update Portion Field
-        // Only update if it's different to avoid cursor fighting,
-        // though SwiftUI handles this reasonably well.
-        let newPortion = String(format: "%.0f", result.qty) // Assuming integer for cleanliness, or %.1f
+        let newPortion = String(format: "%.0f", result.qty)
         if portionSize != newPortion {
             portionSize = newPortion
         }
         
-        // Update Unit Field (Normalize "g" -> "grams")
-        if let rawUnit = result.unit {
-            if let normalized = normalizeUnit(rawUnit) {
-                selectedUnit = normalized
-            }
+        if let rawUnit = result.unit, let normalized = normalizeUnit(rawUnit) {
+            selectedUnit = normalized
         }
     }
     
-    // Helper to map parser output to Picker tags
+    private func applyCachedMeal(_ cached: CachedMealEntity) {
+        let cachedPortion = Double(cached.portionSize ?? "0") ?? 0
+        let currentPortion = Double(self.portionSize) ?? 0
+        
+        if currentPortion > 0, cachedPortion > 0, cached.unit == self.selectedUnit {
+            let ratio = currentPortion / cachedPortion
+            self.protein = String(format: "%.1f", cached.protein * ratio)
+            self.fat = String(format: "%.1f", cached.fat * ratio)
+            self.carbs = String(format: "%.1f", cached.carbs * ratio)
+            self.calories = String(format: "%.0f", cached.calories * ratio)
+        } else if self.portionSize.isEmpty {
+            self.portionSize = cached.portionSize ?? ""
+            self.selectedUnit = cached.unit ?? "grams"
+            self.protein = String(format: "%.1f", cached.protein)
+            self.fat = String(format: "%.1f", cached.fat)
+            self.carbs = String(format: "%.1f", cached.carbs)
+            self.calories = String(format: "%.0f", cached.calories)
+        }
+    }
+    
     private func normalizeUnit(_ input: String) -> String? {
         let map: [String: String] = [
             "g": "grams", "gram": "grams", "grams": "grams",
@@ -136,27 +189,6 @@ struct AddMealView: View {
         return map[input.lowercased()]
     }
     
-    // MARK: - Cached Meal Logic (Unchanged)
-    private func applyCachedMeal(_ cached: CachedMealEntity) {
-        let cachedPortion = Double(cached.portionSize ?? "0") ?? 0
-        let currentPortion = Double(self.portionSize) ?? 0
-        
-        if currentPortion > 0, cachedPortion > 0, cached.unit == self.selectedUnit {
-            let ratio = currentPortion / cachedPortion
-            self.protein = String(format: "%.1f", cached.protein * ratio)
-            self.fat = String(format: "%.1f", cached.fat * ratio)
-            self.carbs = String(format: "%.1f", cached.carbs * ratio)
-            self.calories = String(format: "%.0f", cached.calories * ratio)
-        } else {
-            self.portionSize = cached.portionSize ?? ""
-            self.selectedUnit = cached.unit ?? "grams"
-            self.protein = String(format: "%.1f", cached.protein)
-            self.fat = String(format: "%.1f", cached.fat)
-            self.carbs = String(format: "%.1f", cached.carbs)
-            self.calories = String(format: "%.0f", cached.calories)
-        }
-    }
-    
     private func performAutoFill() {
         let fullQuery = "\(portionSize) \(selectedUnit) \(description)"
         Task {
@@ -165,11 +197,11 @@ struct AddMealView: View {
                 protein = String(format: "%.1f", result.p)
                 carbs = String(format: "%.1f", result.c)
                 fat = String(format: "%.1f", result.f)
+                self.activeCachedMeal = nil
             }
         }
     }
     
-    // MARK: - 2. Save Logic (Clean Up Name)
     private func saveMeal() {
         let p = Double(protein) ?? 0.0
         let c = Double(carbs) ?? 0.0
@@ -177,20 +209,19 @@ struct AddMealView: View {
         let k = Double(calories) ?? 0.0
         let w = (Double(portionSize) ?? 0)
         
-        // Final Clean: If description is still "152g Banana", strip it to "Banana"
         var finalName = description
         if let result = LocalParser.parse(description) {
             finalName = result.foodName.capitalized
         }
         
         viewModel.saveMeal(
-            description: finalName, // Save the CLEAN name
+            description: finalName,
             p: p, f: f, c: c, kcal: k,
             weight: w > 0 ? w : 100
         )
         
         MealCacheManager.shared.cacheMeal(
-            name: finalName, // Cache the CLEAN name
+            name: finalName,
             p: p, f: f, c: c, k: k,
             portion: portionSize,
             unit: selectedUnit
