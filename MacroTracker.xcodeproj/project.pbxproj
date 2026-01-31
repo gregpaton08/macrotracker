@@ -24,6 +24,7 @@
 		9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */; };
 		9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04F2F2D9523007F24A8 /* SettingsView.swift */; };
 		9444E0522F2D9A77007F24A8 /* EditCachedMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */; };
+		9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -69,6 +70,7 @@
 		9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealsView.swift; sourceTree = "<group>"; };
 		9444E04F2F2D9523007F24A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCachedMealView.swift; sourceTree = "<group>"; };
+		9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLogEntryView.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -152,6 +154,7 @@
 				9444E0432F2AF253007F24A8 /* TrackerView.swift */,
 				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
 				9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */,
+				9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
@@ -331,6 +334,7 @@
 				9444E0422F2AF22E007F24A8 /* StatsView.swift in Sources */,
 				9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
+				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,
 				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,
 				9444E03B2F2843B0007F24A8 /* Logger.swift in Sources */,
 				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,
