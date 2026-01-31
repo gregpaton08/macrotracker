@@ -2,57 +2,58 @@ import SwiftUI
 import Charts
 import CoreData
 
+import SwiftUI
+import Charts
+import CoreData
+
 struct StatsView: View {
     @State private var selectedDate = Date()
     
     var body: some View {
-        
-            VStack {
-                // Date Navigator
-                HStack {
-                    Button(action: { moveDate(by: -1) }) {
-                        Image(systemName: "chevron.left")
-                    }
-                    
-                    Spacer()
-                    
-                    Text(selectedDate, style: .date)
-                        .font(.headline)
-                        .id(selectedDate) // Fade animation trigger
-                        .transition(.opacity)
-                    
-                    Spacer()
-                    
-                    Button(action: { moveDate(by: 1) }) {
-                        Image(systemName: "chevron.right")
-                    }
-                    .disabled(Calendar.current.isDateInToday(selectedDate)) // Optional: Disable future
+        // NOTE: We removed NavigationView here because ContentView handles it now
+        VStack {
+            // Date Navigator
+            HStack {
+                Button(action: { moveDate(by: -1) }) {
+                    Image(systemName: "chevron.left")
                 }
-                .padding()
                 
-                // The Content (Swipable)
-                DailyChartContent(date: selectedDate)
-                    .background(Color.white.opacity(0.01)) // Hack to make empty space swipeable
-                    .gesture(
-                        DragGesture()
-                            .onEnded { value in
-                                if value.translation.width < -50 {
-                                    // Swipe Left (Next Day)
-                                    if !Calendar.current.isDateInToday(selectedDate) {
-                                        moveDate(by: 1)
-                                    }
-                                } else if value.translation.width > 50 {
-                                    // Swipe Right (Previous Day)
-                                    moveDate(by: -1)
-                                }
-                            }
-                    )
+                Spacer()
+                
+                Text(selectedDate, style: .date)
+                    .font(.headline)
+                    .id(selectedDate)
+                    .transition(.opacity)
+                
+                Spacer()
+                
+                Button(action: { moveDate(by: 1) }) {
+                    Image(systemName: "chevron.right")
+                }
+                .disabled(Calendar.current.isDateInToday(selectedDate))
             }
-            .navigationTitle("Stats")
-#if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-        
+            .padding()
+            
+            // The Content
+            DailyChartContent(date: selectedDate)
+                .background(Color.white.opacity(0.01))
+                .gesture(
+                    DragGesture()
+                        .onEnded { value in
+                            if value.translation.width < -50 {
+                                if !Calendar.current.isDateInToday(selectedDate) {
+                                    moveDate(by: 1)
+                                }
+                            } else if value.translation.width > 50 {
+                                moveDate(by: -1)
+                            }
+                        }
+                )
+        }
+        .navigationTitle("Stats")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
     
     private func moveDate(by days: Int) {
@@ -64,7 +65,8 @@ struct StatsView: View {
 
 // MARK: - Subview with Dynamic FetchRequest
 struct DailyChartContent: View {
-    @FetchRequest var todaysFoods: FetchedResults<FoodEntity>
+    // FIX: Fetch MealEntity (the Parent), not FoodEntity (the Ingredients)
+    @FetchRequest var todaysMeals: FetchedResults<MealEntity>
     
     // Read Goals from Storage
     @AppStorage("goal_p_min") var pMin: Double = 150
@@ -79,18 +81,19 @@ struct DailyChartContent: View {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        _todaysFoods = FetchRequest(
+        // FIX: Predicate targets MealEntity
+        _todaysMeals = FetchRequest(
             sortDescriptors: [],
             predicate: NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate),
             animation: .default
         )
     }
     
-    // Actual Data
+    // FIX: Calculate totals using MealEntity properties (totalProtein, etc.)
     var totals: [MacroData] {
-        let p = todaysFoods.reduce(0) { $0 + $1.protein }
-        let c = todaysFoods.reduce(0) { $0 + $1.carbs }
-        let f = todaysFoods.reduce(0) { $0 + $1.fat }
+        let p = todaysMeals.reduce(0) { $0 + $1.totalProtein }
+        let c = todaysMeals.reduce(0) { $0 + $1.totalCarbs }
+        let f = todaysMeals.reduce(0) { $0 + $1.totalFat }
         
         return [
             MacroData(type: "Protein", grams: p, color: .blue),
@@ -99,7 +102,6 @@ struct DailyChartContent: View {
         ]
     }
     
-    // Target Zones Data
     var targets: [MacroTarget] {
         [
             MacroTarget(type: "Protein", min: pMin, max: pMax),
@@ -114,51 +116,53 @@ struct DailyChartContent: View {
             HStack(spacing: 20) {
                 VStack {
                     Text("Calories").font(.caption).foregroundColor(.secondary)
-                    Text("\(Int(todaysFoods.reduce(0){ $0 + $1.calories }))")
+                    // FIX: Sum totalCalories from Meals
+                    Text("\(Int(todaysMeals.reduce(0){ $0 + $1.totalCalories }))")
                         .font(.title).bold()
                 }
                 Divider().frame(height: 40)
                 VStack {
                     Text("Entries").font(.caption).foregroundColor(.secondary)
-                    Text("\(todaysFoods.count)")
+                    Text("\(todaysMeals.count)")
                         .font(.title).bold()
                 }
             }
             .padding(.bottom, 20)
             
             // Chart
-            Chart {
-                // 1. Draw Target Zones (Background Layer)
-                ForEach(targets) { target in
-                    RectangleMark(
-                        x: .value("Macro", target.type),
-                        yStart: .value("Min", target.min),
-                        yEnd: .value("Max", target.max)
-                    )
-                    .foregroundStyle(.gray.opacity(0.15)) // Subtle background box
-                    .annotation(position: .overlay, alignment: .bottom) {
-                        Text("Goal")
-                            .font(.caption2)
-                            .foregroundColor(.gray.opacity(0.8))
+            if todaysMeals.isEmpty {
+                Spacer()
+                Text("No data for this day").foregroundColor(.gray)
+                Spacer()
+            } else {
+                Chart {
+                    // Background Goals
+                    ForEach(targets) { target in
+                        RectangleMark(
+                            x: .value("Macro", target.type),
+                            yStart: .value("Min", target.min),
+                            yEnd: .value("Max", target.max)
+                        )
+                        .foregroundStyle(Color.gray.opacity(0.15))
+                    }
+                    
+                    // Foreground Data
+                    ForEach(totals) { item in
+                        BarMark(
+                            x: .value("Macro", item.type),
+                            y: .value("Grams", item.grams)
+                        )
+                        .foregroundStyle(item.color)
+                        .annotation(position: .top) {
+                            Text("\(Int(item.grams))g")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                
-                // 2. Draw Actual Bars (Foreground Layer)
-                ForEach(totals) { item in
-                    BarMark(
-                        x: .value("Macro", item.type),
-                        y: .value("Grams", item.grams)
-                    )
-                    .foregroundStyle(item.color)
-                    .annotation(position: .top) {
-                        Text("\(Int(item.grams))g")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                .frame(height: 300)
+                .padding()
             }
-            .frame(height: 300)
-            .padding()
             
             Spacer()
         }
@@ -166,7 +170,6 @@ struct DailyChartContent: View {
     }
 }
 
-// Data Model for Chart
 struct MacroData: Identifiable {
     let id = UUID()
     let type: String
@@ -174,7 +177,6 @@ struct MacroData: Identifiable {
     let color: Color
 }
 
-// New Helper Struct for Targets
 struct MacroTarget: Identifiable {
     let id = UUID()
     let type: String

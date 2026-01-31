@@ -21,69 +21,76 @@ struct SettingsView: View {
     @AppStorage("goal_f_max") var fMax: Double = 80
     
     var body: some View {
-        
-            Form {
-                // New Section: Database Management
-                Section(header: Text("Data Management")) {
-                    NavigationLink(destination: SavedMealsView()) {
-                        Label("Manage Saved Meals", systemImage: "archivebox")
-                    }
-                    NavigationLink("View Debug Logs", destination: LogViewer())
+        // Remove NavigationView here if it's already in ContentView
+        // If this is standalone, keep it. If nested in TabView > NavView, change to VStack or Group
+        Form {
+            // New Section: Database Management
+            Section(header: Text("Data Management")) {
+                NavigationLink(destination: SavedMealsView()) {
+                    Label("Manage Saved Meals", systemImage: "archivebox")
                 }
+                NavigationLink("View Debug Logs", destination: LogViewer())
+            }
 
-                Section(header: Text("Protein Goals (g)")) {
-                    HStack {
-                        TextField("Min", value: $pMin, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                        Text("-")
-                        TextField("Max", value: $pMax, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                    }
-                }
-                
-                Section(header: Text("Carb Goals (g)")) {
-                    HStack {
-                        TextField("Min", value: $cMin, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                        Text("-")
-                        TextField("Max", value: $cMax, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                    }
-                }
-                
-                Section(header: Text("Fat Goals (g)")) {
-                    HStack {
-                        TextField("Min", value: $fMin, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                        Text("-")
-                        TextField("Max", value: $fMax, format: .number)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                    }
-                }
-                
-                Section(header: Text("API Keys")) {
-                    SecureField("Google Gemini Key", text: $googleKey)
-                    SecureField("USDA API Key", text: $usdaKey)
-                }
-                
-                Section(header: Text("Links")) {
-                    Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                    Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
+            Section(header: Text("Protein Goals (g)")) {
+                HStack {
+                    TextField("Min", value: $pMin, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                    Text("-")
+                    TextField("Max", value: $pMax, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
                 }
             }
-            .navigationTitle("Settings")
-        
+            
+            Section(header: Text("Carb Goals (g)")) {
+                HStack {
+                    TextField("Min", value: $cMin, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                    Text("-")
+                    TextField("Max", value: $cMax, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                }
+            }
+            
+            Section(header: Text("Fat Goals (g)")) {
+                HStack {
+                    TextField("Min", value: $fMin, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                    Text("-")
+                    TextField("Max", value: $fMax, format: .number)
+                        #if os(iOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                }
+            }
+            
+            Section(header: Text("API Keys")) {
+                SecureField("Google Gemini Key", text: $googleKey)
+                SecureField("USDA API Key", text: $usdaKey)
+            }
+            
+            Section(header: Text("Links")) {
+                Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+                Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
+            }
+        }
+        .navigationTitle("Settings")
+        // MARK: - THE FIX
+        // Tapping anywhere on the form background dismisses keyboard
+        .onTapGesture {
+            #if os(iOS)
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            #endif
+        }
     }
 }
