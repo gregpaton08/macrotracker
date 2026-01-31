@@ -32,7 +32,9 @@ struct EditCachedMealView: View {
                 
                 HStack {
                     TextField("Portion", text: $portion)
+                        #if os(iOS)
                         .keyboardType(.decimalPad)
+                        #endif
                     Picker("Unit", selection: $unit) {
                         ForEach(units, id: \.self) { unit in
                             Text(unit).tag(unit)
@@ -110,7 +112,9 @@ struct MacroRow: View {
             Text(label)
             Spacer()
             TextField("0", text: $text)
+                #if os(iOS)
                 .keyboardType(.decimalPad)
+                #endif
                 .multilineTextAlignment(.trailing)
         }
     }

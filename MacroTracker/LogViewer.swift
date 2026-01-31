@@ -9,7 +9,6 @@ import SwiftUI
 
 struct LogViewer: View {
     @State private var logText: String = "Loading..."
-    @State private var showShareSheet = false
     
     var body: some View {
         VStack {
@@ -18,8 +17,9 @@ struct LogViewer: View {
                     .font(.system(.caption, design: .monospaced))
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled) // Allows text copying on iOS/macOS
             }
-            .background(Color(UIColor.systemGray6))
+            .background(Color.gray.opacity(0.1))
             
             HStack {
                 Button("Clear") {
@@ -29,20 +29,26 @@ struct LogViewer: View {
                     }
                 }
                 .foregroundColor(.red)
+                
                 Spacer()
-                Button("Refresh") { Task { await loadLogs() } }
+                
+                Button("Refresh") {
+                    Task { await loadLogs() }
+                }
+                
                 Spacer()
-                Button(action: { showShareSheet = true }) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Export")
+                
+                // MARK: - THE FIX (Cross-Platform Export)
+                // ShareLink works natively on iOS and macOS (no UIKit needed)
+                ShareLink(item: LogStore.shared.fileURL) {
+                    Label("Export", systemImage: "square.and.arrow.up")
                 }
             }
             .padding()
         }
         .navigationTitle("System Logs")
-        .onAppear { Task { await loadLogs() } }
-        .sheet(isPresented: $showShareSheet) {
-            ShareSheet(items: [LogFileProvider()])
+        .onAppear {
+            Task { await loadLogs() }
         }
     }
     
@@ -51,21 +57,5 @@ struct LogViewer: View {
     }
 }
 
-struct ShareSheet: UIViewControllerRepresentable {
-    var items: [Any]
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        return UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-class LogFileProvider: NSObject, UIActivityItemSource {
-    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
-        return ""
-    }
-    
-    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
-        // FIX: Access the nonisolated property directly. No Task needed.
-        return LogStore.shared.fileURL
-    }
-}
+// Note: You can now DELETE the 'ShareSheet' struct and 'LogFileProvider' class.
+// They are obsolete with ShareLink.

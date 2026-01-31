@@ -6,7 +6,7 @@ struct StatsView: View {
     @State private var selectedDate = Date()
     
     var body: some View {
-        NavigationView {
+        
             VStack {
                 // Date Navigator
                 HStack {
@@ -49,8 +49,10 @@ struct StatsView: View {
                     )
             }
             .navigationTitle("Stats")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-        }
+            #endif
+        
     }
     
     private func moveDate(by days: Int) {

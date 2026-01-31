@@ -37,13 +37,14 @@ struct SavedMealsView: View {
         }
         .navigationTitle("Saved Database")
         .toolbar {
-            // The "Add New" Button
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showAddSheet = true }) {
-                    Image(systemName: "plus")
+                    // FIX: Use .primaryAction instead of .navigationBarTrailing
+                    // This puts it Top-Right on iPhone and Top-Right on Mac automatically.
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: { showAddSheet = true }) {
+                            Image(systemName: "plus")
+                        }
+                    }
                 }
-            }
-        }
         // The "Add New" Sheet
         .sheet(isPresented: $showAddSheet) {
             NavigationView {

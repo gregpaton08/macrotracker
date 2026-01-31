@@ -47,7 +47,9 @@ struct AddMealView: View {
                     // 1. Portion & Unit
                     HStack {
                         TextField("Portion", text: $portionSize)
+                            #if os(iOS)
                             .keyboardType(.decimalPad)
+                            #endif
                             .onChange(of: portionSize) { _ in recalculateMacros() }
                         
                         Picker("Unit", selection: $selectedUnit) {
@@ -94,7 +96,9 @@ struct AddMealView: View {
                                 }
                                 
                                 self.showSuggestions = false
+                                #if os(iOS)
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                #endif
                             }
                         }
                     }
@@ -111,10 +115,26 @@ struct AddMealView: View {
                 }
                 
                 Section(header: Text("Macros (Editable)")) {
-                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Protein (g)"); Spacer(); TextField("0", text: $protein).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Carbs (g)"); Spacer(); TextField("0", text: $carbs).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Fat (g)"); Spacer(); TextField("0", text: $fat).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Protein (g)"); Spacer(); TextField("0", text: $protein)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Carbs (g)"); Spacer(); TextField("0", text: $carbs)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Fat (g)"); Spacer(); TextField("0", text: $fat)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .multilineTextAlignment(.trailing) }
                 }
                 
                 if let error = viewModel.errorMessage {

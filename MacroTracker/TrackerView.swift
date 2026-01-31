@@ -24,7 +24,7 @@ struct TrackerView: View {
     private var meals: FetchedResults<MealEntity>
 
     var body: some View {
-        NavigationView {
+        
             List {
                 ForEach(meals) { meal in
                     NavigationLink(destination: MealDetailView(meal: meal)) {
@@ -50,19 +50,20 @@ struct TrackerView: View {
             }
             .navigationTitle("Log")
             .toolbar {
-                // NEW: Add Meal Button
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showAddMeal.toggle() }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
+                            
+                            
+                            ToolbarItem(placement: .primaryAction) {
+                                Button(action: { showAddMeal.toggle() }) {
+                                    Image(systemName: "plus")
+                                }
+                            }
+                        }
             // Bind the sheets
             .sheet(isPresented: $showAddMeal) {
                 // Pass the existing ViewModel so it shares API keys/logic
                 AddMealView(viewModel: viewModel)
             }
-        }
+        
     }
     
     private func deleteItems(offsets: IndexSet) {
