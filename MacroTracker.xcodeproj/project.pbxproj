@@ -20,6 +20,9 @@
 		9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0452F2C51C5007F24A8 /* MealDetailView.swift */; };
 		9444E0482F2D9157007F24A8 /* AddMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0472F2D9157007F24A8 /* AddMealView.swift */; };
 		9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0492F2D918D007F24A8 /* LocalParser.swift */; };
+		9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */; };
+		9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */; };
+		9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04F2F2D9523007F24A8 /* SettingsView.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -61,6 +64,9 @@
 		9444E0452F2C51C5007F24A8 /* MealDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealDetailView.swift; sourceTree = "<group>"; };
 		9444E0472F2D9157007F24A8 /* AddMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMealView.swift; sourceTree = "<group>"; };
 		9444E0492F2D918D007F24A8 /* LocalParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalParser.swift; sourceTree = "<group>"; };
+		9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealCacheManager.swift; sourceTree = "<group>"; };
+		9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealsView.swift; sourceTree = "<group>"; };
+		9444E04F2F2D9523007F24A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -123,23 +129,26 @@
 		94AFB0C12F26F51100ED36F8 /* MacroTracker */ = {
 			isa = PBXGroup;
 			children = (
+				9444E0472F2D9157007F24A8 /* AddMealView.swift */,
 				940AE6662F27F114006A01D1 /* APIClients.swift */,
 				94AFB0C62F26F51300ED36F8 /* Assets.xcassets */,
 				94AFB0C42F26F51100ED36F8 /* ContentView.swift */,
+				9444E0492F2D918D007F24A8 /* LocalParser.swift */,
 				9444E03A2F2843B0007F24A8 /* Logger.swift */,
 				9444E03C2F28458C007F24A8 /* LogViewer.swift */,
 				9444E0382F27F345007F24A8 /* MacroTracker.entitlements */,
 				940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */,
 				94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */,
+				9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */,
+				9444E0452F2C51C5007F24A8 /* MealDetailView.swift */,
 				940AE6642F27F0F2006A01D1 /* Models.swift */,
 				940AE6682F27F128006A01D1 /* Persistence.swift */,
 				94AFB0C82F26F51300ED36F8 /* Preview Content */,
+				9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */,
+				9444E04F2F2D9523007F24A8 /* SettingsView.swift */,
 				9444E0412F2AF22E007F24A8 /* StatsView.swift */,
 				9444E0432F2AF253007F24A8 /* TrackerView.swift */,
 				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
-				9444E0452F2C51C5007F24A8 /* MealDetailView.swift */,
-				9444E0472F2D9157007F24A8 /* AddMealView.swift */,
-				9444E0492F2D918D007F24A8 /* LocalParser.swift */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
@@ -310,6 +319,7 @@
 				9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */,
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
 				940AE6652F27F0F2006A01D1 /* Models.swift in Sources */,
+				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
 				9444E03D2F28458C007F24A8 /* LogViewer.swift in Sources */,
 				940AE6672F27F114006A01D1 /* APIClients.swift in Sources */,
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
@@ -319,6 +329,8 @@
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,
 				9444E03B2F2843B0007F24A8 /* Logger.swift in Sources */,
+				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,
+				9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
