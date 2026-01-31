@@ -9,12 +9,16 @@
 import SwiftUI
 import CoreData
 
+import SwiftUI
+import CoreData
+
 struct TrackerView: View {
     @StateObject private var viewModel = MacroViewModel()
-    @State private var inputText = ""
     @State private var showSettings = false
     
-    // UPDATED: Fetch Meals, not individual foods
+    // NEW: Control the sheet
+    @State private var showAddMeal = false
+    
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: false)],
         animation: .default)
@@ -22,59 +26,51 @@ struct TrackerView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
-                // Input Area
-                HStack {
-                    TextField("Describe meal...", text: $inputText)
-                        .textFieldStyle(.roundedBorder)
-                        .disabled(viewModel.isLoading)
-                    
-                    Button(action: {
-                        Task {
-                            await viewModel.processFoodEntry(text: inputText)
-                            inputText = ""
-                        }
-                    }) {
-                        if viewModel.isLoading { ProgressView() } else { Image(systemName: "arrow.up.circle.fill").font(.title2) }
-                    }
-                    .disabled(inputText.isEmpty || viewModel.isLoading)
-                }
-                .padding()
-                
-                if let error = viewModel.errorMessage {
-                    Text(error).foregroundColor(.red).font(.caption)
-                }
-
-                // UPDATED: Hierarchical List
-                List {
-                    ForEach(meals) { meal in
-                        NavigationLink(destination: MealDetailView(meal: meal)) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(meal.summary ?? "Untitled Meal")
-                                        .font(.headline)
-                                    Text(meal.timestamp ?? Date(), style: .time)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                                Spacer()
-                                VStack(alignment: .trailing) {
-                                    Text("\(Int(meal.totalCalories)) kcal").bold()
-                                    Text("P:\(Int(meal.totalProtein)) C:\(Int(meal.totalCarbs)) F:\(Int(meal.totalFat))")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
+            List {
+                ForEach(meals) { meal in
+                    NavigationLink(destination: MealDetailView(meal: meal)) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(meal.summary ?? "Untitled Meal")
+                                    .font(.headline)
+                                Text(meal.timestamp ?? Date(), style: .time)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing) {
+                                Text("\(Int(meal.totalCalories)) kcal").bold()
+                                Text("P:\(Int(meal.totalProtein)) C:\(Int(meal.totalCarbs)) F:\(Int(meal.totalFat))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
-                    .onDelete(perform: deleteItems)
                 }
+                .onDelete(perform: deleteItems)
             }
             .navigationTitle("Log")
             .toolbar {
-                Button(action: { showSettings.toggle() }) { Image(systemName: "gear") }
+                // Settings Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { showSettings.toggle() }) {
+                        Image(systemName: "gear")
+                    }
+                }
+                
+                // NEW: Add Meal Button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showAddMeal.toggle() }) {
+                        Image(systemName: "plus")
+                    }
+                }
             }
+            // Bind the sheets
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(isPresented: $showAddMeal) {
+                // Pass the existing ViewModel so it shares API keys/logic
+                AddMealView(viewModel: viewModel)
+            }
         }
     }
     

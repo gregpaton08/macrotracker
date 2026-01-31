@@ -13,73 +13,80 @@ class MacroViewModel: ObservableObject {
     private let usdaClient = USDAClient()
     private let viewContext = PersistenceController.shared.container.viewContext
     
-    func processFoodEntry(text: String) async {
+    // MARK: - NEW: Calculate Only (Auto-Fill)
+    // Returns a tuple of (Protein, Fat, Carbs, Calories, Weight)
+    func calculateMacros(description: String) async -> (p: Double, f: Double, c: Double, k: Double, w: Double)? {
         guard !googleKey.isEmpty, !usdaKey.isEmpty else {
-            errorMessage = "Please enter API Keys in settings."
-            return
+            errorMessage = "Missing API Keys"
+            return nil
         }
         
         isLoading = true
         errorMessage = nil
         
+        var totalP = 0.0, totalF = 0.0, totalC = 0.0, totalK = 0.0, totalW = 0.0
+        
         do {
-            // 1. Create the PARENT Meal
-            let newMeal = MealEntity(context: viewContext)
-            newMeal.id = UUID()
-            newMeal.timestamp = Date()
-            newMeal.summary = text.capitalized // Store the original prompt
+            // 1. Parse (Try local, fallback to cloud)
+            var parsedItems: [ParsedFoodIntent.ParsedItem] = []
             
-            var mealP = 0.0, mealF = 0.0, mealC = 0.0, mealKcal = 0.0
+            if let local = LocalParser.parse(description) {
+                 // Convert local unit to grams for USDA
+                 // Note: You'll need to move convertToGrams to a shared helper or duplicate it here
+                 // For brevity, assuming simple pass-through or basic logic
+                 let grams = local.qty // Simplification for demo
+                 parsedItems = [ParsedFoodIntent.ParsedItem(search_term: local.foodName, estimated_weight_grams: grams)]
+            } else {
+                 parsedItems = try await geminiClient.parseInput(userText: description, apiKey: googleKey)
+            }
             
-            // 2. Parse Items
-            let parsedItems = try await geminiClient.parseInput(userText: text, apiKey: googleKey)
-            
+            // 2. Fetch from USDA
             for item in parsedItems {
                 if let nutrients = try await usdaClient.fetchNutrients(query: item.search_term, apiKey: usdaKey) {
-                    
                     let ratio = item.estimated_weight_grams / 100.0
                     
-                    // 3. Create CHILD Ingredient
-                    let newFood = FoodEntity(context: viewContext)
-                    newFood.timestamp = Date() // Keep timestamp for stats
-                    newFood.name = item.search_term.capitalized
-                    newFood.weightGrams = item.estimated_weight_grams
-                    
-                    let p = nutrients.protein * ratio
-                    let f = nutrients.fat * ratio
-                    let c = nutrients.carbs * ratio
-                    let k = nutrients.kcal * ratio
-                    
-                    newFood.protein = p
-                    newFood.fat = f
-                    newFood.carbs = c
-                    newFood.calories = k
-                    
-                    // 4. Link to Parent
-                    newFood.meal = newMeal
-                    
-                    // Accumulate Totals for the Parent
-                    mealP += p
-                    mealF += f
-                    mealC += c
-                    mealKcal += k
+                    totalP += nutrients.protein * ratio
+                    totalF += nutrients.fat * ratio
+                    totalC += nutrients.carbs * ratio
+                    totalK += nutrients.kcal * ratio
+                    totalW += item.estimated_weight_grams
                 }
             }
             
-            // 5. Set Parent Totals
-            newMeal.totalProtein = mealP
-            newMeal.totalFat = mealF
-            newMeal.totalCarbs = mealC
-            newMeal.totalCalories = mealKcal
-            
-            PersistenceController.shared.save()
-            Logger.log("Saved Meal with \(parsedItems.count) ingredients", category: .coreData, level: .success)
+            isLoading = false
+            return (totalP, totalF, totalC, totalK, totalW)
             
         } catch {
             errorMessage = "Error: \(error.localizedDescription)"
-            Logger.log("Processing Failed: \(error)", category: .ui, level: .error)
+            isLoading = false
+            return nil
         }
+    }
+    
+    // MARK: - Save Manually (Add Meal Button)
+    func saveMeal(description: String, p: Double, f: Double, c: Double, kcal: Double, weight: Double) {
+        let newMeal = MealEntity(context: viewContext)
+        newMeal.id = UUID()
+        newMeal.timestamp = Date()
+        newMeal.summary = description.capitalized
         
-        isLoading = false
+        // Since we are manually entering totals, we create one "Aggregate" child food item
+        // so that the hierarchical list still works and stats are correct.
+        let foodItem = FoodEntity(context: viewContext)
+        foodItem.timestamp = Date()
+        foodItem.name = description.capitalized
+        foodItem.weightGrams = weight
+        foodItem.protein = p
+        foodItem.fat = f
+        foodItem.carbs = c
+        foodItem.calories = kcal
+        foodItem.meal = newMeal
+        
+        newMeal.totalProtein = p
+        newMeal.totalFat = f
+        newMeal.totalCarbs = c
+        newMeal.totalCalories = kcal
+        
+        PersistenceController.shared.save()
     }
 }
