@@ -8,6 +8,8 @@ I want a dead simple way to track my macros. I'm prioritizing ease of use over h
 
 * Add a logging framework
 * Add tests
+* Flesh out data model fully
+* Calories should be computed from macros
 
 ## APIs
 

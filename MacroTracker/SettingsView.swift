@@ -8,11 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    // API Keys
+    // API Keys & Goals (Keep your existing @AppStorage vars here)
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("usda_api_key") var usdaKey: String = ""
-    
-    // Goals
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
     @AppStorage("goal_c_min") var cMin: Double = 200
@@ -21,10 +19,7 @@ struct SettingsView: View {
     @AppStorage("goal_f_max") var fMax: Double = 80
     
     var body: some View {
-        // Remove NavigationView here if it's already in ContentView
-        // If this is standalone, keep it. If nested in TabView > NavView, change to VStack or Group
         Form {
-            // New Section: Database Management
             Section(header: Text("Data Management")) {
                 NavigationLink(destination: SavedMealsView()) {
                     Label("Manage Saved Meals", systemImage: "archivebox")
@@ -32,6 +27,7 @@ struct SettingsView: View {
                 NavigationLink("View Debug Logs", destination: LogViewer())
             }
 
+            // ... (Your Goal Sections for Protein, Carbs, Fat) ...
             Section(header: Text("Protein Goals (g)")) {
                 HStack {
                     TextField("Min", value: $pMin, format: .number)
@@ -85,12 +81,9 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        // MARK: - THE FIX
-        // Tapping anywhere on the form background dismisses keyboard
-        .onTapGesture {
-            #if os(iOS)
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            #endif
-        }
+        // FIX: Use this native modifier instead of .onTapGesture
+        #if os(iOS)
+        .scrollDismissesKeyboard(.immediately)
+        #endif
     }
 }

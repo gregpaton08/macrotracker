@@ -21,7 +21,7 @@ struct ContentView: View {
     }
 }
 
-// 1. Mac Layout (Unchanged)
+// MARK: - Mac Layout
 struct SidebarLayout: View {
     @State private var selection: TabSelection? = .track
     
@@ -41,38 +41,39 @@ struct SidebarLayout: View {
             .listStyle(.sidebar)
             .navigationTitle("Macro Tracker")
         } detail: {
-            switch selection {
-            case .track: TrackerView()
-            case .stats: StatsView()
-            case .settings: SettingsView()
-            case .none: Text("Select an item")
+            // FIX: Wrap the destination in NavigationStack so links inside (like SavedMeals) work
+            NavigationStack {
+                switch selection {
+                case .track: TrackerView()
+                case .stats: StatsView()
+                case .settings: SettingsView()
+                case .none: Text("Select an item")
+                }
             }
         }
     }
 }
 
-// 2. iOS Layout (THE FIX IS HERE)
+// MARK: - iOS Layout
 struct TabBarLayout: View {
     var body: some View {
         TabView {
-            // FIX: Wrap TrackerView in NavigationView
-            NavigationView {
+            // FIX: Use NavigationStack instead of NavigationView (it is more robust on iOS 16+)
+            NavigationStack {
                 TrackerView()
             }
             .tabItem {
                 Label("Track", systemImage: "list.bullet")
             }
             
-            // FIX: Wrap StatsView in NavigationView
-            NavigationView {
+            NavigationStack {
                 StatsView()
             }
             .tabItem {
                 Label("Stats", systemImage: "chart.bar.fill")
             }
             
-            // FIX: Wrap SettingsView in NavigationView
-            NavigationView {
+            NavigationStack {
                 SettingsView()
             }
             .tabItem {
