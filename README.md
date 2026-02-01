@@ -6,10 +6,19 @@ I want a dead simple way to track my macros. I'm prioritizing ease of use over h
 
 ## TODO
 
-* Add a logging framework
-* Add tests
+### V1
+
+* Handle data migrations when data model changes
+* Export backups and load from backup
 * Flesh out data model fully
 * Calories should be computed from macros
+
+### Backlog
+
+* Add a logging framework
+* Add tests
+* Weekly and monthly calenda
+* Daily notes
 
 ## APIs
 
