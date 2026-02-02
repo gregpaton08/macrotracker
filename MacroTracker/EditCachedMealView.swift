@@ -17,10 +17,15 @@ struct EditCachedMealView: View {
     @State private var portion: String = ""
     @State private var unit: String = "grams"
     
-    // REMOVED: @State private var calories: String = ""
     @State private var protein: String = ""
     @State private var carbs: String = ""
     @State private var fat: String = ""
+    
+    // 1. FOCUS STATE
+    enum Field: Hashable {
+        case name, portion, protein, carbs, fat
+    }
+    @FocusState private var focusedField: Field?
     
     let units = ["grams", "ounces", "cups", "slices", "pieces", "whole", "ml", "tbsp", "tsp"]
     
@@ -28,9 +33,11 @@ struct EditCachedMealView: View {
         Form {
             Section(header: Text("Details")) {
                 TextField("Name (e.g. Banana)", text: $name)
+                    .focused($focusedField, equals: .name) // 2. BIND FOCUS
                 
                 HStack {
                     TextField("Portion", text: $portion)
+                        .focused($focusedField, equals: .portion) // 2. BIND FOCUS
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
@@ -44,26 +51,90 @@ struct EditCachedMealView: View {
             }
             
             Section(header: Text("Macros per Portion")) {
-                // REMOVED: MacroRow(label: "Calories", text: $calories)
-                MacroRow(label: "Protein (g)", text: $protein)
-                                MacroRow(label: "Fat (g)", text: $fat)
+                // I inlined these so we can access @FocusState easily
+                HStack {
+                    Text("Protein (g)")
+                    Spacer()
+                    TextField("0", text: $protein)
+                        .focused($focusedField, equals: .protein) // 2. BIND FOCUS
+                        .multilineTextAlignment(.trailing)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                }
+                
+                HStack {
+                    Text("Carbs (g)")
+                    Spacer()
+                    TextField("0", text: $carbs)
+                        .focused($focusedField, equals: .carbs) // 2. BIND FOCUS
+                        .multilineTextAlignment(.trailing)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                }
+                
+                HStack {
+                    Text("Fat (g)")
+                    Spacer()
+                    TextField("0", text: $fat)
+                        .focused($focusedField, equals: .fat) // 2. BIND FOCUS
+                        .multilineTextAlignment(.trailing)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                }
             }
         }
         .navigationTitle(mealToEdit == nil ? "New Saved Meal" : "Edit Meal")
+        // 3. KEYBOARD TOOLBAR
         .toolbar {
-            Button("Save") { save() }
-                .disabled(name.isEmpty)
+            ToolbarItem(placement: .primaryAction) {
+                Button("Save") { save() }
+                    .disabled(name.isEmpty)
+            }
+            
+            // The Keyboard Arrows
+            ToolbarItemGroup(placement: .keyboard) {
+                Button(action: { moveFocus(direction: -1) }) {
+                    Image(systemName: "chevron.up")
+                }
+                .disabled(focusedField == .name)
+                
+                Button(action: { moveFocus(direction: 1) }) {
+                    Image(systemName: "chevron.down")
+                }
+                .disabled(focusedField == .fat)
+                
+                Spacer()
+                
+                Button("Done") {
+                    focusedField = nil
+                }
+            }
         }
         .onAppear {
             if let meal = mealToEdit {
                 name = meal.name ?? ""
                 portion = meal.portionSize ?? ""
                 unit = meal.unit ?? "grams"
-                // No need to load calories into a text field
                 protein = String(format: "%.1f", meal.protein)
                 carbs = String(format: "%.1f", meal.carbs)
                 fat = String(format: "%.1f", meal.fat)
             }
+        }
+    }
+    
+    // 4. LOGIC
+    private func moveFocus(direction: Int) {
+        let order: [Field] = [.name, .portion, .protein, .carbs, .fat]
+        
+        guard let current = focusedField,
+              let index = order.firstIndex(of: current) else { return }
+        
+        let nextIndex = index + direction
+        if nextIndex >= 0 && nextIndex < order.count {
+            focusedField = order[nextIndex]
         }
     }
     
@@ -73,43 +144,20 @@ struct EditCachedMealView: View {
         let f = Double(fat) ?? 0
         
         if let meal = mealToEdit {
-            // Edit Mode
             meal.name = name
             meal.portionSize = portion
             meal.unit = unit
             meal.protein = p
             meal.carbs = c
             meal.fat = f
+            // meal.calories = computedKcal (Only if column still exists)
         } else {
-            // Create Mode
             MealCacheManager.shared.cacheMeal(
-                name: name,
-                p: p, f: f, c: c,
-//                k: computedKcal, // Pass the computed value
-                portion: portion,
-                unit: unit
+                name: name, p: p, f: f, c: c,
+                portion: portion, unit: unit
             )
         }
-        
         try? viewContext.save()
         presentationMode.wrappedValue.dismiss()
-    }
-}
-
-// Helper for clean layout
-struct MacroRow: View {
-    let label: String
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            Text(label)
-            Spacer()
-            TextField("0", text: $text)
-                #if os(iOS)
-                .keyboardType(.decimalPad)
-                #endif
-                .multilineTextAlignment(.trailing)
-        }
     }
 }

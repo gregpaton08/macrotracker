@@ -140,6 +140,8 @@
 				940AE6662F27F114006A01D1 /* APIClients.swift */,
 				94AFB0C62F26F51300ED36F8 /* Assets.xcassets */,
 				94AFB0C42F26F51100ED36F8 /* ContentView.swift */,
+				9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */,
+				9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */,
 				9444E0492F2D918D007F24A8 /* LocalParser.swift */,
 				9444E03A2F2843B0007F24A8 /* Logger.swift */,
 				9444E03C2F28458C007F24A8 /* LogViewer.swift */,
@@ -148,6 +150,7 @@
 				94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */,
 				9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */,
 				9444E0452F2C51C5007F24A8 /* MealDetailView.swift */,
+				946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */,
 				940AE6642F27F0F2006A01D1 /* Models.swift */,
 				940AE6682F27F128006A01D1 /* Persistence.swift */,
 				94AFB0C82F26F51300ED36F8 /* Preview Content */,
@@ -156,9 +159,6 @@
 				9444E0412F2AF22E007F24A8 /* StatsView.swift */,
 				9444E0432F2AF253007F24A8 /* TrackerView.swift */,
 				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
-				9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */,
-				9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */,
-				946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
