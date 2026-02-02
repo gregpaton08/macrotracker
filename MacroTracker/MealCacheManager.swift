@@ -13,7 +13,7 @@ struct MealCacheManager {
     private let viewContext = PersistenceController.shared.container.viewContext
     
     // 1. Save or Update a Meal in the Cache
-    func cacheMeal(name: String, p: Double, f: Double, c: Double, k: Double, portion: String, unit: String) {
+    func cacheMeal(name: String, p: Double, f: Double, c: Double, portion: String, unit: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
         
         // Check if exists

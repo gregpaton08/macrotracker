@@ -11,14 +11,13 @@ struct EditCachedMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) var viewContext
     
-    // If this is nil, we are in "Create Mode"
     var mealToEdit: CachedMealEntity?
     
     @State private var name: String = ""
     @State private var portion: String = ""
     @State private var unit: String = "grams"
     
-    @State private var calories: String = ""
+    // REMOVED: @State private var calories: String = ""
     @State private var protein: String = ""
     @State private var carbs: String = ""
     @State private var fat: String = ""
@@ -45,10 +44,9 @@ struct EditCachedMealView: View {
             }
             
             Section(header: Text("Macros per Portion")) {
-                MacroRow(label: "Calories", text: $calories)
+                // REMOVED: MacroRow(label: "Calories", text: $calories)
                 MacroRow(label: "Protein (g)", text: $protein)
-                MacroRow(label: "Carbs (g)", text: $carbs)
-                MacroRow(label: "Fat (g)", text: $fat)
+                                MacroRow(label: "Fat (g)", text: $fat)
             }
         }
         .navigationTitle(mealToEdit == nil ? "New Saved Meal" : "Edit Meal")
@@ -57,11 +55,11 @@ struct EditCachedMealView: View {
                 .disabled(name.isEmpty)
         }
         .onAppear {
-            // Load data if editing
             if let meal = mealToEdit {
                 name = meal.name ?? ""
                 portion = meal.portionSize ?? ""
                 unit = meal.unit ?? "grams"
+                // No need to load calories into a text field
                 protein = String(format: "%.1f", meal.protein)
                 carbs = String(format: "%.1f", meal.carbs)
                 fat = String(format: "%.1f", meal.fat)
@@ -73,28 +71,26 @@ struct EditCachedMealView: View {
         let p = Double(protein) ?? 0
         let c = Double(carbs) ?? 0
         let f = Double(fat) ?? 0
-        let k = Double(calories) ?? 0
         
         if let meal = mealToEdit {
-            // EDIT MODE: Update the existing object directly
+            // Edit Mode
             meal.name = name
             meal.portionSize = portion
             meal.unit = unit
             meal.protein = p
             meal.carbs = c
             meal.fat = f
-            // Note: We don't update 'lastUsed' on edit so it doesn't jump to the top of the list unnaturally
         } else {
-            // CREATE MODE: Use the Manager to ensure safety
+            // Create Mode
             MealCacheManager.shared.cacheMeal(
                 name: name,
-                p: p, f: f, c: c, k: k,
+                p: p, f: f, c: c,
+//                k: computedKcal, // Pass the computed value
                 portion: portion,
                 unit: unit
             )
         }
         
-        // Save Context
         try? viewContext.save()
         presentationMode.wrappedValue.dismiss()
     }

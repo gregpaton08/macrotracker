@@ -242,7 +242,7 @@ struct AddMealView: View {
         
         MealCacheManager.shared.cacheMeal(
             name: finalName,
-            p: p, f: f, c: c, k: k,
+            p: p, f: f, c: c,
             portion: portionSize,
             unit: selectedUnit
         )
