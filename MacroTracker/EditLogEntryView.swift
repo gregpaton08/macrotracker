@@ -57,7 +57,6 @@ struct EditLogEntryView: View {
                 // Load data
                 summary = meal.summary ?? ""
                 timestamp = meal.timestamp ?? Date()
-                calories = String(format: "%.0f", meal.totalCalories)
                 protein = String(format: "%.1f", meal.totalProtein)
                 carbs = String(format: "%.1f", meal.totalCarbs)
                 fat = String(format: "%.1f", meal.totalFat)
@@ -68,7 +67,6 @@ struct EditLogEntryView: View {
     private func saveChanges() {
         meal.summary = summary
         meal.timestamp = timestamp
-        meal.totalCalories = Double(calories) ?? 0
         meal.totalProtein = Double(protein) ?? 0
         meal.totalCarbs = Double(carbs) ?? 0
         meal.totalFat = Double(fat) ?? 0

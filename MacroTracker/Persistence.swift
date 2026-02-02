@@ -16,6 +16,10 @@ struct PersistenceController {
         // Ensure your .xcdatamodeld file is named "MacroTracker"
         container = NSPersistentCloudKitContainer(name: "MacroTracker")
         
+        let description = container.persistentStoreDescriptions.first
+        description?.shouldMigrateStoreAutomatically = true // Must be true
+        description?.shouldInferMappingModelAutomatically = true // Must be true
+        
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }

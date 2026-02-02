@@ -62,7 +62,6 @@ struct EditCachedMealView: View {
                 name = meal.name ?? ""
                 portion = meal.portionSize ?? ""
                 unit = meal.unit ?? "grams"
-                calories = String(format: "%.0f", meal.calories)
                 protein = String(format: "%.1f", meal.protein)
                 carbs = String(format: "%.1f", meal.carbs)
                 fat = String(format: "%.1f", meal.fat)
@@ -84,7 +83,6 @@ struct EditCachedMealView: View {
             meal.protein = p
             meal.carbs = c
             meal.fat = f
-            meal.calories = k
             // Note: We don't update 'lastUsed' on edit so it doesn't jump to the top of the list unnaturally
         } else {
             // CREATE MODE: Use the Manager to ensure safety

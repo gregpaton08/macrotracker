@@ -25,6 +25,7 @@
 		9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04F2F2D9523007F24A8 /* SettingsView.swift */; };
 		9444E0522F2D9A77007F24A8 /* EditCachedMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */; };
 		9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */; };
+		946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -71,6 +72,8 @@
 		9444E04F2F2D9523007F24A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCachedMealView.swift; sourceTree = "<group>"; };
 		9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLogEntryView.swift; sourceTree = "<group>"; };
+		9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "MacroTracker 2.xcdatamodel"; sourceTree = "<group>"; };
+		946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEntity+Extensions.swift"; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
 				9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */,
 				9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */,
+				946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
@@ -325,6 +329,7 @@
 				9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */,
 				9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */,
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
+				946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */,
 				940AE6652F27F0F2006A01D1 /* Models.swift in Sources */,
 				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
 				9444E03D2F28458C007F24A8 /* LogViewer.swift in Sources */,
@@ -698,9 +703,10 @@
 		940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */,
 				940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */,
 			);
-			currentVersion = 940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */;
+			currentVersion = 9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */;
 			name = MacroTracker.xcdatamodeld;
 			path = /Users/gpaton/code/MacroTracker/MacroTracker/MacroTracker.xcdatamodeld;
 			sourceTree = "<group>";

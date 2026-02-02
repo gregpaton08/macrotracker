@@ -19,23 +19,21 @@ class MacroViewModel: ObservableObject {
     
     // MARK: - Logic
     
-    func saveMeal(description: String, p: Double, f: Double, c: Double, kcal: Double, weight: Double) {
+    func saveMeal(description: String, p: Double, f: Double, c: Double, weight: Double) {
         let newMeal = MealEntity(context: context)
         newMeal.id = UUID()
         newMeal.timestamp = Date()
         newMeal.summary = description
         
-        // Save Totals
-        newMeal.totalCalories = kcal
+        // REMOVED: newMeal.totalCalories = kcal (This is gone!)
         newMeal.totalProtein = p
         newMeal.totalFat = f
         newMeal.totalCarbs = c
         
-        // Create Ingredient (Child)
         let ingredient = FoodEntity(context: context)
         ingredient.name = description
         ingredient.weightGrams = weight
-        ingredient.calories = kcal
+        // REMOVED: ingredient.calories = kcal (This is gone!)
         ingredient.protein = p
         ingredient.fat = f
         ingredient.carbs = c

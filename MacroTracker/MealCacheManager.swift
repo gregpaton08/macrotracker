@@ -36,7 +36,6 @@ struct MealCacheManager {
             entity.protein = p
             entity.fat = f
             entity.carbs = c
-            entity.calories = k
             entity.portionSize = portion
             entity.unit = unit
             entity.lastUsed = Date()

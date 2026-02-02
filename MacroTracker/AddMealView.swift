@@ -186,14 +186,14 @@ struct AddMealView: View {
             self.protein = String(format: "%.1f", cached.protein * ratio)
             self.fat = String(format: "%.1f", cached.fat * ratio)
             self.carbs = String(format: "%.1f", cached.carbs * ratio)
-            self.calories = String(format: "%.0f", cached.calories * ratio)
+//            self.calories = String(format: "%.0f", cached.calories * ratio)
         } else if self.portionSize.isEmpty {
             self.portionSize = cached.portionSize ?? ""
             self.selectedUnit = cached.unit ?? "grams"
             self.protein = String(format: "%.1f", cached.protein)
             self.fat = String(format: "%.1f", cached.fat)
             self.carbs = String(format: "%.1f", cached.carbs)
-            self.calories = String(format: "%.0f", cached.calories)
+//            self.calories = String(format: "%.0f", cached.calories)
         }
     }
     
@@ -236,7 +236,7 @@ struct AddMealView: View {
         
         viewModel.saveMeal(
             description: finalName,
-            p: p, f: f, c: c, kcal: k,
+            p: p, f: f, c: c,
             weight: w > 0 ? w : 100
         )
         
