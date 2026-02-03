@@ -17,7 +17,13 @@ struct SavedMealsView: View {
         FilteredSavedMealList(filter: searchText)
             .navigationTitle("Saved Database")
             // NATIVE SEARCH BAR (iOS 15+)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search meals...")
+        #if os(iOS)
+        // On iPhone: Force it to stay visible in the "Drawer"
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search meals...")
+        #else
+        // On Mac: Use default placement (automatically goes to the top of the list or toolbar)
+        .searchable(text: $searchText, prompt: "Search meals...")
+        #endif
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showAddSheet = true }) {

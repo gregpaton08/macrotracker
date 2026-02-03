@@ -32,10 +32,26 @@ struct EditLogEntryView: View {
                 }
                 
                 Section(header: Text("Total Macros")) {
-                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Protein"); Spacer(); TextField("0", text: $protein).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Carbs"); Spacer(); TextField("0", text: $carbs).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Fat"); Spacer(); TextField("0", text: $fat).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories)
+#if os(iOS)
+                            .keyboardType(.decimalPad)
+#endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Protein"); Spacer(); TextField("0", text: $protein)
+#if os(iOS)
+                            .keyboardType(.decimalPad)
+#endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Carbs"); Spacer(); TextField("0", text: $carbs)
+#if os(iOS)
+                            .keyboardType(.decimalPad)
+#endif
+                        .multilineTextAlignment(.trailing) }
+                    HStack { Text("Fat"); Spacer(); TextField("0", text: $fat)
+#if os(iOS)
+                            .keyboardType(.decimalPad)
+#endif
+                        .multilineTextAlignment(.trailing) }
                 }
                 
                 Section {

@@ -51,7 +51,14 @@ struct TrackerView: View {
                 .disabled(Calendar.current.isDateInToday(selectedDate))
             }
             .padding(.vertical, 10)
-            .background(Color(UIColor.secondarySystemBackground)) // Use Color.gray.opacity(0.1) for Mac support
+            // MARK: - THE FIX
+                            #if os(iOS)
+            .background(
+                            Color(uiColor: .secondarySystemBackground))
+                            #else
+            .background(
+                            Color(nsColor: .controlBackgroundColor))
+                            #endif
             
             // MARK: - The List (Sub-View)
             // We pass the date into this view, which handles the Core Data fetching
@@ -173,7 +180,11 @@ struct DailyLogList: View {
                 .onDelete(perform: deleteItems)
             }
         }
+#if os(iOS)
         .listStyle(.insetGrouped)
+        #else
+        .listStyle(.inset)
+        #endif
     }
     
     private func deleteItems(offsets: IndexSet) {
