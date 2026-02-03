@@ -166,49 +166,72 @@ struct ProgressRing: View {
     let min: Double
     let max: Double
     
-    // Determine State
+    // Safety check to avoid divide-by-zero
+    var safeMax: Double {
+        return max > 0 ? max : 100
+    }
+    
+    // Calculate fractions (0.0 to 1.0)
+    var minFraction: Double {
+        return min / safeMax
+    }
+    
+    var currentFraction: Double {
+        return value / safeMax
+    }
+    
+    // Determine State for Colors/Icons
     var state: RingState {
         if value < min { return .under }
         if value > max { return .over }
         return .good
     }
     
-    // Determine Progress (0.0 to 1.0)
-    var progress: Double {
-        if state == .over { return 1.0 }
-        // Use max as the denominator so the ring fills up visually as you approach the limit
-        let target = (max + min) / 2
-        return Swift.min(value / target, 1.0)
-    }
-    
     var body: some View {
         VStack {
             ZStack {
-                // Background Circle (Light Gray)
+                // 1. Base Track (Faint Gray)
                 Circle()
                     .stroke(lineWidth: 12)
-                    .opacity(0.2)
-                    .foregroundColor(state.color)
+                    .opacity(0.1)
+                    .foregroundColor(.primary)
                 
-                // Progress Circle
+                // 2. The "Target Zone" (Shaded Range)
+                // This draws an arc from Min to Max to show the user where to aim.
                 Circle()
-                    .trim(from: 0.0, to: CGFloat(progress))
+                    .trim(from: CGFloat(minFraction), to: 1.0)
+                    .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .butt))
+                    .rotationEffect(Angle(degrees: 270.0))
+                    .opacity(0.15) // Subtle shading
+                    .foregroundColor(.green)
+                
+                // 3. Current Progress Bar
+                // Caps at 1.0 (Full Circle) even if over max
+                Circle()
+                    .trim(from: 0.0, to: CGFloat(Swift.min(currentFraction, 1.0)))
                     .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
                     .foregroundColor(state.color)
                     .rotationEffect(Angle(degrees: 270.0))
-                    .animation(.linear, value: value)
+                    .animation(.spring(), value: value)
                 
-                // Inner Content
-                VStack(spacing: 2) {
-                    if let icon = state.icon {
-                        Image(systemName: icon)
+                // 4. Center Content (Icon & Value)
+                VStack(spacing: 0) {
+                    if state == .over {
+                        Image(systemName: "xmark.octagon.fill")
+                            .foregroundColor(.red)
                             .font(.title2)
-                            .foregroundColor(state.color)
+                            .transition(.scale.combined(with: .opacity))
+                    } else if state == .good {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.title2)
+                            .transition(.scale.combined(with: .opacity))
                     } else {
-                        // Just show the number if Under
-                        Text("\(Int(percent))%")
+                        // Show percentage if still under
+                        Text("\(Int(currentFraction * 100))%")
                             .font(.caption2)
                             .foregroundColor(.secondary)
+                            .transition(.opacity)
                     }
                     
                     Text("\(Int(value))g")
@@ -216,17 +239,13 @@ struct ProgressRing: View {
                         .bold()
                 }
             }
-            .frame(height: 100) // Ring Size
+            .frame(height: 110) // Slightly larger to accommodate the details
             
             Text(label)
                 .font(.caption)
                 .bold()
                 .padding(.top, 5)
         }
-    }
-    
-    var percent: Double {
-        return (value / ((min + max)/2)) * 100
     }
 }
 
