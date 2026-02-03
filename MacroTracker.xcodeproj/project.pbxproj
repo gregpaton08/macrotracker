@@ -26,6 +26,7 @@
 		9444E0522F2D9A77007F24A8 /* EditCachedMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */; };
 		9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */; };
 		946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
+		946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD62F31858700E4F2E4 /* HealthManager.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -74,6 +75,7 @@
 		9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLogEntryView.swift; sourceTree = "<group>"; };
 		9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "MacroTracker 2.xcdatamodel"; sourceTree = "<group>"; };
 		946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEntity+Extensions.swift"; sourceTree = "<group>"; };
+		946AADD62F31858700E4F2E4 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				9444E0412F2AF22E007F24A8 /* StatsView.swift */,
 				9444E0432F2AF253007F24A8 /* TrackerView.swift */,
 				940AE6622F27F0C9006A01D1 /* ViewModel.swift */,
+				946AADD62F31858700E4F2E4 /* HealthManager.swift */,
 			);
 			path = MacroTracker;
 			sourceTree = "<group>";
@@ -337,6 +340,7 @@
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
 				940AE6632F27F0C9006A01D1 /* ViewModel.swift in Sources */,
 				9444E0422F2AF22E007F24A8 /* StatsView.swift in Sources */,
+				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
 				9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,
@@ -511,6 +515,8 @@
 				DEVELOPMENT_TEAM = 4UDF68884M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app needs to read your active energy to calculate your net calories.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app uses this to sync your nutrition data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -543,6 +549,8 @@
 				DEVELOPMENT_TEAM = 4UDF68884M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app needs to read your active energy to calculate your net calories.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app uses this to sync your nutrition data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

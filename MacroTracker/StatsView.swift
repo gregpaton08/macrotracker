@@ -79,6 +79,12 @@ struct StatsView: View {
 struct DailyRingContent: View {
     @FetchRequest var todaysMeals: FetchedResults<MealEntity>
     
+    // Add State for HealthKit Data
+    @State private var caloriesBurned: Double = 0.0
+    
+    // Pass the date in so we can detect changes
+    let date: Date
+    
     // Goals
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
@@ -88,6 +94,7 @@ struct DailyRingContent: View {
     @AppStorage("goal_f_max") var fMax: Double = 80
     
     init(date: Date) {
+        self.date = date
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -99,7 +106,6 @@ struct DailyRingContent: View {
         )
     }
     
-    // Calculated Totals
     var totalP: Double { todaysMeals.reduce(0) { $0 + $1.totalProtein } }
     var totalC: Double { todaysMeals.reduce(0) { $0 + $1.totalCarbs } }
     var totalF: Double { todaysMeals.reduce(0) { $0 + $1.totalFat } }
@@ -108,53 +114,63 @@ struct DailyRingContent: View {
     var body: some View {
         VStack(spacing: 30) {
             
-            // Total Calories Summary
-            VStack {
-                Text("Total Calories")
-                    .font(.caption)
+            // MARK: - NEW CALORIE COMPARISON
+            HStack(spacing: 40) {
+                // In (Food)
+                VStack {
+                    Text("Eaten")
+                        .font(.caption).bold().foregroundColor(.secondary)
+                    Text("\(Int(totalKcal))")
+                        .font(.title2).bold()
+                }
+                
+                Text("-")
                     .foregroundColor(.secondary)
-                    .textCase(.uppercase)
-                Text("\(Int(totalKcal))")
-                    .font(.system(size: 48, weight: .heavy, design: .rounded))
+                
+                // Out (HealthKit)
+                VStack {
+                    Text("Burned")
+                        .font(.caption).bold().foregroundColor(.secondary)
+                    Text("\(Int(caloriesBurned))")
+                        .font(.title2).bold()
+                        .foregroundColor(.orange)
+                }
+                
+                Text("=")
+                    .foregroundColor(.secondary)
+                
+                // Net
+                VStack {
+                    Text("Net")
+                        .font(.caption).bold().foregroundColor(.secondary)
+                    Text("\(Int(totalKcal - caloriesBurned))")
+                        .font(.title2).bold()
+                        // Color logic: If Net is negative, you are in deficit (Green usually?)
+                        .foregroundColor(totalKcal - caloriesBurned < 0 ? .green : .primary)
+                }
             }
-            .padding(.bottom, 10)
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(12)
             
-            // The Three Rings
+            // The Three Rings (Unchanged)
             HStack(spacing: 20) {
-                ProgressRing(
-                    label: "Protein",
-                    value: totalP,
-                    min: pMin,
-                    max: pMax
-                )
-                
-                ProgressRing(
-                    label: "Carbs",
-                    value: totalC,
-                    min: cMin,
-                    max: cMax
-                )
-                
-                ProgressRing(
-                    label: "Fat",
-                    value: totalF,
-                    min: fMin,
-                    max: fMax
-                )
+                ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
+                ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
+                ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
             }
             .padding(.horizontal)
             
-            // Legend / Explanation (Optional)
-            HStack(spacing: 15) {
-                Label("Under", systemImage: "circle.fill").foregroundColor(.yellow)
-                Label("Good", systemImage: "checkmark.circle.fill").foregroundColor(.green)
-                Label("Over", systemImage: "xmark.octagon.fill").foregroundColor(.red)
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .padding(.top, 30)
-            
             Spacer()
+        }
+        // MARK: - FETCH TRIGGER
+        .task(id: date) {
+            // Trigger the fetch whenever the date changes
+            caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+        }
+        .onAppear {
+            // Ask for permission the first time the view loads
+            HealthManager.shared.requestAuthorization()
         }
     }
 }
