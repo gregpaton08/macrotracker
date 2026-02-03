@@ -6,10 +6,7 @@
 //
 
 import Foundation
-
-import Logging
-
-var parentLogger = Logging.Logger(label: "com.gregpaton08")
+import OSLog
 
 struct ApiResponse: Codable {
     let message: String
@@ -20,17 +17,17 @@ class GeminiClient {
     private let session = URLSession.shared
     
     private let useDummyData = false
-    let logger: Logging.Logger
+//    let logger: Logging.Logger
+    private let logger = Logger(subsystem: "com.yourdomain.yourapp", category: "GeminiClient")
     
-    init() {
-        var logger = parentLogger
-        logger[metadataKey: "class"] = "GeminiClient"
-        logger.logLevel = .debug
-        self.logger = logger
+    private let apiKey: String
+
+    init(apiKey: String) {
+        self.apiKey = apiKey
     }
     
     // Recursive function with retry logic
-    func parseInput(userText: String, apiKey: String) async throws -> [ParsedFoodIntent.ParsedItem] {
+    func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
         if useDummyData {
             return [
                 ParsedFoodIntent.ParsedItem(search_term: "honey", estimated_weight_grams: 61.0),
@@ -44,7 +41,7 @@ class GeminiClient {
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         
-        logger.debug("Parsing: '\(userText)'")
+        logger.warning("Parsing: '\(userText)'")
         
         let prompt = """
         Analyze this food description for earching the USDA database for macronutrients: "\(userText)".
@@ -94,12 +91,13 @@ class GeminiClient {
         
         // Strip Markdown
         jsonText = jsonText.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
+        logger.warning("jsonText = \(jsonText)")
         
         guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
         let result = try JSONDecoder().decode(ParsedFoodIntent.self, from: cleanData).items
         
         
-        Logger.log("result: \(result)", category: .gemini)
+        logger.warning("result: \(result)")
         return result
     }
 }
@@ -111,16 +109,22 @@ class USDAClient {
     private let FAT_ID = 1004
     private let CARBS_ID = 1005
     private let KCAL_ID = 1008
-    let logger: Logging.Logger
+//    let logger: Logging.Logger
+    private let logger = Logger(subsystem: "com.yourdomain.yourapp", category: "USDAClient")
     
-    init() {
-        var logger = parentLogger
-        logger[metadataKey: "class"] = "USDAClient"
-        logger.logLevel = .debug
-        self.logger = logger
+    private let apiKey: String
+
+    init(apiKey: String) {
+        self.apiKey = apiKey
     }
+//    init() {
+//        var logger = parentLogger
+//        logger[metadataKey: "class"] = "USDAClient"
+//        logger.logLevel = .debug
+//        self.logger = logger
+//    }
     
-    func fetchNutrients(query: String, apiKey: String) async throws -> (protein: Double, fat: Double, carbs: Double, kcal: Double)? {
+    func fetchNutrients(query: String) async throws -> (protein: Double, fat: Double, carbs: Double, kcal: Double)? {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "https://api.nal.usda.gov/fdc/v1/foods/search?query=\(encodedQuery)&dataType=Foundation,SR%20Legacy&pageSize=1&api_key=\(apiKey)"
         
@@ -134,7 +138,7 @@ class USDAClient {
         let searchResponse = try JSONDecoder().decode(USDAFoodSearchResponse.self, from: data)
         
         guard let foods = searchResponse.foods, let food = foods.first else {
-            Logger.log("No results for \(query)", category: .usda, level: .warn)
+            self.logger.warning("No results for \(query)")
             return nil
         }
         

@@ -45,29 +45,29 @@ struct TrackerView: View {
                 }
             }
             .padding(.vertical, 10)
-                #if os(iOS)
+#if os(iOS)
             .background(
                 Color(uiColor: .secondarySystemBackground))
-                #else
+#else
             .background(
                 Color(nsColor: .controlBackgroundColor))
-                #endif
+#endif
             
             // MARK: - Combined Dashboard
             DailyDashboard(date: selectedDate)
         }
         .navigationTitle("Tracker")
-        #if os(iOS)
+#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        #endif
+#endif
         .toolbar {
-            #if os(iOS)
+#if os(iOS)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showSettings.toggle() }) {
                     Image(systemName: "gear")
                 }
             }
-            #endif
+#endif
             
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showAddMeal.toggle() }) {
@@ -158,12 +158,12 @@ struct DailyDashboard: View {
                     .padding(.bottom, 5)
                     
                     // B. Rings
-                                        HStack(spacing: 15) {
-                                            ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
-                                            ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
-                                            ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
-                                        }
-                                        .padding(.horizontal, 20) // FIX: Add breathing room on the sides
+                    HStack(spacing: 15) {
+                        ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
+                        ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
+                        ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
+                    }
+                    .padding(.horizontal, 20) // FIX: Add breathing room on the sides
                 }
                 .padding(.vertical, 10)
             }
@@ -179,14 +179,27 @@ struct DailyDashboard: View {
                     ForEach(meals) { meal in
                         NavigationLink(destination: MealDetailView(meal: meal)) {
                             HStack {
-                                VStack(alignment: .leading) {
-                                    Text(meal.summary ?? "Meal").font(.headline)
-                                    Text(meal.timestamp ?? Date(), style: .time).font(.caption).foregroundColor(.gray)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(meal.summary ?? "Meal")
+                                        .font(.headline)
+                                    
+                                    // MARK: - THE FIX
+                                    // Replaced Timestamp with Macro Breakdown
+                                    Text("F: \(Int(meal.totalFat))   C: \(Int(meal.totalCarbs))   P: \(Int(meal.totalProtein))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    // Optional: Monospaced font aligns numbers better
+                                        .monospacedDigit()
                                 }
+                                
                                 Spacer()
+                                
                                 VStack(alignment: .trailing) {
-                                    Text("\(Int(meal.totalCalories))").bold()
-                                    Text("kcal").font(.caption2).foregroundColor(.gray)
+                                    Text("\(Int(meal.totalCalories))")
+                                        .bold()
+                                    Text("kcal")
+                                        .font(.caption2)
+                                        .foregroundColor(.gray)
                                 }
                             }
                         }
@@ -195,11 +208,11 @@ struct DailyDashboard: View {
                 }
             }
         }
-        #if os(iOS)
+#if os(iOS)
         .listStyle(.insetGrouped)
-        #else
+#else
         .listStyle(.inset)
-        #endif
+#endif
         // HealthKit Trigger
         .task(id: date) {
             caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)

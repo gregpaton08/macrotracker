@@ -10,135 +10,124 @@ import CoreData
 
 struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.managedObjectContext) var viewContext
     @ObservedObject var viewModel: MacroViewModel
     
-    // Form Inputs
+    // Inputs
     @State private var description: String = ""
-    @State private var portionSize: String = ""
-    @State private var selectedUnit: String = "grams"
+    @State private var weight: String = ""
     
-    // Macros
-    @State private var protein: String = ""
-    @State private var carbs: String = ""
+    // Macros (Fat -> Carbs -> Protein)
     @State private var fat: String = ""
-    @State private var calories: String = ""
+    @State private var carbs: String = ""
+    @State private var protein: String = ""
     
-    // Autocomplete State
-    @State private var showSuggestions = false
+    // UX State
+    @State private var isCalculating = false
     
-    // Internal State: Track which cached meal we are currently "linked" to
-    @State private var activeCachedMeal: CachedMealEntity? = nil
+    // Focus State
+    enum Field: Hashable {
+        case description, weight, fat, carbs, protein
+    }
+    @FocusState private var focusedField: Field?
     
-    let units = ["grams", "ounces", "cups", "slices", "pieces", "whole", "ml", "tbsp", "tsp"]
+    // Fetch Saved Meals for Autocomplete
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.name, ascending: true)],
+        animation: .default
+    )
+    private var cachedMeals: FetchedResults<CachedMealEntity>
     
-    // MARK: - Smart Query Logic
-    // This strips "130g" from "130g Banana" so autocomplete finds "Banana"
-    var cleanQuery: String {
-        if let result = LocalParser.parse(description), !result.foodName.isEmpty {
-            return result.foodName
+    // Filter logic for Autocomplete
+    var suggestions: [CachedMealEntity] {
+        if description.isEmpty { return [] }
+        return cachedMeals.filter {
+            ($0.name ?? "").localizedCaseInsensitiveContains(description)
         }
-        return description
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Food Details")) {
-                    // 1. Portion & Unit
-                    HStack {
-                        TextField("Portion", text: $portionSize)
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
-                            .onChange(of: portionSize) { _ in recalculateMacros() }
-                        
-                        Picker("Unit", selection: $selectedUnit) {
-                            ForEach(units, id: \.self) { unit in
-                                Text(unit).tag(unit)
+                // MARK: - SECTION 1: DETAILS & AI
+                Section(header: Text("Meal Details")) {
+                    // 1. Description Field
+                    TextField("Description (e.g. Banana)", text: $description)
+                        .focused($focusedField, equals: .description)
+                        .submitLabel(.next)
+                    
+                    // 2. Autocomplete List (Only shows when typing matches)
+                    if !suggestions.isEmpty && focusedField == .description {
+                        ForEach(suggestions.prefix(3), id: \.self) { meal in
+                            Button(action: { applySuggestion(meal) }) {
+                                VStack(alignment: .leading) {
+                                    Text(meal.name ?? "Unknown").foregroundColor(.primary)
+                                    Text("F: \(Int(meal.fat)) C: \(Int(meal.carbs)) P: \(Int(meal.protein))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
-                        .labelsHidden()
-                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
                     }
                     
-                    // 2. Description (Smart Parsing + Autocomplete)
-                    VStack(alignment: .leading, spacing: 0) {
-                        TextField("Description (e.g. 150g Chicken)", text: $description)
-                            .onChange(of: description) { newValue in
-                                showSuggestions = !newValue.isEmpty
-                                attemptRealtimeParse(newValue)
-                                
-                                // Reset active link if text diverges significantly
-                                if let active = activeCachedMeal, active.name != cleanQuery {
-                                    // Optional: You could nullify activeCachedMeal here if strict
-                                }
-                            }
-                        
-                        // UPDATED: Use 'cleanQuery' instead of 'description'
-                        if showSuggestions && !cleanQuery.isEmpty {
-                            AutocompleteList(query: cleanQuery) { selectedMeal in
-                                // 1. Set Link
-                                self.activeCachedMeal = selectedMeal
-                                
-                                // 2. Apply Data
-                                applyCachedMeal(selectedMeal)
-                                
-                                // 3. Cleanup UI
-                                // Note: We only replace the NAME part if parsing succeeded
-                                // This keeps "130g" in the text box if the user typed it
-                                if let result = LocalParser.parse(description) {
-                                    // Reconstruct "130g Banana" using the standardized name from cache
-                                    // This fixes typos (e.g. "130g bnn" -> "130g Banana")
-                                    let prefix = description.prefix(upTo: description.range(of: result.foodName)?.lowerBound ?? description.endIndex)
-                                    self.description = "\(prefix)\(selectedMeal.name ?? "")"
-                                } else {
-                                    self.description = selectedMeal.name ?? ""
-                                }
-                                
-                                self.showSuggestions = false
-                                #if os(iOS)
-                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                                #endif
-                            }
-                        }
-                    }
-                }
-                
-                Section {
-                    Button(action: performAutoFill) {
+                    // 3. Weight Field
+                    TextField("Weight (g)", text: $weight)
+                        .focused($focusedField, equals: .weight)
+                        .keyboardType(.decimalPad)
+                    
+                    // 4. AI Button
+                    Button(action: performAIAnalysis) {
                         HStack {
-                            Label("Auto-Fill from AI", systemImage: "sparkles")
-                            if viewModel.isLoading { Spacer(); ProgressView() }
+                            Image(systemName: "sparkles")
+                            if isCalculating {
+                                Text("Calculating...")
+                            } else {
+                                Text("Auto-Fill with AI")
+                            }
                         }
                     }
-                    .disabled(description.isEmpty || viewModel.isLoading)
+                    .disabled(description.isEmpty || isCalculating)
                 }
                 
-                Section(header: Text("Macros (Editable)")) {
-                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .multilineTextAlignment(.trailing) }
-                    HStack { Text("Protein (g)"); Spacer(); TextField("0", text: $protein)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .multilineTextAlignment(.trailing) }
-                    HStack { Text("Carbs (g)"); Spacer(); TextField("0", text: $carbs)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .multilineTextAlignment(.trailing) }
-                    HStack { Text("Fat (g)"); Spacer(); TextField("0", text: $fat)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .multilineTextAlignment(.trailing) }
+                // MARK: - SECTION 2: MACROS (F -> C -> P)
+                Section(header: Text("Macros")) {
+                    // FAT
+                    HStack {
+                        Text("Fat (g)")
+                        Spacer()
+                        TextField("0", text: $fat)
+                            .focused($focusedField, equals: .fat)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.decimalPad)
+                    }
+                    
+                    // CARBS
+                    HStack {
+                        Text("Carbs (g)")
+                        Spacer()
+                        TextField("0", text: $carbs)
+                            .focused($focusedField, equals: .carbs)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.decimalPad)
+                    }
+                    
+                    // PROTEIN
+                    HStack {
+                        Text("Protein (g)")
+                        Spacer()
+                        TextField("0", text: $protein)
+                            .focused($focusedField, equals: .protein)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.decimalPad)
+                    }
                 }
                 
-                if let error = viewModel.errorMessage {
-                    Section { Text(error).foregroundColor(.red) }
+                // MARK: - SAVE BUTTON
+                Section {
+                    Button("Save Meal") {
+                        saveMeal()
+                    }
+                    .disabled(description.isEmpty)
                 }
             }
             .navigationTitle("Add Meal")
@@ -146,142 +135,88 @@ struct AddMealView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { presentationMode.wrappedValue.dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add Meal") {
-                        saveMeal()
-                        presentationMode.wrappedValue.dismiss()
+                
+                // Keyboard Navigation Arrows
+                ToolbarItemGroup(placement: .keyboard) {
+                    Button(action: { moveFocus(direction: -1) }) {
+                        Image(systemName: "chevron.up")
                     }
-                    .disabled(description.isEmpty)
+                    .disabled(focusedField == .description)
+                    
+                    Button(action: { moveFocus(direction: 1) }) {
+                        Image(systemName: "chevron.down")
+                    }
+                    .disabled(focusedField == .protein)
+                    
+                    Spacer()
+                    Button("Done") { focusedField = nil }
                 }
             }
         }
     }
     
-    // MARK: - Logic
+    // MARK: - LOGIC
     
-    private func recalculateMacros() {
-        guard let cached = activeCachedMeal else { return }
-        applyCachedMeal(cached)
-    }
-    
-    private func attemptRealtimeParse(_ text: String) {
-        guard let result = LocalParser.parse(text) else { return }
+    private func applySuggestion(_ meal: CachedMealEntity) {
+        // Auto-fill fields from the saved meal
+        description = meal.name ?? description
         
-        let newPortion = String(format: "%.0f", result.qty)
-        if portionSize != newPortion {
-            portionSize = newPortion
-        }
+        // If the saved meal has a "standard" portion size, you could pre-fill weight here if you tracked it
+        // weight = meal.portionSize ?? ""
         
-        if let rawUnit = result.unit, let normalized = normalizeUnit(rawUnit) {
-            selectedUnit = normalized
-        }
-    }
-    
-    private func applyCachedMeal(_ cached: CachedMealEntity) {
-        let cachedPortion = Double(cached.portionSize ?? "0") ?? 0
-        let currentPortion = Double(self.portionSize) ?? 0
+        fat = String(format: "%.1f", meal.fat)
+        carbs = String(format: "%.1f", meal.carbs)
+        protein = String(format: "%.1f", meal.protein)
         
-        if currentPortion > 0, cachedPortion > 0, cached.unit == self.selectedUnit {
-            let ratio = currentPortion / cachedPortion
-            self.protein = String(format: "%.1f", cached.protein * ratio)
-            self.fat = String(format: "%.1f", cached.fat * ratio)
-            self.carbs = String(format: "%.1f", cached.carbs * ratio)
-//            self.calories = String(format: "%.0f", cached.calories * ratio)
-        } else if self.portionSize.isEmpty {
-            self.portionSize = cached.portionSize ?? ""
-            self.selectedUnit = cached.unit ?? "grams"
-            self.protein = String(format: "%.1f", cached.protein)
-            self.fat = String(format: "%.1f", cached.fat)
-            self.carbs = String(format: "%.1f", cached.carbs)
-//            self.calories = String(format: "%.0f", cached.calories)
-        }
+        // Move focus to weight so user can adjust quantity if needed
+        focusedField = .weight
     }
     
-    private func normalizeUnit(_ input: String) -> String? {
-        let map: [String: String] = [
-            "g": "grams", "gram": "grams", "grams": "grams",
-            "oz": "ounces", "ounce": "ounces", "ounces": "ounces",
-            "cup": "cups", "cups": "cups",
-            "ml": "ml", "l": "l",
-            "lb": "lbs", "lbs": "lbs",
-            "tbsp": "tbsp", "tsp": "tsp"
-        ]
-        return map[input.lowercased()]
-    }
-    
-    private func performAutoFill() {
-        let fullQuery = "\(portionSize) \(selectedUnit) \(description)"
+    private func performAIAnalysis() {
+        guard !description.isEmpty else { return }
+        isCalculating = true
+        
+        // Hide keyboard to show the user something is happening
+        focusedField = nil
+        
         Task {
-            if let result = await viewModel.calculateMacros(description: fullQuery) {
-                calories = String(format: "%.0f", result.k)
-                protein = String(format: "%.1f", result.p)
-                carbs = String(format: "%.1f", result.c)
+            // Construct query (e.g. "150g Chicken Breast")
+            let query = weight.isEmpty ? description : "\(weight)g \(description)"
+            
+            // Call ViewModel
+            if let result = await viewModel.calculateMacros(description: query) {
+                // Update UI on Main Thread
                 fat = String(format: "%.1f", result.f)
-                self.activeCachedMeal = nil
+                carbs = String(format: "%.1f", result.c)
+                protein = String(format: "%.1f", result.p)
             }
+            isCalculating = false
         }
     }
     
     private func saveMeal() {
-        let p = Double(protein) ?? 0.0
-        let c = Double(carbs) ?? 0.0
-        let f = Double(fat) ?? 0.0
-        let k = Double(calories) ?? 0.0
-        let w = (Double(portionSize) ?? 0)
-        
-        var finalName = description
-        if let result = LocalParser.parse(description) {
-            finalName = result.foodName.capitalized
-        }
+        let w = Double(weight) ?? 0
+        let f = Double(fat) ?? 0
+        let c = Double(carbs) ?? 0
+        let p = Double(protein) ?? 0
         
         viewModel.saveMeal(
-            description: finalName,
-            p: p, f: f, c: c,
-            weight: w > 0 ? w : 100
+            description: description,
+            p: p,
+            f: f,
+            c: c,
+            weight: w
         )
         
-        MealCacheManager.shared.cacheMeal(
-            name: finalName,
-            p: p, f: f, c: c,
-            portion: portionSize,
-            unit: selectedUnit
-        )
-    }
-}
-
-// Helper View for Search Results
-struct AutocompleteList: View {
-    var query: String
-    var onSelect: (CachedMealEntity) -> Void
-    
-    @FetchRequest var matches: FetchedResults<CachedMealEntity>
-    
-    init(query: String, onSelect: @escaping (CachedMealEntity) -> Void) {
-        self.query = query
-        self.onSelect = onSelect
-        // Fetch matching names, sorted by most recently used
-        _matches = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.lastUsed, ascending: false)],
-            predicate: NSPredicate(format: "name BEGINSWITH[cd] %@", query),
-            animation: .default
-        )
+        presentationMode.wrappedValue.dismiss()
     }
     
-    var body: some View {
-        if !matches.isEmpty {
-            List {
-                ForEach(matches.prefix(3), id: \.self) { meal in
-                    Button(action: { onSelect(meal) }) {
-                        VStack(alignment: .leading) {
-                            Text(meal.name ?? "").font(.subheadline).bold()
-                            Text("\(meal.portionSize ?? "") \(meal.unit ?? "") • \(Int(meal.calories)) kcal")
-                                .font(.caption).foregroundColor(.gray)
-                        }
-                    }
-                }
-            }
-            .frame(height: 150) // Limit height so it doesn't take over screen
-            .listStyle(.plain)
+    private func moveFocus(direction: Int) {
+        let order: [Field] = [.description, .weight, .fat, .carbs, .protein]
+        guard let current = focusedField, let index = order.firstIndex(of: current) else { return }
+        let nextIndex = index + direction
+        if nextIndex >= 0 && nextIndex < order.count {
+            focusedField = order[nextIndex]
         }
     }
 }

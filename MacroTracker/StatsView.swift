@@ -182,47 +182,72 @@ struct ProgressRing: View {
     let min: Double
     let max: Double
     
-    var safeMax: Double { max > 0 ? max : 100 }
-    var minFraction: Double { min / safeMax }
-    var currentFraction: Double { value / safeMax }
+    // 1. Helper to kill NaNs/Infinity
+    private func sanitize(_ val: Double) -> Double {
+        if val.isNaN || val.isInfinite { return 0.0 }
+        return val
+    }
+    
+    // 2. Safe Max (Prevents divide by zero)
+    var safeMax: Double {
+        let m = sanitize(max)
+        return m > 0 ? m : 100 // Default to 100 if 0 to avoid crash
+    }
+    
+    // 3. Safe Fractions for CoreGraphics
+    var minFraction: CGFloat {
+        let val = sanitize(min) / safeMax
+        return CGFloat(sanitize(val))
+    }
+    
+    var currentFraction: CGFloat {
+        let val = sanitize(value) / safeMax
+        // Clamp to 1.0 for the progress bar (so it doesn't wrap wildly)
+        return CGFloat(sanitize(val > 1.0 ? 1.0 : val))
+    }
     
     var state: RingState {
-        if value < min { return .under }
-        if value > max { return .over }
+        // Safe comparisons
+        let val = sanitize(value)
+        let minVal = sanitize(min)
+        let maxVal = sanitize(max)
+        
+        if val < minVal { return .under }
+        if val > maxVal { return .over }
         return .good
     }
     
     var body: some View {
         VStack {
             ZStack {
-                // 1. Base Track
+                // Base Track
                 Circle()
-                    .stroke(lineWidth: 8) // Reduced slightly for better scaling
+                    .stroke(lineWidth: 8)
                     .opacity(0.1)
                     .foregroundColor(.primary)
                 
-                // 2. Target Zone
+                // Target Zone (Safe Trim)
                 Circle()
-                    .trim(from: CGFloat(minFraction), to: 1.0)
+                    .trim(from: minFraction, to: 1.0)
                     .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .butt))
                     .rotationEffect(Angle(degrees: 270.0))
                     .opacity(0.15)
                     .foregroundColor(.green)
                 
-                // 3. Progress Bar
+                // Progress Bar (Safe Trim)
                 Circle()
-                    .trim(from: 0.0, to: CGFloat(Swift.min(currentFraction, 1.0)))
+                    .trim(from: 0.0, to: currentFraction)
                     .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
                     .foregroundColor(state.color)
                     .rotationEffect(Angle(degrees: 270.0))
                     .animation(.spring(), value: value)
                 
-                // 4. Center Content
+                // Center Content
                 VStack(spacing: 2) {
-                    Text("\(Int(value))g")
+                    Text("\(Int(sanitize(value)))g")
                         .font(.headline)
                         .bold()
-                        .minimumScaleFactor(0.6) // FIX: Allows text to shrink
+                        .minimumScaleFactor(0.6)
                     
                     if state == .over {
                         Image(systemName: "xmark.octagon.fill")
@@ -233,16 +258,13 @@ struct ProgressRing: View {
                             .foregroundColor(.green)
                             .font(.subheadline)
                     } else {
-                        Text("\(Int(min))-\(Int(max))")
-                            .font(.system(size: 9)) // Slightly smaller base size
+                        Text("\(Int(sanitize(min)))-\(Int(sanitize(max)))")
+                            .font(.system(size: 9))
                             .foregroundColor(.secondary)
-                            .minimumScaleFactor(0.8) // FIX: Allows text to shrink
+                            .minimumScaleFactor(0.8)
                     }
                 }
             }
-            // MARK: - THE FIX
-            // Remove .frame(height: 110)
-            // Force the ring to stay square and fit the width available
             .aspectRatio(1, contentMode: .fit)
             
             Text(label)

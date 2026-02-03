@@ -24,7 +24,7 @@ struct LogViewer: View {
             HStack {
                 Button("Clear") {
                     Task {
-                        await LogStore.shared.clearLogs()
+//                        await LogStore.shared.clearLogs()
                         await loadLogs()
                     }
                 }
@@ -40,9 +40,9 @@ struct LogViewer: View {
                 
                 // MARK: - THE FIX (Cross-Platform Export)
                 // ShareLink works natively on iOS and macOS (no UIKit needed)
-                ShareLink(item: LogStore.shared.fileURL) {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                }
+//                ShareLink(item: LogStore.shared.fileURL) {
+//                    Label("Export", systemImage: "square.and.arrow.up")
+//                }
             }
             .padding()
         }
@@ -53,7 +53,7 @@ struct LogViewer: View {
     }
     
     private func loadLogs() async {
-        logText = await LogStore.shared.readLogs()
+//        logText = await LogStore.shared.readLogs()
     }
 }
 

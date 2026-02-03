@@ -31,7 +31,7 @@ struct PersistenceController {
         container.loadPersistentStores { (storeDescription, error) in
             if let error = error as NSError? {
                 // In production, handle this error appropriately
-                Logger.log("CoreData Error: \(error), \(error.userInfo)", category: .coreData, level: .error)
+//                Logger.log("CoreData Error: \(error), \(error.userInfo)", category: .coreData, level: .error)
             }
         }
     }
@@ -42,7 +42,7 @@ struct PersistenceController {
             do {
                 try context.save()
             } catch {
-                Logger.log("Save Failed: \(error.localizedDescription)", category: .coreData, level: .error)
+//                Logger.log("Save Failed: \(error.localizedDescription)", category: .coreData, level: .error)
             }
         }
     }
