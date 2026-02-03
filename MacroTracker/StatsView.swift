@@ -182,20 +182,10 @@ struct ProgressRing: View {
     let min: Double
     let max: Double
     
-    // Safety check
-    var safeMax: Double {
-        return max > 0 ? max : 100
-    }
+    var safeMax: Double { max > 0 ? max : 100 }
+    var minFraction: Double { min / safeMax }
+    var currentFraction: Double { value / safeMax }
     
-    var minFraction: Double {
-        return min / safeMax
-    }
-    
-    var currentFraction: Double {
-        return value / safeMax
-    }
-    
-    // State Logic
     var state: RingState {
         if value < min { return .under }
         if value > max { return .over }
@@ -207,14 +197,14 @@ struct ProgressRing: View {
             ZStack {
                 // 1. Base Track
                 Circle()
-                    .stroke(lineWidth: 12)
+                    .stroke(lineWidth: 8) // Reduced slightly for better scaling
                     .opacity(0.1)
                     .foregroundColor(.primary)
                 
-                // 2. Target Zone (Shaded Arc)
+                // 2. Target Zone
                 Circle()
                     .trim(from: CGFloat(minFraction), to: 1.0)
-                    .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .butt))
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .butt))
                     .rotationEffect(Angle(degrees: 270.0))
                     .opacity(0.15)
                     .foregroundColor(.green)
@@ -222,45 +212,44 @@ struct ProgressRing: View {
                 // 3. Progress Bar
                 Circle()
                     .trim(from: 0.0, to: CGFloat(Swift.min(currentFraction, 1.0)))
-                    .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
                     .foregroundColor(state.color)
                     .rotationEffect(Angle(degrees: 270.0))
                     .animation(.spring(), value: value)
                 
-                // 4. Center Content (Value + Range/Icon)
+                // 4. Center Content
                 VStack(spacing: 2) {
-                    // A. Current Value (Top)
                     Text("\(Int(value))g")
                         .font(.headline)
                         .bold()
+                        .minimumScaleFactor(0.6) // FIX: Allows text to shrink
                     
-                    // B. The Range or Status Icon (Bottom)
                     if state == .over {
                         Image(systemName: "xmark.octagon.fill")
                             .foregroundColor(.red)
                             .font(.subheadline)
-                            .transition(.scale.combined(with: .opacity))
                     } else if state == .good {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
                             .font(.subheadline)
-                            .transition(.scale.combined(with: .opacity))
                     } else {
-                        // FIX: Show Range instead of Percentage
                         Text("\(Int(min))-\(Int(max))")
-                            .font(.system(size: 10))
+                            .font(.system(size: 9)) // Slightly smaller base size
                             .foregroundColor(.secondary)
-                            .transition(.opacity)
+                            .minimumScaleFactor(0.8) // FIX: Allows text to shrink
                     }
                 }
             }
-            .frame(height: 110)
+            // MARK: - THE FIX
+            // Remove .frame(height: 110)
+            // Force the ring to stay square and fit the width available
+            .aspectRatio(1, contentMode: .fit)
             
-            // Label (Protein, Carbs, Fat)
             Text(label)
                 .font(.caption)
                 .bold()
                 .padding(.top, 5)
+                .minimumScaleFactor(0.8)
         }
     }
 }

@@ -12,7 +12,7 @@ import CoreData
 struct TrackerView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    // 1. Track the selected day (Just like StatsView)
+    // Date State
     @State private var selectedDate = Date()
     @State private var showAddMeal = false
     @State private var showSettings = false
@@ -22,19 +22,16 @@ struct TrackerView: View {
             // MARK: - Date Navigator
             HStack {
                 Button(action: { moveDate(by: -1) }) {
-                    Image(systemName: "chevron.left")
-                        .padding()
+                    Image(systemName: "chevron.left").padding()
                 }
                 
                 Spacer()
                 
-                // Clicking the date resets to "Today"
                 Button(action: { withAnimation { selectedDate = Date() } }) {
                     VStack {
                         Text(selectedDate, style: .date)
                             .font(.headline)
                             .foregroundColor(.primary)
-                        
                         if Calendar.current.isDateInToday(selectedDate) {
                             Text("Today").font(.caption).foregroundColor(.blue)
                         }
@@ -44,32 +41,26 @@ struct TrackerView: View {
                 Spacer()
                 
                 Button(action: { moveDate(by: 1) }) {
-                    Image(systemName: "chevron.right")
-                        .padding()
+                    Image(systemName: "chevron.right").padding()
                 }
-                // Disable "Next" if we are already on Today (optional, remove if you want to plan ahead)
-                .disabled(Calendar.current.isDateInToday(selectedDate))
             }
             .padding(.vertical, 10)
-            // MARK: - THE FIX
-                            #if os(iOS)
+                #if os(iOS)
             .background(
-                            Color(uiColor: .secondarySystemBackground))
-                            #else
+                Color(uiColor: .secondarySystemBackground))
+                #else
             .background(
-                            Color(nsColor: .controlBackgroundColor))
-                            #endif
+                Color(nsColor: .controlBackgroundColor))
+                #endif
             
-            // MARK: - The List (Sub-View)
-            // We pass the date into this view, which handles the Core Data fetching
-            DailyLogList(date: selectedDate)
+            // MARK: - Combined Dashboard
+            DailyDashboard(date: selectedDate)
         }
-        .navigationTitle("Log")
+        .navigationTitle("Tracker")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
-            // Settings Button (iOS only)
             #if os(iOS)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showSettings.toggle() }) {
@@ -78,7 +69,6 @@ struct TrackerView: View {
             }
             #endif
             
-            // Add Meal Button
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showAddMeal.toggle() }) {
                     Image(systemName: "plus")
@@ -86,7 +76,6 @@ struct TrackerView: View {
             }
         }
         .sheet(isPresented: $showAddMeal) {
-            // Note: AddMealView creates a NEW context, so we inject the viewContext
             AddMealView(viewModel: MacroViewModel(context: viewContext))
         }
         .sheet(isPresented: $showSettings) {
@@ -103,25 +92,32 @@ struct TrackerView: View {
     }
 }
 
-// MARK: - Sub-View: The Dynamic List
-struct DailyLogList: View {
+// MARK: - The Unified Dashboard
+struct DailyDashboard: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    // The Fetch Request
+    // 1. Fetch Meals
     @FetchRequest var meals: FetchedResults<MealEntity>
     
-    // Calculate Day Totals
-    var dayCalories: Int { Int(meals.reduce(0) { $0 + $1.totalCalories }) }
-    var dayProtein: Int { Int(meals.reduce(0) { $0 + $1.totalProtein }) }
-    var dayCarbs: Int { Int(meals.reduce(0) { $0 + $1.totalCarbs }) }
-    var dayFat: Int { Int(meals.reduce(0) { $0 + $1.totalFat }) }
+    // 2. HealthKit State
+    @State private var caloriesBurned: Double = 0.0
+    
+    // 3. Goals
+    @AppStorage("goal_p_min") var pMin: Double = 150
+    @AppStorage("goal_p_max") var pMax: Double = 180
+    @AppStorage("goal_c_min") var cMin: Double = 200
+    @AppStorage("goal_c_max") var cMax: Double = 300
+    @AppStorage("goal_f_min") var fMin: Double = 60
+    @AppStorage("goal_f_max") var fMax: Double = 80
+    
+    let date: Date
     
     init(date: Date) {
+        self.date = date
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        // Dynamic Predicate: Only fetch meals between 00:00 and 23:59 of 'date'
         _meals = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: false)],
             predicate: NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate),
@@ -129,62 +125,88 @@ struct DailyLogList: View {
         )
     }
     
+    // Totals
+    var totalP: Double { meals.reduce(0) { $0 + $1.totalProtein } }
+    var totalC: Double { meals.reduce(0) { $0 + $1.totalCarbs } }
+    var totalF: Double { meals.reduce(0) { $0 + $1.totalFat } }
+    var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
+    
     var body: some View {
         List {
-            // 1. Daily Summary Header (Optional, but nice to see)
-            if !meals.isEmpty {
-                Section {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Total").font(.caption).bold().foregroundColor(.gray)
-                            Text("\(dayCalories) kcal").font(.headline)
+            // SECTION 1: STATS HEADER (Scrolls with list)
+            Section {
+                VStack(spacing: 20) {
+                    // A. Calorie Math
+                    HStack(spacing: 20) {
+                        VStack {
+                            Text("Eaten").font(.caption).bold().foregroundColor(.secondary)
+                            Text("\(Int(totalKcal))").font(.title3).bold()
                         }
-                        Spacer()
-                        MacroPill(label: "P", amount: dayProtein, color: .blue)
-                        MacroPill(label: "C", amount: dayCarbs, color: .green)
-                        MacroPill(label: "F", amount: dayFat, color: .red)
+                        Text("-").foregroundColor(.secondary)
+                        VStack {
+                            Text("Burned").font(.caption).bold().foregroundColor(.secondary)
+                            Text("\(Int(caloriesBurned))").font(.title3).bold().foregroundColor(.orange)
+                        }
+                        Text("=").foregroundColor(.secondary)
+                        VStack {
+                            Text("Net").font(.caption).bold().foregroundColor(.secondary)
+                            Text("\(Int(totalKcal - caloriesBurned))")
+                                .font(.title3).bold()
+                                .foregroundColor(totalKcal - caloriesBurned < 0 ? .green : .primary)
+                        }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.bottom, 5)
+                    
+                    // B. Rings
+                                        HStack(spacing: 15) {
+                                            ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
+                                            ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
+                                            ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
+                                        }
+                                        .padding(.horizontal, 20) // FIX: Add breathing room on the sides
                 }
+                .padding(.vertical, 10)
             }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets()) // Removes side padding so rings can be full width
             
-            // 2. The Meals
-            if meals.isEmpty {
-                Text("No meals logged for this day.")
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 40)
-                    .listRowBackground(Color.clear)
-            } else {
-                ForEach(meals) { meal in
-                    NavigationLink(destination: MealDetailView(meal: meal)) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(meal.summary ?? "Meal")
-                                    .font(.headline)
-                                Text(meal.timestamp ?? Date(), style: .time)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing) {
-                                Text("\(Int(meal.totalCalories))")
-                                    .bold()
-                                Text("kcal")
-                                    .font(.caption2)
-                                    .foregroundColor(.gray)
+            // SECTION 2: MEALS
+            Section(header: Text("Meals")) {
+                if meals.isEmpty {
+                    Text("No meals logged.")
+                        .foregroundColor(.gray)
+                } else {
+                    ForEach(meals) { meal in
+                        NavigationLink(destination: MealDetailView(meal: meal)) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(meal.summary ?? "Meal").font(.headline)
+                                    Text(meal.timestamp ?? Date(), style: .time).font(.caption).foregroundColor(.gray)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing) {
+                                    Text("\(Int(meal.totalCalories))").bold()
+                                    Text("kcal").font(.caption2).foregroundColor(.gray)
+                                }
                             }
                         }
                     }
+                    .onDelete(perform: deleteItems)
                 }
-                .onDelete(perform: deleteItems)
             }
         }
-#if os(iOS)
+        #if os(iOS)
         .listStyle(.insetGrouped)
         #else
         .listStyle(.inset)
         #endif
+        // HealthKit Trigger
+        .task(id: date) {
+            caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+        }
+        .onAppear {
+            HealthManager.shared.requestAuthorization()
+        }
     }
     
     private func deleteItems(offsets: IndexSet) {
@@ -195,20 +217,4 @@ struct DailyLogList: View {
     }
 }
 
-// Small helper for the summary header
-struct MacroPill: View {
-    let label: String
-    let amount: Int
-    let color: Color
-    
-    var body: some View {
-        VStack {
-            Text(label).font(.system(size: 8, weight: .bold))
-            Text("\(amount)").font(.caption).bold()
-        }
-        .padding(6)
-        .background(color.opacity(0.1))
-        .cornerRadius(6)
-        .foregroundColor(color)
-    }
-}
+// Ensure ProgressRing is defined here or in a separate file (Reuse code from previous step)
