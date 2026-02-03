@@ -10,72 +10,101 @@ import CoreData
 
 struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
-    @Environment(\.managedObjectContext) var viewContext
     @ObservedObject var viewModel: MacroViewModel
     
-    // Inputs
-    @State private var description: String = ""
-    @State private var weight: String = ""
+    // MARK: - State
     
-    // Macros (Fat -> Carbs -> Protein)
+    // 1. Inputs
+    @State private var description: String = ""
+    @State private var portionSize: String = ""
+    @State private var selectedUnit: String = "g"
+    
+    // 2. Macros (Fat -> Carbs -> Protein)
     @State private var fat: String = ""
     @State private var carbs: String = ""
     @State private var protein: String = ""
     
-    // UX State
+    // 3. Logic State
+    @State private var activeCachedMeal: CachedMealEntity? = nil // The meal we are scaling off of
     @State private var isCalculating = false
-    
-    // Focus State
-    enum Field: Hashable {
-        case description, weight, fat, carbs, protein
-    }
     @FocusState private var focusedField: Field?
     
-    // Fetch Saved Meals for Autocomplete
+    // Units for Dropdown
+    let units = ["g", "oz", "ml", "cups", "tbsp", "tsp", "pieces", "slice"]
+    
+    enum Field: Hashable {
+        case description, portion, fat, carbs, protein
+    }
+    
+    // MARK: - Autocomplete Fetcher
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.name, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.lastUsed, ascending: false)],
         animation: .default
     )
     private var cachedMeals: FetchedResults<CachedMealEntity>
     
-    // Filter logic for Autocomplete
+    // Filter suggestions based on what user types
     var suggestions: [CachedMealEntity] {
         if description.isEmpty { return [] }
         return cachedMeals.filter {
             ($0.name ?? "").localizedCaseInsensitiveContains(description)
         }
     }
-    
+
     var body: some View {
         NavigationView {
             Form {
-                // MARK: - SECTION 1: DETAILS & AI
-                Section(header: Text("Meal Details")) {
-                    // 1. Description Field
-                    TextField("Description (e.g. Banana)", text: $description)
-                        .focused($focusedField, equals: .description)
-                        .submitLabel(.next)
+                // MARK: - SECTION 1: FOOD DETAILS
+                Section(header: Text("Food Details")) {
                     
-                    // 2. Autocomplete List (Only shows when typing matches)
-                    if !suggestions.isEmpty && focusedField == .description {
-                        ForEach(suggestions.prefix(3), id: \.self) { meal in
-                            Button(action: { applySuggestion(meal) }) {
-                                VStack(alignment: .leading) {
-                                    Text(meal.name ?? "Unknown").foregroundColor(.primary)
-                                    Text("F: \(Int(meal.fat)) C: \(Int(meal.carbs)) P: \(Int(meal.protein))")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                    // A. Portion & Unit Picker
+                    HStack {
+                        TextField("Portion", text: $portionSize)
+                            .focused($focusedField, equals: .portion)
+                            .keyboardType(.decimalPad)
+                            .onChange(of: portionSize) { _ in recalculateMacros() }
+                        
+                        Picker("Unit", selection: $selectedUnit) {
+                            ForEach(units, id: \.self) { unit in
+                                Text(unit).tag(unit)
+                            }
+                        }
+                        .labelsHidden()
+                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
+                    }
+                    
+                    // B. Description & Autocomplete
+                    VStack(alignment: .leading, spacing: 0) {
+                        TextField("Description (e.g. Chicken Breast)", text: $description)
+                            .focused($focusedField, equals: .description)
+                            .submitLabel(.next)
+                            .onChange(of: description) { newValue in
+                                // If user types something new, break the link to the cached meal
+                                if let active = activeCachedMeal, active.name != newValue {
+                                    // Optional: activeCachedMeal = nil
                                 }
                             }
+                        
+                        // Autocomplete List
+                        if !suggestions.isEmpty && focusedField == .description {
+                            List {
+                                ForEach(suggestions.prefix(3), id: \.self) { meal in
+                                    Button(action: { applyCachedMeal(meal) }) {
+                                        VStack(alignment: .leading) {
+                                            Text(meal.name ?? "Unknown").foregroundColor(.primary)
+                                            Text("Base: \(meal.portionSize ?? "100") \(meal.unit ?? "g") • P:\(Int(meal.protein))")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(height: 120) // Limit height
+                            .listStyle(.plain)
                         }
                     }
                     
-                    // 3. Weight Field
-                    TextField("Weight (g)", text: $weight)
-                        .focused($focusedField, equals: .weight)
-                        .keyboardType(.decimalPad)
-                    
-                    // 4. AI Button
+                    // C. AI Auto-Fill Button
                     Button(action: performAIAnalysis) {
                         HStack {
                             Image(systemName: "sparkles")
@@ -89,8 +118,8 @@ struct AddMealView: View {
                     .disabled(description.isEmpty || isCalculating)
                 }
                 
-                // MARK: - SECTION 2: MACROS (F -> C -> P)
-                Section(header: Text("Macros")) {
+                // MARK: - SECTION 2: MACROS
+                Section(header: Text("Macros (Auto-Scales)")) {
                     // FAT
                     HStack {
                         Text("Fat (g)")
@@ -135,19 +164,7 @@ struct AddMealView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { presentationMode.wrappedValue.dismiss() }
                 }
-                
-                // Keyboard Navigation Arrows
                 ToolbarItemGroup(placement: .keyboard) {
-                    Button(action: { moveFocus(direction: -1) }) {
-                        Image(systemName: "chevron.up")
-                    }
-                    .disabled(focusedField == .description)
-                    
-                    Button(action: { moveFocus(direction: 1) }) {
-                        Image(systemName: "chevron.down")
-                    }
-                    .disabled(focusedField == .protein)
-                    
                     Spacer()
                     Button("Done") { focusedField = nil }
                 }
@@ -157,66 +174,123 @@ struct AddMealView: View {
     
     // MARK: - LOGIC
     
-    private func applySuggestion(_ meal: CachedMealEntity) {
-        // Auto-fill fields from the saved meal
-        description = meal.name ?? description
+    // 1. Apply a selected suggestion
+    private func applyCachedMeal(_ meal: CachedMealEntity) {
+        // Link the meal
+        self.activeCachedMeal = meal
         
-        // If the saved meal has a "standard" portion size, you could pre-fill weight here if you tracked it
-        // weight = meal.portionSize ?? ""
+        // Fill Text Fields
+        self.description = meal.name ?? ""
+        self.selectedUnit = meal.unit ?? "g"
         
-        fat = String(format: "%.1f", meal.fat)
-        carbs = String(format: "%.1f", meal.carbs)
-        protein = String(format: "%.1f", meal.protein)
+        // Set Default Portion
+        // If user already typed "200", keep "200". If empty, use saved portion.
+        if portionSize.isEmpty {
+            self.portionSize = meal.portionSize ?? "100"
+        }
         
-        // Move focus to weight so user can adjust quantity if needed
-        focusedField = .weight
+        // Trigger calc
+        recalculateMacros()
+        
+        // Dismiss keyboard/list
+        focusedField = nil
     }
     
+    // 2. Scale Macros based on Portion
+    private func recalculateMacros() {
+        guard let cached = activeCachedMeal else { return }
+        
+        // Get numbers
+        let currentSize = Double(portionSize) ?? 0
+        let baseSize = Double(cached.portionSize ?? "0") ?? 0
+        
+        // Only scale if:
+        // 1. We have valid numbers
+        // 2. The units match (Scaling 100g base to 2oz requires conversion logic, simpler to require matching units for now)
+        if currentSize > 0, baseSize > 0, cached.unit == selectedUnit {
+            let ratio = currentSize / baseSize
+            
+            self.protein = String(format: "%.1f", cached.protein * ratio)
+            self.carbs = String(format: "%.1f", cached.carbs * ratio)
+            self.fat = String(format: "%.1f", cached.fat * ratio)
+        } else {
+            // Fallback to base values if no portion entered yet
+            self.protein = String(format: "%.1f", cached.protein)
+            self.carbs = String(format: "%.1f", cached.carbs)
+            self.fat = String(format: "%.1f", cached.fat)
+        }
+    }
+    
+    // 3. AI Analysis
     private func performAIAnalysis() {
         guard !description.isEmpty else { return }
         isCalculating = true
-        
-        // Hide keyboard to show the user something is happening
         focusedField = nil
         
         Task {
-            // Construct query (e.g. "150g Chicken Breast")
-            let query = weight.isEmpty ? description : "\(weight)g \(description)"
+            // Send "200 g Chicken" to AI
+            let query = portionSize.isEmpty ? description : "\(portionSize) \(selectedUnit) \(description)"
             
-            // Call ViewModel
             if let result = await viewModel.calculateMacros(description: query) {
-                // Update UI on Main Thread
                 fat = String(format: "%.1f", result.f)
                 carbs = String(format: "%.1f", result.c)
                 protein = String(format: "%.1f", result.p)
+                
+                // Clear the cached link since AI just gave us fresh data
+                activeCachedMeal = nil
             }
             isCalculating = false
         }
     }
     
+    // 4. Save
     private func saveMeal() {
-        let w = Double(weight) ?? 0
+        let p = Double(protein) ?? 0
         let f = Double(fat) ?? 0
         let c = Double(carbs) ?? 0
-        let p = Double(protein) ?? 0
+        
+        // Convert input portion to grams for standardizing the database
+        // (Assuming ViewModel expects grams)
+        let rawWeight = Double(portionSize) ?? 0
+        let weightInGrams = convertToGrams(amount: rawWeight, unit: selectedUnit)
         
         viewModel.saveMeal(
             description: description,
             p: p,
             f: f,
             c: c,
-            weight: w
+            weight: weightInGrams
         )
+        
+        // Cache this meal for next time
+        // Note: You need to make sure MealCacheManager exists,
+        // OR add this logic to your ViewModel.
+        saveToCache(p: p, f: f, c: c)
         
         presentationMode.wrappedValue.dismiss()
     }
     
-    private func moveFocus(direction: Int) {
-        let order: [Field] = [.description, .weight, .fat, .carbs, .protein]
-        guard let current = focusedField, let index = order.firstIndex(of: current) else { return }
-        let nextIndex = index + direction
-        if nextIndex >= 0 && nextIndex < order.count {
-            focusedField = order[nextIndex]
+    // Simple helper to save recent items
+    private func saveToCache(p: Double, f: Double, c: Double) {
+        // This is a quick inline CoreData save.
+        // Ideally, move this to ViewModel.
+        let cached = CachedMealEntity(context: viewModel.context)
+        cached.name = description
+        cached.protein = p
+        cached.fat = f
+        cached.carbs = c
+        cached.portionSize = portionSize
+        cached.unit = selectedUnit
+        cached.lastUsed = Date()
+        try? viewModel.context.save()
+    }
+    
+    private func convertToGrams(amount: Double, unit: String) -> Double {
+        switch unit {
+        case "oz": return amount * 28.3495
+        case "lbs": return amount * 453.592
+        case "kg": return amount * 1000
+        default: return amount // Assumes grams, ml, or pieces are 1:1 for simplicity
         }
     }
 }
