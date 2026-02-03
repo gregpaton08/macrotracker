@@ -1,59 +1,71 @@
 import SwiftUI
-import Charts
-import CoreData
-
-import SwiftUI
-import Charts
 import CoreData
 
 struct StatsView: View {
     @State private var selectedDate = Date()
     
     var body: some View {
-        // NOTE: We removed NavigationView here because ContentView handles it now
         VStack {
             // Date Navigator
             HStack {
                 Button(action: { moveDate(by: -1) }) {
                     Image(systemName: "chevron.left")
+                        .padding()
                 }
                 
                 Spacer()
                 
-                Text(selectedDate, style: .date)
-                    .font(.headline)
-                    .id(selectedDate)
-                    .transition(.opacity)
+                VStack {
+                    Text(selectedDate, style: .date)
+                        .font(.headline)
+                        .id(selectedDate)
+                    if Calendar.current.isDateInToday(selectedDate) {
+                        Text("Today").font(.caption).foregroundColor(.blue)
+                    }
+                }
                 
                 Spacer()
                 
                 Button(action: { moveDate(by: 1) }) {
                     Image(systemName: "chevron.right")
+                        .padding()
                 }
                 .disabled(Calendar.current.isDateInToday(selectedDate))
             }
-            .padding()
+            .padding(.bottom)
+#if os(iOS)
+            .background(
+                Color(uiColor: .secondarySystemBackground)
+            )
+#else
+            .background(
+                Color(nsColor: .controlBackgroundColor)
+            )
+#endif
             
             // The Content
-            DailyChartContent(date: selectedDate)
-                .background(Color.white.opacity(0.01))
-                .gesture(
-                    DragGesture()
-                        .onEnded { value in
-                            if value.translation.width < -50 {
-                                if !Calendar.current.isDateInToday(selectedDate) {
-                                    moveDate(by: 1)
-                                }
-                            } else if value.translation.width > 50 {
-                                moveDate(by: -1)
+            ScrollView {
+                DailyRingContent(date: selectedDate)
+                    .padding(.top, 20)
+            }
+            // Swipe Gestures
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if value.translation.width < -50 {
+                            if !Calendar.current.isDateInToday(selectedDate) {
+                                moveDate(by: 1)
                             }
+                        } else if value.translation.width > 50 {
+                            moveDate(by: -1)
                         }
-                )
+                    }
+            )
         }
         .navigationTitle("Stats")
-        #if os(iOS)
+#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        #endif
+#endif
     }
     
     private func moveDate(by days: Int) {
@@ -63,12 +75,11 @@ struct StatsView: View {
     }
 }
 
-// MARK: - Subview with Dynamic FetchRequest
-struct DailyChartContent: View {
-    // FIX: Fetch MealEntity (the Parent), not FoodEntity (the Ingredients)
+// MARK: - Ring Content Subview
+struct DailyRingContent: View {
     @FetchRequest var todaysMeals: FetchedResults<MealEntity>
     
-    // Read Goals from Storage
+    // Goals
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
     @AppStorage("goal_c_min") var cMin: Double = 200
@@ -81,7 +92,6 @@ struct DailyChartContent: View {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        // FIX: Predicate targets MealEntity
         _todaysMeals = FetchRequest(
             sortDescriptors: [],
             predicate: NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate),
@@ -89,97 +99,153 @@ struct DailyChartContent: View {
         )
     }
     
-    // FIX: Calculate totals using MealEntity properties (totalProtein, etc.)
-    var totals: [MacroData] {
-        let p = todaysMeals.reduce(0) { $0 + $1.totalProtein }
-        let c = todaysMeals.reduce(0) { $0 + $1.totalCarbs }
-        let f = todaysMeals.reduce(0) { $0 + $1.totalFat }
-        
-        return [
-            MacroData(type: "Protein", grams: p, color: .blue),
-            MacroData(type: "Carbs", grams: c, color: .green),
-            MacroData(type: "Fat", grams: f, color: .red)
-        ]
+    // Calculated Totals
+    var totalP: Double { todaysMeals.reduce(0) { $0 + $1.totalProtein } }
+    var totalC: Double { todaysMeals.reduce(0) { $0 + $1.totalCarbs } }
+    var totalF: Double { todaysMeals.reduce(0) { $0 + $1.totalFat } }
+    var totalKcal: Double { todaysMeals.reduce(0) { $0 + $1.totalCalories } }
+    
+    var body: some View {
+        VStack(spacing: 30) {
+            
+            // Total Calories Summary
+            VStack {
+                Text("Total Calories")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textCase(.uppercase)
+                Text("\(Int(totalKcal))")
+                    .font(.system(size: 48, weight: .heavy, design: .rounded))
+            }
+            .padding(.bottom, 10)
+            
+            // The Three Rings
+            HStack(spacing: 20) {
+                ProgressRing(
+                    label: "Protein",
+                    value: totalP,
+                    min: pMin,
+                    max: pMax
+                )
+                
+                ProgressRing(
+                    label: "Carbs",
+                    value: totalC,
+                    min: cMin,
+                    max: cMax
+                )
+                
+                ProgressRing(
+                    label: "Fat",
+                    value: totalF,
+                    min: fMin,
+                    max: fMax
+                )
+            }
+            .padding(.horizontal)
+            
+            // Legend / Explanation (Optional)
+            HStack(spacing: 15) {
+                Label("Under", systemImage: "circle.fill").foregroundColor(.yellow)
+                Label("Good", systemImage: "checkmark.circle.fill").foregroundColor(.green)
+                Label("Over", systemImage: "xmark.octagon.fill").foregroundColor(.red)
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .padding(.top, 30)
+            
+            Spacer()
+        }
+    }
+}
+
+// MARK: - The Custom Ring Component
+struct ProgressRing: View {
+    let label: String
+    let value: Double
+    let min: Double
+    let max: Double
+    
+    // Determine State
+    var state: RingState {
+        if value < min { return .under }
+        if value > max { return .over }
+        return .good
     }
     
-    var targets: [MacroTarget] {
-        [
-            MacroTarget(type: "Protein", min: pMin, max: pMax),
-            MacroTarget(type: "Carbs", min: cMin, max: cMax),
-            MacroTarget(type: "Fat", min: fMin, max: fMax)
-        ]
+    // Determine Progress (0.0 to 1.0)
+    var progress: Double {
+        if state == .over { return 1.0 }
+        // Use max as the denominator so the ring fills up visually as you approach the limit
+        let target = (max + min) / 2
+        return Swift.min(value / target, 1.0)
     }
     
     var body: some View {
         VStack {
-            // Stats Summary
-            HStack(spacing: 20) {
-                VStack {
-                    Text("Calories").font(.caption).foregroundColor(.secondary)
-                    // FIX: Sum totalCalories from Meals
-                    Text("\(Int(todaysMeals.reduce(0){ $0 + $1.totalCalories }))")
-                        .font(.title).bold()
-                }
-                Divider().frame(height: 40)
-                VStack {
-                    Text("Entries").font(.caption).foregroundColor(.secondary)
-                    Text("\(todaysMeals.count)")
-                        .font(.title).bold()
-                }
-            }
-            .padding(.bottom, 20)
-            
-            // Chart
-            if todaysMeals.isEmpty {
-                Spacer()
-                Text("No data for this day").foregroundColor(.gray)
-                Spacer()
-            } else {
-                Chart {
-                    // Background Goals
-                    ForEach(targets) { target in
-                        RectangleMark(
-                            x: .value("Macro", target.type),
-                            yStart: .value("Min", target.min),
-                            yEnd: .value("Max", target.max)
-                        )
-                        .foregroundStyle(Color.gray.opacity(0.15))
+            ZStack {
+                // Background Circle (Light Gray)
+                Circle()
+                    .stroke(lineWidth: 12)
+                    .opacity(0.2)
+                    .foregroundColor(state.color)
+                
+                // Progress Circle
+                Circle()
+                    .trim(from: 0.0, to: CGFloat(progress))
+                    .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
+                    .foregroundColor(state.color)
+                    .rotationEffect(Angle(degrees: 270.0))
+                    .animation(.linear, value: value)
+                
+                // Inner Content
+                VStack(spacing: 2) {
+                    if let icon = state.icon {
+                        Image(systemName: icon)
+                            .font(.title2)
+                            .foregroundColor(state.color)
+                    } else {
+                        // Just show the number if Under
+                        Text("\(Int(percent))%")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
                     
-                    // Foreground Data
-                    ForEach(totals) { item in
-                        BarMark(
-                            x: .value("Macro", item.type),
-                            y: .value("Grams", item.grams)
-                        )
-                        .foregroundStyle(item.color)
-                        .annotation(position: .top) {
-                            Text("\(Int(item.grams))g")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    Text("\(Int(value))g")
+                        .font(.headline)
+                        .bold()
                 }
-                .frame(height: 300)
-                .padding()
             }
+            .frame(height: 100) // Ring Size
             
-            Spacer()
+            Text(label)
+                .font(.caption)
+                .bold()
+                .padding(.top, 5)
         }
-        .padding()
+    }
+    
+    var percent: Double {
+        return (value / ((min + max)/2)) * 100
     }
 }
 
-struct MacroData: Identifiable {
-    let id = UUID()
-    let type: String
-    let grams: Double
-    let color: Color
-}
-
-struct MacroTarget: Identifiable {
-    let id = UUID()
-    let type: String
-    let min: Double
-    let max: Double
+enum RingState {
+    case under, good, over
+    
+    var color: Color {
+        switch self {
+        case .under: return .yellow
+        case .good: return .green
+        case .over: return .red
+        }
+    }
+    
+    var icon: String? {
+        switch self {
+        case .under: return nil // Or use "arrow.up" to indicate "eat more"
+        case .good: return "checkmark"
+        case .over: return "xmark.octagon.fill"
+        }
+    }
 }
