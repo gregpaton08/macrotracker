@@ -17,15 +17,17 @@ class HealthManager: ObservableObject {
     let healthStore = HKHealthStore()
     #endif
     
-    // Request Permission
     func requestAuthorization() {
         #if os(iOS)
         guard HKHealthStore.isHealthDataAvailable() else { return }
         
-        let burnedType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        // 1. Add .workoutType() to the read list
+        let activeEnergy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        let workoutType = HKObjectType.workoutType()
         
-        // We only need read access for now
-        healthStore.requestAuthorization(toShare: [], read: [burnedType]) { success, error in
+        let readTypes: Set<HKObjectType> = [activeEnergy, workoutType]
+        
+        healthStore.requestAuthorization(toShare: [], read: readTypes) { success, error in
             if let error = error {
                 print("HealthKit Auth Error: \(error.localizedDescription)")
             }
@@ -33,14 +35,11 @@ class HealthManager: ObservableObject {
         #endif
     }
     
-    // Fetch Calories for a specific day
+    // Fetch Total Active Calories (Existing)
     func fetchCaloriesBurned(for date: Date) async -> Double {
         #if os(iOS)
         guard HKHealthStore.isHealthDataAvailable() else { return 0 }
-        
         let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
-        
-        // Create the predicate for "Start of Day" to "End of Day"
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -48,20 +47,45 @@ class HealthManager: ObservableObject {
         
         return await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(quantityType: calorieType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
-                
                 guard let result = result, let sum = result.sumQuantity() else {
                     continuation.resume(returning: 0.0)
                     return
                 }
-                
-                // Convert to Kilocalories
-                let value = sum.doubleValue(for: HKUnit.kilocalorie())
-                continuation.resume(returning: value)
+                continuation.resume(returning: sum.doubleValue(for: HKUnit.kilocalorie()))
             }
             healthStore.execute(query)
         }
         #else
-        return 0.0 // Mac always returns 0
+        return 0.0
+        #endif
+    }
+    
+    // 2. NEW: Fetch Specific Workouts
+    func fetchWorkouts(for date: Date) async -> [HKWorkout] {
+        #if os(iOS)
+        guard HKHealthStore.isHealthDataAvailable() else { return [] }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        // Predicate: Workouts that happened today
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
+                
+                guard let workouts = samples as? [HKWorkout] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                continuation.resume(returning: workouts)
+            }
+            healthStore.execute(query)
+        }
+        #else
+        return []
         #endif
     }
 }

@@ -102,6 +102,10 @@ struct DailyDashboard: View {
     // 2. HealthKit State
     @State private var caloriesBurned: Double = 0.0
     
+#if os(iOS)
+    @State private var workouts: [HKWorkout] = []
+#endif
+    
     // 3. Goals
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
@@ -164,11 +168,51 @@ struct DailyDashboard: View {
                         ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
                     }
                     .padding(.horizontal, 20) // FIX: Add breathing room on the sides
+                    
+#if os(iOS)
+                    if !workouts.isEmpty {
+                        Divider()
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Workouts")
+                                .font(.caption).bold()
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            ForEach(workouts, id: \.uuid) { workout in
+                                HStack {
+                                    Image(systemName: "figure.run.circle.fill") // Generic icon
+                                        .foregroundColor(.orange)
+                                    
+                                    Text(workout.workoutActivityType.name)
+                                        .font(.subheadline).bold()
+                                    
+                                    Spacer()
+                                    
+                                    // Show duration
+                                    Text("\(Int(workout.duration / 60)) min")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    
+                                    // Show calories
+                                    if let energy = workout.totalEnergyBurned {
+                                        Text("\(Int(energy.doubleValue(for: .kilocalorie()))) kcal")
+                                            .font(.subheadline).bold()
+                                            .monospacedDigit()
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                    }
+#endif
                 }
                 .padding(.vertical, 10)
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets()) // Removes side padding so rings can be full width
+            
+            
             
             // SECTION 2: MEALS
             Section(header: Text("Meals")) {
@@ -216,12 +260,18 @@ struct DailyDashboard: View {
         // HealthKit Trigger
         .task(id: date) {
             caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+#if os(iOS)
+            workouts = await HealthManager.shared.fetchWorkouts(for: date)
+#endif
+        }
+        .onAppear {
+            HealthManager.shared.requestAuthorization()
         }
         .onAppear {
             HealthManager.shared.requestAuthorization()
         }
     }
-    
+
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             offsets.map { meals[$0] }.forEach(viewContext.delete)
@@ -230,4 +280,25 @@ struct DailyDashboard: View {
     }
 }
 
+
 // Ensure ProgressRing is defined here or in a separate file (Reuse code from previous step)
+
+// Helper to name workouts nicely
+#if os(iOS)
+import HealthKit
+extension HKWorkoutActivityType {
+    var name: String {
+        switch self {
+        case .running: return "Run"
+        case .cycling: return "Cycle"
+        case .walking: return "Walk"
+        case .traditionalStrengthTraining: return "Strength"
+        case .functionalStrengthTraining: return "Strength"
+        case .highIntensityIntervalTraining: return "HIIT"
+        case .yoga: return "Yoga"
+        case .swimming: return "Swim"
+        default: return "Workout"
+        }
+    }
+}
+#endif
