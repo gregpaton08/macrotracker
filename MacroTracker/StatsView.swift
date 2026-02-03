@@ -182,12 +182,11 @@ struct ProgressRing: View {
     let min: Double
     let max: Double
     
-    // Safety check to avoid divide-by-zero
+    // Safety check
     var safeMax: Double {
         return max > 0 ? max : 100
     }
     
-    // Calculate fractions (0.0 to 1.0)
     var minFraction: Double {
         return min / safeMax
     }
@@ -196,7 +195,7 @@ struct ProgressRing: View {
         return value / safeMax
     }
     
-    // Determine State for Colors/Icons
+    // State Logic
     var state: RingState {
         if value < min { return .under }
         if value > max { return .over }
@@ -206,23 +205,21 @@ struct ProgressRing: View {
     var body: some View {
         VStack {
             ZStack {
-                // 1. Base Track (Faint Gray)
+                // 1. Base Track
                 Circle()
                     .stroke(lineWidth: 12)
                     .opacity(0.1)
                     .foregroundColor(.primary)
                 
-                // 2. The "Target Zone" (Shaded Range)
-                // This draws an arc from Min to Max to show the user where to aim.
+                // 2. Target Zone (Shaded Arc)
                 Circle()
                     .trim(from: CGFloat(minFraction), to: 1.0)
                     .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .butt))
                     .rotationEffect(Angle(degrees: 270.0))
-                    .opacity(0.15) // Subtle shading
+                    .opacity(0.15)
                     .foregroundColor(.green)
                 
-                // 3. Current Progress Bar
-                // Caps at 1.0 (Full Circle) even if over max
+                // 3. Progress Bar
                 Circle()
                     .trim(from: 0.0, to: CGFloat(Swift.min(currentFraction, 1.0)))
                     .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
@@ -230,33 +227,36 @@ struct ProgressRing: View {
                     .rotationEffect(Angle(degrees: 270.0))
                     .animation(.spring(), value: value)
                 
-                // 4. Center Content (Icon & Value)
-                VStack(spacing: 0) {
+                // 4. Center Content (Value + Range/Icon)
+                VStack(spacing: 2) {
+                    // A. Current Value (Top)
+                    Text("\(Int(value))g")
+                        .font(.headline)
+                        .bold()
+                    
+                    // B. The Range or Status Icon (Bottom)
                     if state == .over {
                         Image(systemName: "xmark.octagon.fill")
                             .foregroundColor(.red)
-                            .font(.title2)
+                            .font(.subheadline)
                             .transition(.scale.combined(with: .opacity))
                     } else if state == .good {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                            .font(.title2)
+                            .font(.subheadline)
                             .transition(.scale.combined(with: .opacity))
                     } else {
-                        // Show percentage if still under
-                        Text("\(Int(currentFraction * 100))%")
-                            .font(.caption2)
+                        // FIX: Show Range instead of Percentage
+                        Text("\(Int(min))-\(Int(max))")
+                            .font(.system(size: 10))
                             .foregroundColor(.secondary)
                             .transition(.opacity)
                     }
-                    
-                    Text("\(Int(value))g")
-                        .font(.headline)
-                        .bold()
                 }
             }
-            .frame(height: 110) // Slightly larger to accommodate the details
+            .frame(height: 110)
             
+            // Label (Protein, Carbs, Fat)
             Text(label)
                 .font(.caption)
                 .bold()
