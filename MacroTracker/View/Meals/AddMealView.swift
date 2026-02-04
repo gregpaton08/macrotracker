@@ -57,23 +57,8 @@ struct AddMealView: View {
                 // MARK: - SECTION 1: FOOD DETAILS
                 Section(header: Text("Food Details")) {
                     
-                    // A. Portion & Unit Picker
-                    HStack {
-                        TextField("Portion", text: $portionSize)
-                            .focused($focusedField, equals: .portion)
-                            .keyboardType(.decimalPad)
-                            .onChange(of: portionSize) { _ in recalculateMacros() }
-                        
-                        Picker("Unit", selection: $selectedUnit) {
-                            ForEach(units, id: \.self) { unit in
-                                Text(unit).tag(unit)
-                            }
-                        }
-                        .labelsHidden()
-                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
-                    }
                     
-                    // B. Description & Autocomplete
+                    // Description & Autocomplete
                     VStack(alignment: .leading, spacing: 0) {
                         TextField("Description (e.g. Chicken Breast)", text: $description)
                             .focused($focusedField, equals: .description)
@@ -104,7 +89,23 @@ struct AddMealView: View {
                         }
                     }
                     
-                    // C. AI Auto-Fill Button
+                    // Portion & Unit Picker
+                    HStack {
+                        TextField("Portion", text: $portionSize)
+                            .focused($focusedField, equals: .portion)
+                            .keyboardType(.decimalPad)
+                            .onChange(of: portionSize) { _ in recalculateMacros() }
+                        
+                        Picker("Unit", selection: $selectedUnit) {
+                            ForEach(units, id: \.self) { unit in
+                                Text(unit).tag(unit)
+                            }
+                        }
+                        .labelsHidden()
+                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
+                    }
+                    
+                    // AI Auto-Fill Button
                     Button(action: performAIAnalysis) {
                         HStack {
                             Image(systemName: "sparkles")
@@ -210,14 +211,14 @@ struct AddMealView: View {
         if currentSize > 0, baseSize > 0, cached.unit == selectedUnit {
             let ratio = currentSize / baseSize
             
-            self.protein = String(format: "%.1f", cached.protein * ratio)
-            self.carbs = String(format: "%.1f", cached.carbs * ratio)
             self.fat = String(format: "%.1f", cached.fat * ratio)
+            self.carbs = String(format: "%.1f", cached.carbs * ratio)
+            self.protein = String(format: "%.1f", cached.protein * ratio)
         } else {
             // Fallback to base values if no portion entered yet
-            self.protein = String(format: "%.1f", cached.protein)
-            self.carbs = String(format: "%.1f", cached.carbs)
             self.fat = String(format: "%.1f", cached.fat)
+            self.carbs = String(format: "%.1f", cached.carbs)
+            self.protein = String(format: "%.1f", cached.protein)
         }
     }
     

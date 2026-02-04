@@ -32,12 +32,7 @@ struct EditLogEntryView: View {
                 }
                 
                 Section(header: Text("Total Macros")) {
-                    HStack { Text("Calories"); Spacer(); TextField("0", text: $calories)
-#if os(iOS)
-                            .keyboardType(.decimalPad)
-#endif
-                        .multilineTextAlignment(.trailing) }
-                    HStack { Text("Protein"); Spacer(); TextField("0", text: $protein)
+                    HStack { Text("Fat"); Spacer(); TextField("0", text: $fat)
 #if os(iOS)
                             .keyboardType(.decimalPad)
 #endif
@@ -47,7 +42,7 @@ struct EditLogEntryView: View {
                             .keyboardType(.decimalPad)
 #endif
                         .multilineTextAlignment(.trailing) }
-                    HStack { Text("Fat"); Spacer(); TextField("0", text: $fat)
+                    HStack { Text("Protein"); Spacer(); TextField("0", text: $protein)
 #if os(iOS)
                             .keyboardType(.decimalPad)
 #endif

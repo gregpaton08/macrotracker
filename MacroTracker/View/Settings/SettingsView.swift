@@ -11,12 +11,12 @@ struct SettingsView: View {
     // API Keys & Goals (Keep your existing @AppStorage vars here)
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("usda_api_key") var usdaKey: String = ""
-    @AppStorage("goal_p_min") var pMin: Double = 150
-    @AppStorage("goal_p_max") var pMax: Double = 180
-    @AppStorage("goal_c_min") var cMin: Double = 200
-    @AppStorage("goal_c_max") var cMax: Double = 300
     @AppStorage("goal_f_min") var fMin: Double = 60
     @AppStorage("goal_f_max") var fMax: Double = 80
+    @AppStorage("goal_c_min") var cMin: Double = 200
+    @AppStorage("goal_c_max") var cMax: Double = 300
+    @AppStorage("goal_p_min") var pMin: Double = 150
+    @AppStorage("goal_p_max") var pMax: Double = 180
     
     var body: some View {
         Form {
@@ -24,18 +24,18 @@ struct SettingsView: View {
                 NavigationLink(destination: SavedMealsView()) {
                     Label("Manage Saved Meals", systemImage: "archivebox")
                 }
-                NavigationLink("View Debug Logs", destination: LogViewer())
             }
 
             // ... (Your Goal Sections for Protein, Carbs, Fat) ...
-            Section(header: Text("Protein Goals (g)")) {
+            
+            Section(header: Text("Fat Goals (g)")) {
                 HStack {
-                    TextField("Min", value: $pMin, format: .number)
+                    TextField("Min", value: $fMin, format: .number)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif
                     Text("-")
-                    TextField("Max", value: $pMax, format: .number)
+                    TextField("Max", value: $fMax, format: .number)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif
@@ -55,15 +55,14 @@ struct SettingsView: View {
                         #endif
                 }
             }
-            
-            Section(header: Text("Fat Goals (g)")) {
+            Section(header: Text("Protein Goals (g)")) {
                 HStack {
-                    TextField("Min", value: $fMin, format: .number)
+                    TextField("Min", value: $pMin, format: .number)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif
                     Text("-")
-                    TextField("Max", value: $fMax, format: .number)
+                    TextField("Max", value: $pMax, format: .number)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif

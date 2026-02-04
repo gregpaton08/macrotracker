@@ -51,18 +51,17 @@ struct EditCachedMealView: View {
             }
             
             Section(header: Text("Macros per Portion")) {
-                // I inlined these so we can access @FocusState easily
+                
                 HStack {
-                    Text("Protein (g)")
+                    Text("Fat (g)")
                     Spacer()
-                    TextField("0", text: $protein)
-                        .focused($focusedField, equals: .protein) // 2. BIND FOCUS
+                    TextField("0", text: $fat)
+                        .focused($focusedField, equals: .fat) // 2. BIND FOCUS
                         .multilineTextAlignment(.trailing)
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
                 }
-                
                 HStack {
                     Text("Carbs (g)")
                     Spacer()
@@ -75,10 +74,10 @@ struct EditCachedMealView: View {
                 }
                 
                 HStack {
-                    Text("Fat (g)")
+                    Text("Protein (g)")
                     Spacer()
-                    TextField("0", text: $fat)
-                        .focused($focusedField, equals: .fat) // 2. BIND FOCUS
+                    TextField("0", text: $protein)
+                        .focused($focusedField, equals: .protein) // 2. BIND FOCUS
                         .multilineTextAlignment(.trailing)
                         #if os(iOS)
                         .keyboardType(.decimalPad)

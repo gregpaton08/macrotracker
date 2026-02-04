@@ -37,9 +37,9 @@ struct MealDetailView: View {
                     Text("\(Int(meal.totalCalories))")
                 }
                 HStack {
-                    Text("Protein")
+                    Text("Fat")
                     Spacer()
-                    Text("\(Int(meal.totalProtein))g")
+                    Text("\(Int(meal.totalFat))g")
                 }
                 HStack {
                     Text("Carbs")
@@ -47,9 +47,9 @@ struct MealDetailView: View {
                     Text("\(Int(meal.totalCarbs))g")
                 }
                 HStack {
-                    Text("Fat")
+                    Text("Protein")
                     Spacer()
-                    Text("\(Int(meal.totalFat))g")
+                    Text("\(Int(meal.totalProtein))g")
                 }
             }
             
