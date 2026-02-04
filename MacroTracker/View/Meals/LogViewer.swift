@@ -5,6 +5,8 @@
 //  Created by Gregory Paton on 1/26/26.
 //
 
+// TODO: delete this file
+
 import SwiftUI
 
 struct LogViewer: View {
