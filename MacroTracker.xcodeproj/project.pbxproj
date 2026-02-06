@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6622F27F0C9006A01D1 /* MacroViewModel.swift */; };
-		940AE6652F27F0F2006A01D1 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6642F27F0F2006A01D1 /* Models.swift */; };
-		940AE6672F27F114006A01D1 /* APIClients.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6662F27F114006A01D1 /* APIClients.swift */; };
 		940AE6692F27F128006A01D1 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6682F27F128006A01D1 /* Persistence.swift */; };
 		940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */; };
 		9444E03B2F2843B0007F24A8 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E03A2F2843B0007F24A8 /* Logger.swift */; };
@@ -25,6 +23,12 @@
 		9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */; };
 		946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
 		946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD62F31858700E4F2E4 /* HealthManager.swift */; };
+		946AADE72F35801900E4F2E4 /* GeminiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADE62F35801900E4F2E4 /* GeminiModels.swift */; };
+		946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADE82F35802700E4F2E4 /* USDAModels.swift */; };
+		946AADEC2F35807400E4F2E4 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADEB2F35807400E4F2E4 /* GeminiClient.swift */; };
+		946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADED2F35807C00E4F2E4 /* USDAClient.swift */; };
+		946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */; };
+		946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF22F3580E000E4F2E4 /* ProgressRings.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -53,8 +57,6 @@
 
 /* Begin PBXFileReference section */
 		940AE6622F27F0C9006A01D1 /* MacroViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MacroViewModel.swift; sourceTree = "<group>"; };
-		940AE6642F27F0F2006A01D1 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		940AE6662F27F114006A01D1 /* APIClients.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClients.swift; sourceTree = "<group>"; };
 		940AE6682F27F128006A01D1 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MacroTracker.xcdatamodel; sourceTree = "<group>"; };
 		9444E0382F27F345007F24A8 /* MacroTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacroTracker.entitlements; sourceTree = "<group>"; };
@@ -72,6 +74,12 @@
 		9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "MacroTracker 2.xcdatamodel"; sourceTree = "<group>"; };
 		946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEntity+Extensions.swift"; sourceTree = "<group>"; };
 		946AADD62F31858700E4F2E4 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
+		946AADE62F35801900E4F2E4 /* GeminiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModels.swift; sourceTree = "<group>"; };
+		946AADE82F35802700E4F2E4 /* USDAModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAModels.swift; sourceTree = "<group>"; };
+		946AADEB2F35807400E4F2E4 /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
+		946AADED2F35807C00E4F2E4 /* USDAClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAClient.swift; sourceTree = "<group>"; };
+		946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDashboard.swift; sourceTree = "<group>"; };
+		946AADF22F3580E000E4F2E4 /* ProgressRings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressRings.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -123,6 +131,7 @@
 		946AADDA2F33F9DB00E4F2E4 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				946AADEF2F3580BB00E4F2E4 /* Components */,
 				946AADE42F33FA9200E4F2E4 /* Settings */,
 				946AADE32F33FA8B00E4F2E4 /* Meals */,
 				946AADE12F33FA7D00E4F2E4 /* Main */,
@@ -142,8 +151,8 @@
 		946AADDC2F33F9F000E4F2E4 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				946AADE52F35800500E4F2E4 /* API */,
 				946AADE02F33FA6200E4F2E4 /* CoreData */,
-				940AE6642F27F0F2006A01D1 /* Models.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -159,9 +168,9 @@
 		946AADDE2F33FA0100E4F2E4 /* Service */ = {
 			isa = PBXGroup;
 			children = (
+				946AADEA2F35806700E4F2E4 /* API */,
 				946AADD62F31858700E4F2E4 /* HealthManager.swift */,
 				9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */,
-				940AE6662F27F114006A01D1 /* APIClients.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -209,6 +218,33 @@
 				9444E04F2F2D9523007F24A8 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		946AADE52F35800500E4F2E4 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				946AADE62F35801900E4F2E4 /* GeminiModels.swift */,
+				946AADE82F35802700E4F2E4 /* USDAModels.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		946AADEA2F35806700E4F2E4 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				946AADEB2F35807400E4F2E4 /* GeminiClient.swift */,
+				946AADED2F35807C00E4F2E4 /* USDAClient.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		946AADEF2F3580BB00E4F2E4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */,
+				946AADF22F3580E000E4F2E4 /* ProgressRings.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		94AFB0B62F26F51100ED36F8 = {
@@ -410,18 +446,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				9444E0482F2D9157007F24A8 /* AddMealView.swift in Sources */,
+				946AADEC2F35807400E4F2E4 /* GeminiClient.swift in Sources */,
 				9444E0522F2D9A77007F24A8 /* EditCachedMealView.swift in Sources */,
+				946AADE72F35801900E4F2E4 /* GeminiModels.swift in Sources */,
 				9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */,
 				9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */,
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
 				946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */,
-				940AE6652F27F0F2006A01D1 /* Models.swift in Sources */,
+				946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */,
+				946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */,
 				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
-				940AE6672F27F114006A01D1 /* APIClients.swift in Sources */,
+				946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */,
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
 				940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */,
 				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
 				9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */,
+				946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,
 				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,

@@ -22,14 +22,14 @@ struct MealDetailView: View {
         List {
             Section(header: Text("Summary")) {
                 HStack {
-                    Text("Time")
-                    Spacer()
-                    Text(meal.timestamp ?? Date(), style: .time)
-                }
-                HStack {
                     Text("Date")
                     Spacer()
                     Text(meal.timestamp ?? Date(), style: .date)
+                }
+                HStack {
+                    Text("Time")
+                    Spacer()
+                    Text(meal.timestamp ?? Date(), style: .time)
                 }
                 HStack {
                     Text("Calories").bold()

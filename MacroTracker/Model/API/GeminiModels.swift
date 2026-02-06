@@ -1,8 +1,8 @@
 //
-//  Models.swift
+//  GeminiModels.swift
 //  MacroTracker
 //
-//  Created by Gregory Paton on 1/26/26.
+//  Created by Gregory Paton on 2/5/26.
 //
 
 import Foundation
@@ -33,21 +33,4 @@ struct ParsedFoodIntent: Codable {
         let search_term: String
         let estimated_weight_grams: Double
     }
-}
-
-// MARK: - USDA API Response (Defensive Version)
-struct USDAFoodSearchResponse: Codable {
-    // OPTIONAL: Prevents crash if USDA returns an error object instead of food list
-    let foods: [USDAFood]?
-}
-
-struct USDAFood: Codable {
-    let fdcId: Int?
-    let description: String?
-    let foodNutrients: [USDANutrient]?
-}
-
-struct USDANutrient: Codable {
-    let nutrientId: Int?
-    let value: Double? // OPTIONAL: Sometimes null in USDA database
 }
