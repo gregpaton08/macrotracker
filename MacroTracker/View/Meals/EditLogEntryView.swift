@@ -19,7 +19,7 @@ struct EditLogEntryView: View {
     @State private var carbs: String = ""
     @State private var fat: String = ""
     
-    // 1. Focus State
+    // Focus State
     enum Field: Hashable {
         case summary, fat, carbs, protein
     }
@@ -81,7 +81,6 @@ struct EditLogEntryView: View {
                     Button("Save") { saveChanges() }
                 }
                 
-                // MARK: - KEYBOARD TOOLBAR
                 ToolbarItemGroup(placement: .keyboard) {
                     Button(action: { moveFocus(direction: -1) }) {
                         Image(systemName: "chevron.up")
@@ -95,6 +94,15 @@ struct EditLogEntryView: View {
                     
                     Spacer()
                     Button("Done") { focusedField = nil }
+                }
+            }
+            // MARK: - THE FIX: Auto-Select Text on Focus
+            .onChange(of: focusedField) { newValue in
+                guard newValue != nil else { return }
+                
+                // Slight delay ensures the field is fully active before selecting
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
                 }
             }
             .onAppear {
