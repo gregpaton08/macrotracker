@@ -32,32 +32,24 @@ class MacroViewModel: ObservableObject {
     
     // MARK: - Logic
     
-    func saveMeal(description: String, p: Double, f: Double, c: Double, weight: Double) {
-        let newMeal = MealEntity(context: context)
-        newMeal.id = UUID()
-        newMeal.timestamp = Date()
-        newMeal.summary = description
-        
-        // Save Totals
-        newMeal.totalProtein = p
-        newMeal.totalFat = f
-        newMeal.totalCarbs = c
-        // Note: Calories are calculated dynamically in your extension,
-        // but if you kept the attribute, uncomment below:
-        // newMeal.totalCalories = kcal
-        
-        // Create Ingredient (Child)
-        let ingredient = FoodEntity(context: context)
-    
-        ingredient.name = description
-        ingredient.weightGrams = weight
-        ingredient.protein = p
-        ingredient.fat = f
-        ingredient.carbs = c
-        ingredient.meal = newMeal
-        
-        saveContext()
-    }
+    // Updated signature
+        func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String) {
+            let newMeal = MealEntity(context: context)
+            newMeal.id = UUID()
+            newMeal.timestamp = Date()
+            newMeal.summary = description
+            
+            // Macros
+            newMeal.totalProtein = p
+            newMeal.totalFat = f
+            newMeal.totalCarbs = c
+            
+            // NEW: Semantic Naming
+            newMeal.portion = portion
+            newMeal.portionUnit = portionUnit
+            
+            saveContext()
+        }
     
     /// Orchestrates the AI + USDA flow
     func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {

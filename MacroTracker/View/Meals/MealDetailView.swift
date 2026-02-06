@@ -13,11 +13,6 @@ struct MealDetailView: View {
     @ObservedObject var meal: MealEntity
     @State private var isEditing = false
     
-    var ingredients: [FoodEntity] {
-        let set = meal.ingredients as? Set<FoodEntity> ?? []
-        return set.sorted { $0.name ?? "" < $1.name ?? "" }
-    }
-    
     var body: some View {
         List {
             Section(header: Text("Summary")) {
@@ -31,6 +26,13 @@ struct MealDetailView: View {
                     Spacer()
                     Text(meal.timestamp ?? Date(), style: .time)
                 }
+                HStack {
+                            Text("Portion")
+                            Spacer()
+                            // Display: "2.0 slice" or "150.0 g"
+                            Text("\(String(format: "%.1f", meal.portion)) \(meal.portionUnit ?? "")")
+                                .foregroundColor(.secondary)
+                        }
                 HStack {
                     Text("Calories").bold()
                     Spacer()
@@ -50,29 +52,6 @@ struct MealDetailView: View {
                     Text("Protein")
                     Spacer()
                     Text("\(Int(meal.totalProtein))g")
-                }
-            }
-            
-            Section(header: Text("Ingredients")) {
-                if ingredients.isEmpty {
-                    Text("No individual ingredients listed.")
-                        .foregroundColor(.gray)
-                } else {
-                    ForEach(ingredients) { food in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(food.name ?? "Unknown")
-                                Text("\(Int(food.weightGrams))g").font(.caption).foregroundColor(.gray)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing) {
-                                Text("\(Int(food.calories)) kcal").font(.caption).bold()
-                                Text("P:\(Int(food.protein)) C:\(Int(food.carbs)) F:\(Int(food.fat))")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
                 }
             }
         }

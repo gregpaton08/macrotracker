@@ -20,16 +20,6 @@ extension MealEntity {
     }
 }
 
-extension FoodEntity {
-    var calories: Double {
-        let p = self.protein
-        let c = self.carbs
-        let f = self.fat
-        
-        return (p * 4) + (c * 4) + (f * 9)
-    }
-}
-
 extension CachedMealEntity {
     var calories: Double {
         let p = self.protein
