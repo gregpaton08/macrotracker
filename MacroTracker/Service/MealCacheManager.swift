@@ -12,37 +12,44 @@ struct MealCacheManager {
     static let shared = MealCacheManager()
     private let viewContext = PersistenceController.shared.container.viewContext
     
-    // 1. Save or Update a Meal in the Cache
+    // 1. Save Template (Unique by Name, No Overwrite)
     func cacheMeal(name: String, p: Double, f: Double, c: Double, portion: String, unit: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
+        guard !cleanName.isEmpty else { return }
         
-        // Check if exists
         let fetch: NSFetchRequest<CachedMealEntity> = CachedMealEntity.fetchRequest()
-        fetch.predicate = NSPredicate(format: "name == %@", cleanName)
+        fetch.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
         fetch.fetchLimit = 1
         
         do {
             let results = try viewContext.fetch(fetch)
-            let entity: CachedMealEntity
             
             if let existing = results.first {
-                entity = existing // Update existing
+                // MARK: - TEMPLATE EXISTS
+                // Logic: Do NOT overwrite macros. Just update 'lastUsed'
+                // so it appears at the top of your autocomplete next time.
+                existing.lastUsed = Date()
+                
+                // We deliberately DO NOT update protein, fat, carbs, etc.
+                // This ensures your saved template remains a static reference.
+                
             } else {
-                entity = CachedMealEntity(context: viewContext) // Create new
-                entity.name = cleanName
+                // MARK: - NEW TEMPLATE
+                // Only create a new entry if one doesn't exist
+                let newEntity = CachedMealEntity(context: viewContext)
+                newEntity.name = cleanName
+                newEntity.protein = p
+                newEntity.fat = f
+                newEntity.carbs = c
+                newEntity.portionSize = portion
+                newEntity.unit = unit
+                newEntity.lastUsed = Date()
             }
             
-            // Update values (Learning the latest usage)
-            entity.protein = p
-            entity.fat = f
-            entity.carbs = c
-            entity.portionSize = portion
-            entity.unit = unit
-            entity.lastUsed = Date()
-            
             try viewContext.save()
+            
         } catch {
-            print("Failed to cache meal: \(error)")
+            print("Failed to access meal cache: \(error)")
         }
     }
     
