@@ -4,7 +4,6 @@
 //
 //  Created by Gregory Paton on 1/28/26.
 //
-// This is the main view where you enter in food you ate and it shows a history of food items.
 
 import SwiftUI
 import CoreData
@@ -12,63 +11,87 @@ import CoreData
 struct TrackerView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    // Date State
-    @State private var selectedDate = Date()
+    // MARK: - State
+    @State private var dayOffset: Int = 0
     @State private var showAddMeal = false
     @State private var showSettings = false
     
+    private let anchorDate: Date = Calendar.current.startOfDay(for: Date())
+    
+    private var selectedDate: Date {
+        Calendar.current.date(byAdding: .day, value: dayOffset, to: anchorDate) ?? anchorDate
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Date Navigator
+            
+            // MARK: - Date Navigator Header
             HStack {
-                Button(action: { moveDate(by: -1) }) {
-                    Image(systemName: "chevron.left").padding()
+                Button(action: { changeDay(by: -1) }) {
+                    Image(systemName: "chevron.left")
+                        .padding()
+                        .contentShape(Rectangle())
                 }
                 
                 Spacer()
                 
-                Button(action: { withAnimation { selectedDate = Date() } }) {
-                    VStack {
+                // CENTER DATE DISPLAY
+                Button(action: { withAnimation { dayOffset = 0 } }) {
+                    VStack(spacing: 2) {
                         Text(selectedDate, style: .date)
                             .font(.headline)
                             .foregroundColor(.primary)
-                        if Calendar.current.isDateInToday(selectedDate) {
-                            Text("Today").font(.caption).foregroundColor(.blue)
-                        }
+                            // 1. FIXED WIDTH: Prevents horizontal jitter when "Jan 1" becomes "Jan 12"
+                            .frame(width: 200)
+                            .lineLimit(1)
+                        
+                        // 2. OPACITY VS IF/ELSE: Keeps the layout height identical even when hidden
+                        Text("Today")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.blue)
+                            .opacity(dayOffset == 0 ? 1 : 0)
                     }
                 }
+                .buttonStyle(.plain)
                 
                 Spacer()
                 
-                Button(action: { moveDate(by: 1) }) {
-                    Image(systemName: "chevron.right").padding()
+                Button(action: { changeDay(by: 1) }) {
+                    Image(systemName: "chevron.right")
+                        .padding()
+                        .contentShape(Rectangle())
                 }
             }
-            .padding(.vertical, 10)
-#if os(iOS)
-            .background(
-                Color(uiColor: .secondarySystemBackground))
-#else
-            .background(
-                Color(nsColor: .controlBackgroundColor))
-#endif
+            .padding(.vertical, 8)
+            // 3. FIXED HEIGHT: Forces the header to stay exactly this tall
+            // This prevents the TabView below it from ever being "nudged"
+            .frame(height: 60)
+            .background(Color(.secondarySystemBackground))
             
-            // MARK: - Combined Dashboard
-            DailyDashboard(date: selectedDate)
+            // MARK: - Paging Content Area
+            TabView(selection: $dayOffset) {
+                ForEach(-365...365, id: \.self) { offset in
+                    let dateForPage = Calendar.current.date(
+                        byAdding: .day,
+                        value: offset,
+                        to: anchorDate
+                    ) ?? anchorDate
+                    
+                    LazyView(DailyDashboard(date: dateForPage))
+                        .tag(offset)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .navigationTitle("Tracker")
-#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-#endif
         .toolbar {
-#if os(iOS)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showSettings.toggle() }) {
                     Image(systemName: "gear")
                 }
             }
-#endif
-            
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showAddMeal.toggle() }) {
                     Image(systemName: "plus")
@@ -76,10 +99,10 @@ struct TrackerView: View {
             }
         }
         .sheet(isPresented: $showAddMeal) {
-                AddMealView(
-                    viewModel: MacroViewModel(context: viewContext),
-                    targetDate: selectedDate // PASS SELECTED DATE
-                )
+            AddMealView(
+                viewModel: MacroViewModel(context: viewContext),
+                targetDate: selectedDate
+            )
         }
         .sheet(isPresented: $showSettings) {
             NavigationView {
@@ -88,9 +111,19 @@ struct TrackerView: View {
         }
     }
     
-    private func moveDate(by days: Int) {
+    private func changeDay(by value: Int) {
         withAnimation {
-            selectedDate = Calendar.current.date(byAdding: .day, value: days, to: selectedDate) ?? Date()
+            dayOffset += value
         }
+    }
+}
+
+struct LazyView<Content: View>: View {
+    let build: () -> Content
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+    var body: some View {
+        build()
     }
 }

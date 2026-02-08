@@ -59,6 +59,8 @@ Schema:
 
 Gemini 3 Pro claims to 1M token context window size.
 
+[Sample templates](https://github.com/mufeedvh/code2prompt/tree/main/crates/code2prompt-core/templates).
+
 ```bash
 cargo install code2prompt --version 3.0.2 # `source_tree` is broken in latest
 
