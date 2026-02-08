@@ -32,24 +32,45 @@ class MacroViewModel: ObservableObject {
     
     // MARK: - Logic
     
-    // Updated signature
-        func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String) {
-            let newMeal = MealEntity(context: context)
-            newMeal.id = UUID()
-            newMeal.timestamp = Date()
-            newMeal.summary = description
-            
-            // Macros
-            newMeal.totalProtein = p
-            newMeal.totalFat = f
-            newMeal.totalCarbs = c
-            
-            // NEW: Semantic Naming
-            newMeal.portion = portion
-            newMeal.portionUnit = portionUnit
-            
-            saveContext()
-        }
+    // Add 'date: Date' to the signature
+    func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) {
+        let newMeal = MealEntity(context: context)
+        newMeal.id = UUID()
+        
+        // MARK: - THE FIX
+        // Use the passed date, but preserve the current time if possible?
+        // Actually, just using the passed date (which is usually 00:00 or current time) is fine.
+        // Better logic: Combine the 'date' (Day/Month/Year) with the current 'time' (Hour/Minute)
+        // so meals don't all stack at midnight.
+        newMeal.timestamp = combineDate(date, withTime: Date())
+        
+        newMeal.summary = description
+        
+        newMeal.totalProtein = p
+        newMeal.totalFat = f
+        newMeal.totalCarbs = c
+        
+        newMeal.portion = portion
+        newMeal.portionUnit = portionUnit
+        
+        saveContext()
+    }
+    
+    // Helper to keep the day correct but use "Now" for the time sorting
+    private func combineDate(_ date: Date, withTime time: Date) -> Date {
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+        
+        return calendar.date(from: DateComponents(
+            year: dateComponents.year,
+            month: dateComponents.month,
+            day: dateComponents.day,
+            hour: timeComponents.hour,
+            minute: timeComponents.minute,
+            second: timeComponents.second
+        )) ?? date
+    }
     
     /// Orchestrates the AI + USDA flow
     func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {

@@ -34,6 +34,7 @@ struct AddMealView: View {
     }
     
     let units = ["g", "oz", "ml", "cups", "tbsp", "tsp", "pieces", "slice"]
+    var targetDate: Date
     
     // Autocomplete...
     @FetchRequest(
@@ -48,7 +49,7 @@ struct AddMealView: View {
             ($0.name ?? "").localizedCaseInsensitiveContains(description)
         }
     }
-
+    
     var body: some View {
         NavigationView {
             Form {
@@ -218,28 +219,26 @@ struct AddMealView: View {
     }
     
     private func saveMeal() {
-            let p = Double(protein) ?? 0
-            let f = Double(fat) ?? 0
-            let c = Double(carbs) ?? 0
-            
-            // "portionSize" is the text field string
-            let amount = Double(portionSize) ?? 0
-            
-            viewModel.saveMeal(
-                description: description,
-                p: p, f: f, c: c,
-                portion: amount,       // Pass as 'portion'
-                portionUnit: selectedUnit // Pass 'portionUnit' (e.g. "slice")
-            )
-            
-            // Cache Logic (Unchanged names in CacheManager for now, or update those too)
-            MealCacheManager.shared.cacheMeal(
-                name: description,
-                p: p, f: f, c: c,
-                portion: portionSize,
-                unit: selectedUnit
-            )
-            
-            presentationMode.wrappedValue.dismiss()
-        }
+        let p = Double(protein) ?? 0
+        let f = Double(fat) ?? 0
+        let c = Double(carbs) ?? 0
+        let amount = Double(portionSize) ?? 0
+        
+        viewModel.saveMeal(
+            description: description,
+            p: p, f: f, c: c,
+            portion: amount,
+            portionUnit: selectedUnit,
+            date: targetDate // PASS THE DATE HERE
+        )
+        
+        MealCacheManager.shared.cacheMeal(
+            name: description,
+            p: p, f: f, c: c,
+            portion: portionSize,
+            unit: selectedUnit
+        )
+        
+        presentationMode.wrappedValue.dismiss()
+    }
 }

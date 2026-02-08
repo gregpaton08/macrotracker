@@ -76,7 +76,10 @@ struct TrackerView: View {
             }
         }
         .sheet(isPresented: $showAddMeal) {
-            AddMealView(viewModel: MacroViewModel(context: viewContext))
+                AddMealView(
+                    viewModel: MacroViewModel(context: viewContext),
+                    targetDate: selectedDate // PASS SELECTED DATE
+                )
         }
         .sheet(isPresented: $showSettings) {
             NavigationView {
