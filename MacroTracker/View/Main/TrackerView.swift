@@ -13,13 +13,18 @@ struct TrackerView: View {
     
     // MARK: - State
     @State private var dayOffset: Int = 0
+    @State private var displayedOffset: Int = 0
     @State private var showAddMeal = false
     @State private var showSettings = false
-    
+
     private let anchorDate: Date = Calendar.current.startOfDay(for: Date())
-    
+
     private var selectedDate: Date {
         Calendar.current.date(byAdding: .day, value: dayOffset, to: anchorDate) ?? anchorDate
+    }
+
+    private var displayedDate: Date {
+        Calendar.current.date(byAdding: .day, value: displayedOffset, to: anchorDate) ?? anchorDate
     }
 
     var body: some View {
@@ -38,19 +43,17 @@ struct TrackerView: View {
                 // CENTER DATE DISPLAY
                 Button(action: { withAnimation { dayOffset = 0 } }) {
                     VStack(spacing: 2) {
-                        Text(selectedDate, style: .date)
+                        Text(displayedDate, style: .date)
                             .font(.headline)
                             .foregroundColor(.primary)
-                            // 1. FIXED WIDTH: Prevents horizontal jitter when "Jan 1" becomes "Jan 12"
                             .frame(width: 200)
                             .lineLimit(1)
-                        
-                        // 2. OPACITY VS IF/ELSE: Keeps the layout height identical even when hidden
+
                         Text("Today")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
-                            .opacity(dayOffset == 0 ? 1 : 0)
+                            .opacity(displayedOffset == 0 ? 1 : 0)
                     }
                 }
                 .buttonStyle(.plain)
@@ -71,7 +74,8 @@ struct TrackerView: View {
             
             // MARK: - Paging Content Area
             TabView(selection: $dayOffset) {
-                ForEach(-365...365, id: \.self) { offset in
+                // TODO: NOTE: this only allows you to scroll back 10 days. If you set this number too large then perform suffers (there is a huge delay in the middle of swiping).
+                ForEach(-10...0, id: \.self) { offset in
                     let dateForPage = Calendar.current.date(
                         byAdding: .day,
                         value: offset,
@@ -83,6 +87,9 @@ struct TrackerView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+        }
+        .onChange(of: dayOffset) { newValue in
+            displayedOffset = newValue
         }
         .navigationTitle("Tracker")
         .navigationBarTitleDisplayMode(.inline)
