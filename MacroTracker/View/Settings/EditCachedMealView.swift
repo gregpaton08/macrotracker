@@ -27,8 +27,6 @@ struct EditCachedMealView: View {
     }
     @FocusState private var focusedField: Field?
     
-    let units = ["grams", "ounces", "cups", "slices", "pieces", "whole", "ml", "tbsp", "tsp"]
-    
     var body: some View {
         Form {
             Section(header: Text("Details")) {
@@ -42,7 +40,7 @@ struct EditCachedMealView: View {
                         .keyboardType(.decimalPad)
                         #endif
                     Picker("Unit", selection: $unit) {
-                        ForEach(units, id: \.self) { unit in
+                        ForEach(MealEntity.validUnits, id: \.self) { unit in
                             Text(unit).tag(unit)
                         }
                     }

@@ -33,7 +33,6 @@ struct AddMealView: View {
         case description, portion, fat, carbs, protein
     }
     
-    let units = ["g", "oz", "ml", "cups", "tbsp", "tsp", "pieces", "slice"]
     var targetDate: Date
     
     // Autocomplete...
@@ -91,7 +90,7 @@ struct AddMealView: View {
                             .onChange(of: portionSize) { _ in recalculateMacros() }
                         
                         Picker("Unit", selection: $selectedUnit) {
-                            ForEach(units, id: \.self) { unit in
+                            ForEach(MealEntity.validUnits, id: \.self) { unit in
                                 Text(unit).tag(unit)
                             }
                         }

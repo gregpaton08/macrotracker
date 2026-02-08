@@ -18,6 +18,8 @@ extension MealEntity {
         
         return (p * 4) + (c * 4) + (f * 9)
     }
+    
+    static let validUnits = ["", "g", "ml", "oz", "fl oz", "cups", "tbsp", "tsp", "piece", "slice"]
 }
 
 extension CachedMealEntity {

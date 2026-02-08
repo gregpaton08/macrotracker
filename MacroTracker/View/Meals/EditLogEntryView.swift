@@ -28,9 +28,6 @@ struct EditLogEntryView: View {
     @State private var densityC: Double = 0
     @State private var densityF: Double = 0
     
-    // Standard units + abstract ones
-    let units = ["g", "oz", "ml", "cups", "tbsp", "tsp", "pieces", "slice", "whole"]
-    
     enum Field: Hashable { case summary, portion, fat, carbs, protein }
     @FocusState private var focusedField: Field?
     
@@ -52,7 +49,7 @@ struct EditLogEntryView: View {
                             .onChange(of: portion) { _ in scaleMacros() }
                         
                         Picker("Unit", selection: $portionUnit) {
-                            ForEach(units, id: \.self) { Text($0).tag($0) }
+                            ForEach(MealEntity.validUnits, id: \.self) { Text($0).tag($0) }
                         }
                         .labelsHidden()
                         // If unit changes (e.g. oz -> g), we might need to handle conversion
