@@ -1,3 +1,10 @@
+//
+//  AddMealView.swift
+//  MacroTracker
+//
+//  Created by Gregory Paton on 1/30/26.
+//
+
 import SwiftUI
 import CoreData
 

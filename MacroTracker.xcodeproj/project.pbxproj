@@ -28,6 +28,7 @@
 		946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADED2F35807C00E4F2E4 /* USDAClient.swift */; };
 		946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */; };
 		946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF22F3580E000E4F2E4 /* ProgressRings.swift */; };
+		946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -78,6 +79,7 @@
 		946AADED2F35807C00E4F2E4 /* USDAClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAClient.swift; sourceTree = "<group>"; };
 		946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDashboard.swift; sourceTree = "<group>"; };
 		946AADF22F3580E000E4F2E4 /* ProgressRings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressRings.swift; sourceTree = "<group>"; };
+		946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransferManager.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				946AADEA2F35806700E4F2E4 /* API */,
 				946AADD62F31858700E4F2E4 /* HealthManager.swift */,
 				9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */,
+				946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -464,6 +467,7 @@
 				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,
 				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,
 				9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */,
+				946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
