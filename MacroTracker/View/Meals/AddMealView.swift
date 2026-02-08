@@ -1,10 +1,3 @@
-//
-//  AddMealView.swift
-//  MacroTracker
-//
-//  Created by Gregory Paton on 1/30/26.
-//
-
 import SwiftUI
 import CoreData
 
@@ -12,7 +5,10 @@ struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: MacroViewModel
     
-    // MARK: - State
+    // External Date Logic
+    var targetDate: Date
+    
+    // Inputs
     @State private var description: String = ""
     @State private var portionSize: String = ""
     @State private var selectedUnit: String = "g"
@@ -26,16 +22,13 @@ struct AddMealView: View {
     @State private var activeCachedMeal: CachedMealEntity? = nil
     @State private var isCalculating = false
     
-    // 1. Focus State
+    // Focus
     @FocusState private var focusedField: Field?
-    
     enum Field: Hashable {
         case description, portion, fat, carbs, protein
     }
     
-    var targetDate: Date
-    
-    // Autocomplete...
+    // Autocomplete
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.lastUsed, ascending: false)],
         animation: .default
@@ -48,23 +41,23 @@ struct AddMealView: View {
             ($0.name ?? "").localizedCaseInsensitiveContains(description)
         }
     }
-    
+
     var body: some View {
         NavigationView {
             Form {
+                // MARK: - SECTION 1: FOOD DETAILS
                 Section(header: Text("Food Details")) {
                     // Description
                     VStack(alignment: .leading, spacing: 0) {
-                        TextField("Description (e.g. Chicken Breast)", text: $description)
+                        TextField("Description (e.g. Chicken)", text: $description)
                             .focused($focusedField, equals: .description)
                             .submitLabel(.next)
                             .onChange(of: description) { newValue in
                                 if let active = activeCachedMeal, active.name != newValue {
-                                    // activeCachedMeal = nil // Optional
+                                    // activeCachedMeal = nil
                                 }
                             }
                         
-                        // Suggestions List
                         if !suggestions.isEmpty && focusedField == .description {
                             List {
                                 ForEach(suggestions.prefix(3), id: \.self) { meal in
@@ -82,7 +75,7 @@ struct AddMealView: View {
                         }
                     }
                     
-                    // Portion
+                    // Portion & Unit
                     HStack {
                         TextField("Portion", text: $portionSize)
                             .focused($focusedField, equals: .portion)
@@ -108,30 +101,49 @@ struct AddMealView: View {
                     .disabled(description.isEmpty || isCalculating)
                 }
                 
+                // MARK: - SECTION 2: MACROS (Compact Row)
                 Section(header: Text("Macros (Auto-Scales)")) {
-                    HStack {
-                        Text("Fat (g)"); Spacer()
-                        TextField("0", text: $fat)
-                            .focused($focusedField, equals: .fat)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.decimalPad)
+                    HStack(spacing: 20) {
+                        // FAT
+                        VStack(alignment: .center, spacing: 4) {
+                            Text("Fat").font(.caption).bold().foregroundColor(.red)
+                            TextField("0", text: $fat)
+                                .focused($focusedField, equals: .fat)
+                                .multilineTextAlignment(.center)
+                                .keyboardType(.decimalPad)
+                                .padding(8)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(8)
+                        }
+                        
+                        // CARBS
+                        VStack(alignment: .center, spacing: 4) {
+                            Text("Carbs").font(.caption).bold().foregroundColor(.blue)
+                            TextField("0", text: $carbs)
+                                .focused($focusedField, equals: .carbs)
+                                .multilineTextAlignment(.center)
+                                .keyboardType(.decimalPad)
+                                .padding(8)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(8)
+                        }
+                        
+                        // PROTEIN
+                        VStack(alignment: .center, spacing: 4) {
+                            Text("Protein").font(.caption).bold().foregroundColor(.green)
+                            TextField("0", text: $protein)
+                                .focused($focusedField, equals: .protein)
+                                .multilineTextAlignment(.center)
+                                .keyboardType(.decimalPad)
+                                .padding(8)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(8)
+                        }
                     }
-                    HStack {
-                        Text("Carbs (g)"); Spacer()
-                        TextField("0", text: $carbs)
-                            .focused($focusedField, equals: .carbs)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.decimalPad)
-                    }
-                    HStack {
-                        Text("Protein (g)"); Spacer()
-                        TextField("0", text: $protein)
-                            .focused($focusedField, equals: .protein)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.decimalPad)
-                    }
+                    .padding(.vertical, 4)
                 }
                 
+                // Bottom Save Button (Optional but convenient)
                 Section {
                     Button("Save Meal") { saveMeal() }
                         .disabled(description.isEmpty)
@@ -139,24 +151,33 @@ struct AddMealView: View {
             }
             .navigationTitle("Add Meal")
             .toolbar {
+                // Cancel (Left)
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { presentationMode.wrappedValue.dismiss() }
                 }
                 
-                // MARK: - KEYBOARD NAVIGATION
+                // MARK: - THE NEW SAVE BUTTON (Right)
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveMeal() }
+                        .disabled(description.isEmpty)
+                        .bold()
+                }
+                
+                // Keyboard Toolbar (Arrows)
                 ToolbarItemGroup(placement: .keyboard) {
-                    Button(action: { moveFocus(direction: -1) }) {
-                        Image(systemName: "chevron.up")
-                    }
-                    .disabled(focusedField == .description)
-                    
-                    Button(action: { moveFocus(direction: 1) }) {
-                        Image(systemName: "chevron.down")
-                    }
-                    .disabled(focusedField == .protein)
-                    
+                    Button(action: { moveFocus(-1) }) { Image(systemName: "chevron.up") }
+                        .disabled(focusedField == .description)
+                    Button(action: { moveFocus(1) }) { Image(systemName: "chevron.down") }
+                        .disabled(focusedField == .protein)
                     Spacer()
                     Button("Done") { focusedField = nil }
+                }
+            }
+            // Auto-Select Text Logic
+            .onChange(of: focusedField) { newValue in
+                guard newValue != nil else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
                 }
             }
         }
@@ -164,17 +185,13 @@ struct AddMealView: View {
     
     // MARK: - Logic
     
-    private func moveFocus(direction: Int) {
+    private func moveFocus(_ direction: Int) {
         let order: [Field] = [.description, .portion, .fat, .carbs, .protein]
         guard let current = focusedField, let index = order.firstIndex(of: current) else { return }
-        let nextIndex = index + direction
-        if nextIndex >= 0 && nextIndex < order.count {
-            focusedField = order[nextIndex]
-        }
+        let next = index + direction
+        if next >= 0 && next < order.count { focusedField = order[next] }
     }
     
-    // ... (Keep existing applyCachedMeal, recalculateMacros, performAIAnalysis, saveMeal logic) ...
-    // Note: Ensure you copy the previous logic methods here (omitted for brevity)
     private func applyCachedMeal(_ meal: CachedMealEntity) {
         self.activeCachedMeal = meal
         self.description = meal.name ?? ""
@@ -228,14 +245,11 @@ struct AddMealView: View {
             p: p, f: f, c: c,
             portion: amount,
             portionUnit: selectedUnit,
-            date: targetDate // PASS THE DATE HERE
+            date: targetDate
         )
         
         MealCacheManager.shared.cacheMeal(
-            name: description,
-            p: p, f: f, c: c,
-            portion: portionSize,
-            unit: selectedUnit
+            name: description, p: p, f: f, c: c, portion: portionSize, unit: selectedUnit
         )
         
         presentationMode.wrappedValue.dismiss()
