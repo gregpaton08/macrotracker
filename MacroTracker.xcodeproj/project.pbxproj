@@ -139,13 +139,11 @@
 		946AADDA2F33F9DB00E4F2E4 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				946AADFE2F397B1A00E4F2E4 /* Insights */,
 				946AADEF2F3580BB00E4F2E4 /* Components */,
 				946AADE42F33FA9200E4F2E4 /* Settings */,
 				946AADE32F33FA8B00E4F2E4 /* Meals */,
 				946AADE12F33FA7D00E4F2E4 /* Main */,
-				946AADF62F39707400E4F2E4 /* InsightsView.swift */,
-				946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */,
-				946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -257,6 +255,16 @@
 				946AADF22F3580E000E4F2E4 /* ProgressRings.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		946AADFE2F397B1A00E4F2E4 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */,
+				946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */,
+				946AADF62F39707400E4F2E4 /* InsightsView.swift */,
+			);
+			path = Insights;
 			sourceTree = "<group>";
 		};
 		94AFB0B62F26F51100ED36F8 = {

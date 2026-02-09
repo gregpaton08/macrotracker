@@ -10,7 +10,6 @@ I want a dead simple way to track my macros. I'm prioritizing ease of use over h
 
 * Export backups and load from backup
 * Flesh out data model fully
-* Weekly and monthly view. Custom time range.
 
 ### Backlog
 
