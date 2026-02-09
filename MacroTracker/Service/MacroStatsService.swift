@@ -4,9 +4,6 @@
 //
 //  Created by Gregory Paton on 2/8/26.
 //
-//  MacroStatsService.swift
-//  MacroTracker
-//
 //  Provides read-only aggregation helpers over MealEntity data
 //  for the Insights feature (calendar dots + averages).
 //

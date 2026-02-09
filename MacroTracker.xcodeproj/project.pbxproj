@@ -14,7 +14,6 @@
 		9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0432F2AF253007F24A8 /* TrackerView.swift */; };
 		9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0452F2C51C5007F24A8 /* MealDetailView.swift */; };
 		9444E0482F2D9157007F24A8 /* AddMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0472F2D9157007F24A8 /* AddMealView.swift */; };
-		9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0492F2D918D007F24A8 /* LocalParser.swift */; };
 		9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */; };
 		9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */; };
 		9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E04F2F2D9523007F24A8 /* SettingsView.swift */; };
@@ -68,7 +67,6 @@
 		9444E0432F2AF253007F24A8 /* TrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerView.swift; sourceTree = "<group>"; };
 		9444E0452F2C51C5007F24A8 /* MealDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealDetailView.swift; sourceTree = "<group>"; };
 		9444E0472F2D9157007F24A8 /* AddMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMealView.swift; sourceTree = "<group>"; };
-		9444E0492F2D918D007F24A8 /* LocalParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalParser.swift; sourceTree = "<group>"; };
 		9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealCacheManager.swift; sourceTree = "<group>"; };
 		9444E04D2F2D94FB007F24A8 /* SavedMealsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealsView.swift; sourceTree = "<group>"; };
 		9444E04F2F2D9523007F24A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -185,14 +183,6 @@
 			path = Service;
 			sourceTree = "<group>";
 		};
-		946AADDF2F33FA0600E4F2E4 /* Utility */ = {
-			isa = PBXGroup;
-			children = (
-				9444E0492F2D918D007F24A8 /* LocalParser.swift */,
-			);
-			path = Utility;
-			sourceTree = "<group>";
-		};
 		946AADE02F33FA6200E4F2E4 /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
@@ -297,7 +287,6 @@
 				946AADDC2F33F9F000E4F2E4 /* Model */,
 				94AFB0C82F26F51300ED36F8 /* Preview Content */,
 				946AADDE2F33FA0100E4F2E4 /* Service */,
-				946AADDF2F33FA0600E4F2E4 /* Utility */,
 				946AADDA2F33F9DB00E4F2E4 /* View */,
 				946AADDD2F33F9F800E4F2E4 /* ViewModel */,
 			);
@@ -483,7 +472,6 @@
 				940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */,
 				946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */,
 				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
-				9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */,
 				946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,

@@ -6,10 +6,12 @@
 //
 
 import CoreData
+import OSLog
 
 struct PersistenceController {
     static let shared = PersistenceController()
 
+    private let logger = Logger(subsystem: "com.macrotracker", category: "Persistence")
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
@@ -30,8 +32,7 @@ struct PersistenceController {
         
         container.loadPersistentStores { (storeDescription, error) in
             if let error = error as NSError? {
-                // In production, handle this error appropriately
-//                Logger.log("CoreData Error: \(error), \(error.userInfo)", category: .coreData, level: .error)
+                fatalError("CoreData failed to load: \(error), \(error.userInfo)")
             }
         }
     }
@@ -42,7 +43,7 @@ struct PersistenceController {
             do {
                 try context.save()
             } catch {
-//                Logger.log("Save Failed: \(error.localizedDescription)", category: .coreData, level: .error)
+                logger.error("CoreData save failed: \(error.localizedDescription)")
             }
         }
     }

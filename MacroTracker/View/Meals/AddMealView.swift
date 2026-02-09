@@ -28,6 +28,7 @@ struct AddMealView: View {
     // Logic
     @State private var activeCachedMeal: CachedMealEntity? = nil
     @State private var isCalculating = false
+    @State private var showError = false
     
     // Focus
     @FocusState private var focusedField: Field?
@@ -187,6 +188,11 @@ struct AddMealView: View {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
                 }
             }
+            .alert("Error", isPresented: $showError) {
+                Button("OK") { viewModel.errorMessage = nil }
+            } message: {
+                Text(viewModel.errorMessage ?? "An unknown error occurred.")
+            }
         }
     }
     
@@ -236,6 +242,8 @@ struct AddMealView: View {
                 carbs = String(format: "%.1f", result.c)
                 protein = String(format: "%.1f", result.p)
                 activeCachedMeal = nil
+            } else if viewModel.errorMessage != nil {
+                showError = true
             }
             isCalculating = false
         }

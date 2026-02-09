@@ -67,17 +67,14 @@ class GeminiClient {
         if let httpResponse = response as? HTTPURLResponse {
             if httpResponse.statusCode == 429 {
                 self.logger.warning("Rate Limited.")
-                return []
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Rate limited by Gemini API. Please try again shortly."])
             }
             if httpResponse.statusCode != 200 {
                 self.logger.error("Received HTTP response: \(httpResponse.statusCode)")
-                
-                do {
-                    let decodedData = try JSONDecoder().decode(ApiResponse.self, from: data)
+
+                if let decodedData = try? JSONDecoder().decode(ApiResponse.self, from: data) {
                     let userInfo: [String: Any] = [NSLocalizedDescriptionKey: decodedData.message]
                     throw URLError(.badServerResponse, userInfo: userInfo)
-                } catch {
-                    print("Failed to decode JSON body")
                 }
                 throw URLError(.badServerResponse)
             }

@@ -71,3 +71,44 @@ code2prompt . \
   --exclude "**/DerivedData/**,**/Pods/**,**/Carthage/**,**/.build/**,**/fastlane/**,**/*.xcodeproj/**,**/*.xcworkspace/**,**.md**,**.hbs**" \
   --output-file project_context.md
 ```
+
+## Random
+
+```Here's an honest assessment — the app works well on the happy path, but it's not quite v1 ready. The biggest theme is silent failures: when things go wrong, the user sees zeros or empty screens with no explanation.
+
+  Must-fix before release
+
+  1. Errors are invisible to users. MacroViewModel.errorMessage is set on API failures but no view ever displays it. When Gemini is rate-limited (429), the app silently returns 0 for all macros. The user thinks their food has no calories.
+
+  2. CoreData failures are silently swallowed. If loadPersistentStores fails (Persistence.swift:31), the app launches with an empty, non-functional state — looks like total data loss. Every try? viewContext.save() throughout the codebase
+  also discards errors silently.
+
+  3. Gemini error parsing is broken. In GeminiClient.swift:74-83, the inner catch catches both JSON decode failures and the intentional throw URLError on the line above, so the meaningful error message from the API is always lost and
+  replaced with a generic one.
+
+  4. LocalParser is dead code. It exists but is never called anywhere — the hybrid parsing tier described in the architecture isn't wired up.
+
+  Should-fix
+
+  - API keys in UserDefaults — not encrypted, included in unencrypted backups. Keychain is the standard for secrets.
+  - Logger subsystems — two of three use the placeholder "com.yourdomain.yourapp".
+  - Typo in Gemini prompt — "earching" instead of "searching" (GeminiClient.swift:47).
+  - useDummyData = false flag left in production code (GeminiClient.swift:19).
+  - No cancel/timeout on AI analysis — user is stuck if the network hangs.
+  - Deprecated APIs — NavigationView in sheets (use NavigationStack), presentationMode (use dismiss), onChange single-parameter form.
+  - combineSources toggle — tapping "Burned" label secretly changes the calculation mode with no explanation.
+  - Meals with 0 macros get cached — failed API calls create useless saved meal entries.
+
+  Nice-to-have
+
+  - Clean up commented-out code (old Logger calls scattered throughout).
+  - Input validation on macro goal ranges (min > max is allowed).
+  - HealthManager.requestAuthorization() called on every DailyDashboard appear — wasteful.
+  - RingState.icon property is defined but never used.
+
+  ---
+  The core meal tracking flow is solid and the architecture is clean. I'd prioritize making errors visible (wire up errorMessage, show alerts on save failures) and fixing the Gemini error handling bug — those are the difference between
+  "it broke and I don't know why" and a usable v1.
+
+  Want me to tackle any of these?
+```
