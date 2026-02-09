@@ -31,3 +31,7 @@ extension CachedMealEntity {
         return (p * 4) + (c * 4) + (f * 9)
     }
 }
+
+func caloriesFromMacros(fat: Double, carbohydrates: Double, protein: Double) -> Double {
+    return (fat * 9) + (carbohydrates * 4) + (protein * 4)
+}

@@ -29,6 +29,10 @@
 		946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */; };
 		946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF22F3580E000E4F2E4 /* ProgressRings.swift */; };
 		946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */; };
+		946AADF72F39707400E4F2E4 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF62F39707400E4F2E4 /* InsightsView.swift */; };
+		946AADF92F3970AC00E4F2E4 /* MacroCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */; };
+		946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */; };
+		946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -80,6 +84,10 @@
 		946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDashboard.swift; sourceTree = "<group>"; };
 		946AADF22F3580E000E4F2E4 /* ProgressRings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressRings.swift; sourceTree = "<group>"; };
 		946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransferManager.swift; sourceTree = "<group>"; };
+		946AADF62F39707400E4F2E4 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroCalendarView.swift; sourceTree = "<group>"; };
+		946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AveragesMacroView.swift; sourceTree = "<group>"; };
+		946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroStatsService.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -135,6 +143,9 @@
 				946AADE42F33FA9200E4F2E4 /* Settings */,
 				946AADE32F33FA8B00E4F2E4 /* Meals */,
 				946AADE12F33FA7D00E4F2E4 /* Main */,
+				946AADF62F39707400E4F2E4 /* InsightsView.swift */,
+				946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */,
+				946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -171,6 +182,7 @@
 				946AADD62F31858700E4F2E4 /* HealthManager.swift */,
 				9444E04B2F2D94D9007F24A8 /* MealCacheManager.swift */,
 				946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */,
+				946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -451,14 +463,17 @@
 				946AADE72F35801900E4F2E4 /* GeminiModels.swift in Sources */,
 				9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */,
 				9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */,
+				946AADF92F3970AC00E4F2E4 /* MacroCalendarView.swift in Sources */,
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
 				946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */,
 				946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */,
+				946AADF72F39707400E4F2E4 /* InsightsView.swift in Sources */,
 				946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */,
 				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
 				946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */,
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
 				940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */,
+				946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */,
 				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
 				9444E04A2F2D918D007F24A8 /* LocalParser.swift in Sources */,
 				946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */,
@@ -468,6 +483,7 @@
 				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,
 				9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */,
 				946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */,
+				946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
