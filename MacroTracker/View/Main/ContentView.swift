@@ -9,9 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        // Simple, single-screen navigation
+        // Single Navigation Stack for the whole app
         NavigationStack {
             TrackerView()
         }
+        .tint(Theme.tint) // Applies global blue tint
     }
 }

@@ -9,24 +9,18 @@ import Foundation
 import SwiftUI
 import HealthKit
 
-// MARK: - The Unified Dashboard
 struct DailyDashboard: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    // ... FetchRequests and existing Init ...
     @FetchRequest var meals: FetchedResults<MealEntity>
     
-    // HealthKit Data
-    @State private var caloriesBurned: Double = 0.0 // Active Energy (Steps)
+    @State private var caloriesBurned: Double = 0.0
     #if os(iOS)
     @State private var workouts: [HKWorkout] = []
     #endif
     
-    // MARK: - NEW SETTING
-    // Toggle this to fix your specific data issue
     @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
     
-    // ... Goals Init ...
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
     @AppStorage("goal_c_min") var cMin: Double = 200
@@ -49,13 +43,11 @@ struct DailyDashboard: View {
         )
     }
     
-    // Math Helpers
     var totalP: Double { meals.reduce(0) { $0 + $1.totalProtein } }
     var totalC: Double { meals.reduce(0) { $0 + $1.totalCarbs } }
     var totalF: Double { meals.reduce(0) { $0 + $1.totalFat } }
     var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
     
-    // Workouts Total
     var workoutKcal: Double {
         #if os(iOS)
         return workouts.reduce(0) { $0 + ($1.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0) }
@@ -64,15 +56,9 @@ struct DailyDashboard: View {
         #endif
     }
     
-    // MARK: - THE SMART CALCULATION
     var finalBurned: Double {
-        if combineSources {
-            // Your Fix: Add them together (Background Steps + External Workout)
-            return caloriesBurned + workoutKcal
-        } else {
-            // Standard: Active Energy is the source of truth
-            return caloriesBurned
-        }
+        if combineSources { return caloriesBurned + workoutKcal }
+        else { return caloriesBurned }
     }
 
     var body: some View {
@@ -82,20 +68,14 @@ struct DailyDashboard: View {
                     
                     // 1. CALORIE MATH ROW
                     HStack(spacing: 15) {
-                        // IN
-                        VStack {
-                            Text("Eaten").font(.caption).bold().foregroundColor(.secondary)
-                            Text("\(Int(totalKcal))").font(.title3).bold()
-                        }
+                        statColumn(title: "Eaten", value: totalKcal, color: .primary)
                         
                         Text("-").foregroundColor(.secondary)
                         
-                        // OUT (Clickable to Toggle Mode)
                         Button(action: { combineSources.toggle() }) {
-                            VStack {
-                                HStack(spacing: 4) {
+                            VStack(spacing: 2) {
+                                HStack(spacing: 2) {
                                     Text("Burned")
-                                    // Visual indicator of the mode
                                     Image(systemName: combineSources ? "plus.circle.fill" : "flame.fill")
                                         .font(.caption2)
                                 }
@@ -106,59 +86,29 @@ struct DailyDashboard: View {
                                     .contentTransition(.numericText())
                             }
                         }
-                        .buttonStyle(.plain) // Removes default button styling
+                        .buttonStyle(.plain)
                         
                         Text("=").foregroundColor(.secondary)
                         
-                        // NET
-                        VStack {
-                            Text("Net").font(.caption).bold().foregroundColor(.secondary)
-                            Text("\(Int(totalKcal - finalBurned))")
-                                .font(.title3).bold()
-                                .foregroundColor(totalKcal - finalBurned < 0 ? .green : .primary)
-                        }
+                        statColumn(title: "Net", value: totalKcal - finalBurned, color: (totalKcal - finalBurned < 0 ? Theme.good : .primary))
                     }
                     .padding(.bottom, 5)
                     
-                    // 2. EXPLANATION (Only appears if Workouts exist)
-                    #if os(iOS)
-                    if !workouts.isEmpty {
-                        HStack {
-                            Text("Active: \(Int(caloriesBurned))")
-                            Spacer()
-                            Text("+")
-                            Spacer()
-                            Text("Workouts: \(Int(workoutKcal))")
-                        }
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 40)
-                        
-                        if combineSources {
-                            Text("Combining Steps & Workouts")
-                                .font(.caption2)
-                                .foregroundColor(.orange)
-                        }
-                    }
-                    #endif
-
-                    // ... RINGS ...
+                    // 2. RINGS
                     HStack(spacing: 15) {
                         ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
                         ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
                         ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
                     }
-                    .padding(.horizontal, 20)
-
-                    // ... WORKOUTS LIST ...
+                    .padding(.horizontal, 10)
+                    
+                    // 3. WORKOUTS (iOS only)
                     #if os(iOS)
                     if !workouts.isEmpty {
                         Divider()
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Workouts")
-                                .font(.caption).bold()
-                                .foregroundColor(.secondary)
-                                .textCase(.uppercase)
+                                .font(.caption).bold().foregroundColor(.secondary).textCase(.uppercase)
                             
                             ForEach(workouts, id: \.uuid) { workout in
                                 HStack {
@@ -176,29 +126,30 @@ struct DailyDashboard: View {
                     }
                     #endif
                 }
-                .padding(.vertical, 10)
+                .padding(.vertical, 16)
             }
-            .listRowBackground(Color.clear)
+            .listRowBackground(Theme.secondaryBackground)
             .listRowInsets(EdgeInsets())
             
-            // ... MEALS SECTION ...
+            // 4. MEALS
             Section(header: Text("Meals")) {
                 if meals.isEmpty {
-                    Text("No meals logged.")
-                        .foregroundColor(.gray)
+                    Text("No meals logged yet.")
+                        .italic().foregroundColor(.secondary)
+                        .listRowBackground(Color.clear)
                 } else {
                     ForEach(meals) { meal in
                         NavigationLink(destination: MealDetailView(meal: meal)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(meal.summary ?? "Meal").font(.headline)
-                                    Text("F: \(Int(meal.totalFat))   C: \(Int(meal.totalCarbs))   P: \(Int(meal.totalProtein))")
+                                    Text("F: \(Int(meal.totalFat))  C: \(Int(meal.totalCarbs))  P: \(Int(meal.totalProtein))")
                                         .font(.caption).foregroundColor(.secondary).monospacedDigit()
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing) {
                                     Text("\(Int(meal.totalCalories))").bold()
-                                    Text("kcal").font(.caption2).foregroundColor(.gray)
+                                    Text("kcal").font(.caption2).foregroundColor(.secondary)
                                 }
                             }
                         }
@@ -207,6 +158,8 @@ struct DailyDashboard: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
         .task(id: date) {
             caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
             #if os(iOS)
@@ -214,6 +167,13 @@ struct DailyDashboard: View {
             #endif
         }
         .onAppear { HealthManager.shared.requestAuthorization() }
+    }
+    
+    private func statColumn(title: String, value: Double, color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(title).font(.caption).bold().foregroundColor(.secondary)
+            Text("\(Int(value))").font(.title3).bold().foregroundColor(color)
+        }
     }
     
     private func deleteItems(offsets: IndexSet) {

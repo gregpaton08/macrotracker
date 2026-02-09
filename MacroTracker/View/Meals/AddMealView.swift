@@ -27,8 +27,6 @@ struct AddMealView: View {
     
     // Logic
     @State private var activeCachedMeal: CachedMealEntity? = nil
-    @State private var isCalculating = false
-    @State private var showError = false
     
     // Focus
     @FocusState private var focusedField: Field?
@@ -103,10 +101,10 @@ struct AddMealView: View {
                     Button(action: performAIAnalysis) {
                         HStack {
                             Image(systemName: "sparkles")
-                            if isCalculating { Text("Calculating...") } else { Text("Auto-Fill with AI") }
+                            Text("Auto-Fill with AI")
                         }
                     }
-                    .disabled(description.isEmpty || isCalculating)
+                    .disabled(description.isEmpty || viewModel.isLoading)
                 }
                 
                 // MARK: - SECTION 2: MACROS (Compact Row)
@@ -114,44 +112,44 @@ struct AddMealView: View {
                     HStack(spacing: 20) {
                         // FAT
                         VStack(alignment: .center, spacing: 4) {
-                            Text("Fat").font(.caption).bold().foregroundColor(.red)
+                            Text("Fat").font(.caption).bold().foregroundColor(Theme.over)
                             TextField("0", text: $fat)
                                 .focused($focusedField, equals: .fat)
                                 .multilineTextAlignment(.center)
                                 .keyboardType(.decimalPad)
                                 .padding(8)
-                                .background(Color(.secondarySystemBackground))
+                                .background(Theme.secondaryBackground)
                                 .cornerRadius(8)
                         }
                         
                         // CARBS
                         VStack(alignment: .center, spacing: 4) {
-                            Text("Carbs").font(.caption).bold().foregroundColor(.blue)
+                            Text("Carbs").font(.caption).bold().foregroundColor(Theme.tint)
                             TextField("0", text: $carbs)
                                 .focused($focusedField, equals: .carbs)
                                 .multilineTextAlignment(.center)
                                 .keyboardType(.decimalPad)
                                 .padding(8)
-                                .background(Color(.secondarySystemBackground))
+                                .background(Theme.secondaryBackground)
                                 .cornerRadius(8)
                         }
                         
                         // PROTEIN
                         VStack(alignment: .center, spacing: 4) {
-                            Text("Protein").font(.caption).bold().foregroundColor(.green)
+                            Text("Protein").font(.caption).bold().foregroundColor(Theme.good)
                             TextField("0", text: $protein)
                                 .focused($focusedField, equals: .protein)
                                 .multilineTextAlignment(.center)
                                 .keyboardType(.decimalPad)
                                 .padding(8)
-                                .background(Color(.secondarySystemBackground))
+                                .background(Theme.secondaryBackground)
                                 .cornerRadius(8)
                         }
                     }
                     .padding(.vertical, 4)
                 }
                 
-                // Bottom Save Button (Optional but convenient)
+                // Bottom Save Button
                 Section {
                     Button("Save Meal") { saveMeal() }
                         .disabled(description.isEmpty)
@@ -159,19 +157,16 @@ struct AddMealView: View {
             }
             .navigationTitle("Add Meal")
             .toolbar {
-                // Cancel (Left)
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { presentationMode.wrappedValue.dismiss() }
                 }
                 
-                // MARK: - THE NEW SAVE BUTTON (Right)
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveMeal() }
                         .disabled(description.isEmpty)
                         .bold()
                 }
                 
-                // Keyboard Toolbar (Arrows)
                 ToolbarItemGroup(placement: .keyboard) {
                     Button(action: { moveFocus(-1) }) { Image(systemName: "chevron.up") }
                         .disabled(focusedField == .description)
@@ -188,10 +183,31 @@ struct AddMealView: View {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK") { viewModel.errorMessage = nil }
+            // Error Alert
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage ?? "An unknown error occurred.")
+                Text(viewModel.errorMessage ?? "Unknown error")
+            }
+        }
+        // Loading Overlay
+        .overlay {
+            if viewModel.isLoading {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    VStack {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        Text("Analyzing...")
+                            .foregroundColor(.white)
+                            .bold()
+                            .padding(.top, 8)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                }
             }
         }
     }
@@ -233,7 +249,6 @@ struct AddMealView: View {
     
     private func performAIAnalysis() {
         guard !description.isEmpty else { return }
-        isCalculating = true
         focusedField = nil
         Task {
             let query = portionSize.isEmpty ? description : "\(portionSize) \(selectedUnit) \(description)"
@@ -242,10 +257,7 @@ struct AddMealView: View {
                 carbs = String(format: "%.1f", result.c)
                 protein = String(format: "%.1f", result.p)
                 activeCachedMeal = nil
-            } else if viewModel.errorMessage != nil {
-                showError = true
             }
-            isCalculating = false
         }
     }
     

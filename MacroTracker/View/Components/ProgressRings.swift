@@ -145,9 +145,9 @@ enum RingState {
 
     var color: Color {
         switch self {
-        case .under: return .yellow
-        case .good: return .green
-        case .over: return .red
+        case .under: return Theme.under
+        case .good: return Theme.good
+        case .over: return Theme.over
         }
     }
 

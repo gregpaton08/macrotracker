@@ -5,10 +5,11 @@ import OSLog
 @MainActor
 class MacroViewModel: ObservableObject {
     let context: NSManagedObjectContext
-    let logger = Logger(subsystem: "com.gpaton08.MacroTracker", category: "ViewModel")
+    private let logger = Logger(subsystem: "com.macrotracker", category: "ViewModel")
     
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var showError = false // Controls the alert presentation
     
     private var geminiClient: GeminiClient?
     private var usdaClient: USDAClient?
@@ -20,64 +21,23 @@ class MacroViewModel: ObservableObject {
     
     private func setupClients() {
         let defaults = UserDefaults.standard
-        
         if let googleKey = defaults.string(forKey: "google_api_key"), !googleKey.isEmpty {
             self.geminiClient = GeminiClient(apiKey: googleKey)
         }
-        
         if let usdaKey = defaults.string(forKey: "usda_api_key"), !usdaKey.isEmpty {
             self.usdaClient = USDAClient(apiKey: usdaKey)
         }
     }
     
-    // MARK: - Logic
+    // MARK: - Core Logic
     
-    // Add 'date: Date' to the signature
-    func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) {
-        let newMeal = MealEntity(context: context)
-        newMeal.id = UUID()
-        
-        // MARK: - THE FIX
-        // Use the passed date, but preserve the current time if possible?
-        // Actually, just using the passed date (which is usually 00:00 or current time) is fine.
-        // Better logic: Combine the 'date' (Day/Month/Year) with the current 'time' (Hour/Minute)
-        // so meals don't all stack at midnight.
-        newMeal.timestamp = combineDate(date, withTime: Date())
-        
-        newMeal.summary = description
-        
-        newMeal.totalProtein = p
-        newMeal.totalFat = f
-        newMeal.totalCarbs = c
-        
-        newMeal.portion = portion
-        newMeal.portionUnit = portionUnit
-        
-        saveContext()
-    }
-    
-    // Helper to keep the day correct but use "Now" for the time sorting
-    private func combineDate(_ date: Date, withTime time: Date) -> Date {
-        let calendar = Calendar.current
-        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
-        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
-        
-        return calendar.date(from: DateComponents(
-            year: dateComponents.year,
-            month: dateComponents.month,
-            day: dateComponents.day,
-            hour: timeComponents.hour,
-            minute: timeComponents.minute,
-            second: timeComponents.second
-        )) ?? date
-    }
-    
-    /// Orchestrates the AI + USDA flow
     func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {
-        setupClients() // Refresh keys
+        setupClients() // Refresh keys just in case
         
+        // 1. Validation
         guard let gemini = geminiClient, let usda = usdaClient else {
-            errorMessage = "Missing API Keys. Please check Settings."
+            errorMessage = "API Keys missing. Please add them in Settings."
+            showError = true
             return nil
         }
         
@@ -85,23 +45,17 @@ class MacroViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            logger.debug("Starting Analysis for: \(description)")
-            
-            // 1. Gemini: Parse Input into Ingredients
+            // 2. Gemini Parse
             let ingredients = try await gemini.parseInput(userText: description)
+            if ingredients.isEmpty {
+                throw URLError(.cannotParseResponse, userInfo: [NSLocalizedDescriptionKey: "AI could not identify any food items."])
+            }
             
-            var totalP = 0.0
-            var totalC = 0.0
-            var totalF = 0.0
-            var totalK = 0.0
+            // 3. USDA Lookup
+            var totalP = 0.0, totalC = 0.0, totalF = 0.0, totalK = 0.0
             
-            // 2. USDA: Fetch & Sum for each ingredient
             for item in ingredients {
-                logger.debug("Fetching USDA for: \(item.search_term)")
-                
                 if let nutrients = try await usda.fetchNutrients(query: item.search_term) {
-                    // USDA returns values per 100g.
-                    // If Gemini gave us a weight, use it. Otherwise assume 100g.
                     let weight = item.estimated_weight_grams > 0 ? item.estimated_weight_grams : 100.0
                     let ratio = weight / 100.0
                     
@@ -112,21 +66,40 @@ class MacroViewModel: ObservableObject {
                 }
             }
             
-            logger.notice("Total Calculated: P:\(totalP) C:\(totalC) F:\(totalF)")
             return (totalP, totalC, totalF, totalK)
             
         } catch {
             logger.error("Analysis Failed: \(error.localizedDescription)")
-            errorMessage = "Failed to analyze food."
+            errorMessage = error.localizedDescription
+            showError = true // Trigger Alert in View
             return nil
         }
     }
     
-    private func saveContext() {
+    func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) {
+        let newMeal = MealEntity(context: context)
+        newMeal.id = UUID()
+        newMeal.timestamp = combineDate(date, withTime: Date())
+        newMeal.summary = description
+        newMeal.totalProtein = p
+        newMeal.totalFat = f
+        newMeal.totalCarbs = c
+        newMeal.portion = portion
+        newMeal.portionUnit = portionUnit
+        
         do {
             try context.save()
         } catch {
             logger.error("Failed to save context: \(error.localizedDescription)")
+            errorMessage = "Failed to save meal to database."
+            showError = true
         }
+    }
+    
+    private func combineDate(_ date: Date, withTime time: Date) -> Date {
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+        return calendar.date(from: DateComponents(year: dateComponents.year, month: dateComponents.month, day: dateComponents.day, hour: timeComponents.hour, minute: timeComponents.minute, second: timeComponents.second)) ?? date
     }
 }

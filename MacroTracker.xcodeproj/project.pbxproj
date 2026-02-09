@@ -32,6 +32,7 @@
 		946AADF92F3970AC00E4F2E4 /* MacroCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */; };
 		946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */; };
 		946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
+		946AAE002F3988C800E4F2E4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFF2F3988C800E4F2E4 /* Theme.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -86,6 +87,7 @@
 		946AADF82F3970AC00E4F2E4 /* MacroCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroCalendarView.swift; sourceTree = "<group>"; };
 		946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AveragesMacroView.swift; sourceTree = "<group>"; };
 		946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroStatsService.swift; sourceTree = "<group>"; };
+		946AADFF2F3988C800E4F2E4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				946AADE42F33FA9200E4F2E4 /* Settings */,
 				946AADE32F33FA8B00E4F2E4 /* Meals */,
 				946AADE12F33FA7D00E4F2E4 /* Main */,
+				946AADFF2F3988C800E4F2E4 /* Theme.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -454,6 +457,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				946AAE002F3988C800E4F2E4 /* Theme.swift in Sources */,
 				9444E0482F2D9157007F24A8 /* AddMealView.swift in Sources */,
 				946AADEC2F35807400E4F2E4 /* GeminiClient.swift in Sources */,
 				9444E0522F2D9A77007F24A8 /* EditCachedMealView.swift in Sources */,
