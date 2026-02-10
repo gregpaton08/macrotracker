@@ -112,3 +112,45 @@ code2prompt . \
 
   Want me to tackle any of these?
 ```
+
+
+```
+❯ What else should I do to get this app ready for release? Will this app be accepted on the App Store?
+
+⏺ Good questions. Let me give you an honest assessment based on what I've seen.
+
+  Will Apple accept it?
+
+  The biggest risk is the "bring your own API key" model. Apple has rejected apps for requiring users to supply their own API keys — they consider it a poor user experience and sometimes flag it under guideline 4.2 (Minimum Functionality)
+   since the app doesn't work until the user goes through that setup. This is by far the most likely rejection reason.
+
+  Your options:
+  - Ship your own keys (bundled or fetched from your server) so the app works out of the box
+  - Provide a free tier that works without keys, and treat user-supplied keys as a "power user" option
+  - Submit as-is and see if it passes — some reviewers are more lenient than others
+
+  Beyond that, you should be fine on the technical side as long as your entitlements (CloudKit, HealthKit) are properly configured and your privacy descriptions are filled in.
+
+  Remaining code issues (not yet fixed)
+
+  From the audit, these nice-to-haves are still open:
+  ┌───────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────┐
+  │                                       Issue                                       │               Risk                │
+  ├───────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ MacroStatsService.swift:52 — try? on CoreData fetch silently shows blank Insights │ Low — confusing but not data loss │
+  ├───────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ HealthManager.swift — denied permission shows "0 calories" with no explanation    │ Low — UX only                     │
+  ├───────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ GeminiClient.swift:19 — useDummyData = false flag ships in production             │ Low — but embarrassing if toggled │
+  ├───────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ GeminiClient.swift — logger.warning() used for normal flow (noisy in Console)     │ Cosmetic                          │
+  └───────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────┘
+  Pre-submission checklist (non-code)
+
+  - App Store Connect metadata — screenshots, description, category, age rating
+  - Privacy nutrition labels — you collect health data (HealthKit) and use third-party APIs (Google, USDA). You need accurate privacy labels.
+  - Info.plist usage descriptions — NSHealthShareUsageDescription must be present and explain why you need HealthKit
+  - CloudKit container — must exist in your Apple Developer account and match the container ID in your entitlements
+  - Test on a real device — CloudKit sync and HealthKit don't work in the simulator
+  - Handle no-network gracefully — reviewers often test in airplane mode
+```
