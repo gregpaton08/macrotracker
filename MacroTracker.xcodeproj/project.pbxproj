@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6622F27F0C9006A01D1 /* MacroViewModel.swift */; };
 		940AE6692F27F128006A01D1 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940AE6682F27F128006A01D1 /* Persistence.swift */; };
-		940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */; };
 		9444E0402F299F98007F24A8 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 9444E03F2F299F98007F24A8 /* Logging */; };
 		9444E0442F2AF253007F24A8 /* TrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0432F2AF253007F24A8 /* TrackerView.swift */; };
 		9444E0462F2C51C5007F24A8 /* MealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444E0452F2C51C5007F24A8 /* MealDetailView.swift */; };
@@ -33,8 +32,7 @@
 		946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */; };
 		946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
 		946AAE002F3988C800E4F2E4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFF2F3988C800E4F2E4 /* Theme.swift */; };
-		946AAE012F3ACEC200E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
-		946AAE022F3ACEC500E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
+		946AAE052F3AD3CF00E4F2E4 /* MacroTracker.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 946AAE042F3AD3CF00E4F2E4 /* MacroTracker.xcdatamodel */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -64,7 +62,6 @@
 /* Begin PBXFileReference section */
 		940AE6622F27F0C9006A01D1 /* MacroViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MacroViewModel.swift; sourceTree = "<group>"; };
 		940AE6682F27F128006A01D1 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
-		940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MacroTracker.xcdatamodel; sourceTree = "<group>"; };
 		9444E0382F27F345007F24A8 /* MacroTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacroTracker.entitlements; sourceTree = "<group>"; };
 		9444E0392F2839C8007F24A8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9444E0432F2AF253007F24A8 /* TrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerView.swift; sourceTree = "<group>"; };
@@ -75,7 +72,6 @@
 		9444E04F2F2D9523007F24A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9444E0512F2D9A77007F24A8 /* EditCachedMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCachedMealView.swift; sourceTree = "<group>"; };
 		9444E0532F2DA17C007F24A8 /* EditLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLogEntryView.swift; sourceTree = "<group>"; };
-		9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "MacroTracker 2.xcdatamodel"; sourceTree = "<group>"; };
 		946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEntity+Extensions.swift"; sourceTree = "<group>"; };
 		946AADD62F31858700E4F2E4 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
 		946AADE62F35801900E4F2E4 /* GeminiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModels.swift; sourceTree = "<group>"; };
@@ -90,6 +86,7 @@
 		946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AveragesMacroView.swift; sourceTree = "<group>"; };
 		946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroStatsService.swift; sourceTree = "<group>"; };
 		946AADFF2F3988C800E4F2E4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		946AAE042F3AD3CF00E4F2E4 /* MacroTracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MacroTracker.xcdatamodel; sourceTree = "<group>"; };
 		94AFB0BF2F26F51100ED36F8 /* MacroTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacroTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerApp.swift; sourceTree = "<group>"; };
 		94AFB0C42F26F51100ED36F8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -286,9 +283,9 @@
 		94AFB0C12F26F51100ED36F8 /* MacroTracker */ = {
 			isa = PBXGroup;
 			children = (
+				946AAE042F3AD3CF00E4F2E4 /* MacroTracker.xcdatamodel */,
 				946AADD82F33F9C900E4F2E4 /* App */,
 				946AADDB2F33F9E800E4F2E4 /* Core */,
-				940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */,
 				946AADDC2F33F9F000E4F2E4 /* Model */,
 				94AFB0C82F26F51300ED36F8 /* Preview Content */,
 				946AADDE2F33FA0100E4F2E4 /* Service */,
@@ -469,6 +466,7 @@
 				946AADF92F3970AC00E4F2E4 /* MacroCalendarView.swift in Sources */,
 				94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */,
 				946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */,
+				946AAE052F3AD3CF00E4F2E4 /* MacroTracker.xcdatamodel in Sources */,
 				946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */,
 				946AADF72F39707400E4F2E4 /* InsightsView.swift in Sources */,
 				946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */,
@@ -481,7 +479,6 @@
 				946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,
-				940AE66C2F27F175006A01D1 /* MacroTracker.xcdatamodeld in Sources */,
 				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,
 				9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */,
 				946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */,
@@ -493,9 +490,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				946AAE012F3ACEC200E4F2E4 /* MacroStatsService.swift in Sources */,
 				94AFB0D42F26F51400ED36F8 /* MacroTrackerTests.swift in Sources */,
-				946AAE022F3ACEC500E4F2E4 /* MealEntity+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -846,21 +841,6 @@
 			productName = Logging;
 		};
 /* End XCSwiftPackageProductDependency section */
-
-/* Begin XCVersionGroup section */
-		940AE66A2F27F174006A01D1 /* MacroTracker.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */,
-				940AE66B2F27F174006A01D1 /* MacroTracker.xcdatamodel */,
-			);
-			currentVersion = 9444E0552F30386A007F24A8 /* MacroTracker 2.xcdatamodel */;
-			name = MacroTracker.xcdatamodeld;
-			path = /Users/gpaton/code/MacroTracker/MacroTracker/MacroTracker.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = 94AFB0B72F26F51100ED36F8 /* Project object */;
 }

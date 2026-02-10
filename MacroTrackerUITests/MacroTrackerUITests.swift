@@ -1,154 +1,89 @@
 //
-//  MacroTrackerTests.swift
-//  MacroTrackerTests
+//  MacroTrackerUITests.swift
+//  MacroTrackerUITests
 //
 //  Created by Gregory Paton on 1/25/26.
 //
 
 import XCTest
-import CoreData
-@testable import MacroTracker
 
-final class MacroTrackerTests: XCTestCase {
+final class MacroTrackerUITests: XCTestCase {
 
-    var context: NSManagedObjectContext!
+    var app: XCUIApplication!
 
     override func setUpWithError() throws {
-        // Use the in-memory persistence controller for isolated testing
-        let controller = PersistenceController(inMemory: true)
-        context = controller.container.viewContext
+        continueAfterFailure = false
+        app = XCUIApplication()
+        
+        // Reset the app state if possible, or handle existing data in tests.
+        // For V1, we assume a standard environment.
+        app.launchArguments += ["-UITesting"]
+        app.launch()
     }
 
-    override func tearDownWithError() throws {
-        context = nil
-    }
-
-    // MARK: - Logic Tests
-
-    func testCalorieCalculation() {
-        // Given
-        let p: Double = 30 // 120 kcal
-        let c: Double = 40 // 160 kcal
-        let f: Double = 10 // 90 kcal
-        // Total should be 370
+    func testAddManualMeal() throws {
+        // 1. Check we are on the Tracker screen
+        XCTAssertTrue(app.navigationBars["Tracker"].exists)
         
-        // When
-        let calories = caloriesFromMacros(fat: f, carbohydrates: c, protein: p)
-        
-        // Then
-        XCTAssertEqual(calories, 370, accuracy: 0.1, "Calorie calculation should be (P*4)+(C*4)+(F*9)")
-    }
-    
-    // MARK: - Core Data Tests
-
-    func testSaveMeal() throws {
-        // Given
-        let meal = MealEntity(context: context)
-        meal.id = UUID()
-        meal.summary = "Test Steak"
-        meal.totalProtein = 50
-        meal.totalCarbs = 0
-        meal.totalFat = 20
-        meal.timestamp = Date()
-        meal.portion = 8
-        meal.portionUnit = "oz"
-        
-        // When
-        try context.save()
-        
-        // Then
-        let request: NSFetchRequest<MealEntity> = MealEntity.fetchRequest()
-        let results = try context.fetch(request)
-        
-        XCTAssertEqual(results.count, 1)
-        XCTAssertEqual(results.first?.summary, "Test Steak")
-        XCTAssertEqual(results.first?.totalCalories, 380) // (50*4) + (20*9)
-    }
-    
-    // MARK: - Service Tests (Stats)
-    
-    func testDailyTotals() throws {
-        // Given: Two meals on the same day
-        let meal1 = MealEntity(context: context)
-        meal1.timestamp = Date()
-        meal1.totalProtein = 10
-        meal1.totalCarbs = 10
-        meal1.totalFat = 10
-        
-        let meal2 = MealEntity(context: context)
-        meal2.timestamp = Date()
-        meal2.totalProtein = 5
-        meal2.totalCarbs = 5
-        meal2.totalFat = 5
-        
-        try context.save()
-        
-        // When: We ask for totals for today
-        let calendar = Calendar.current
-        let start = calendar.startOfDay(for: Date())
-        let end = calendar.date(byAdding: .day, value: 1, to: start)!
-        
-        let totals = MacroStatsService.dailyTotals(from: start, to: end, context: context)
-        
-        // Then
-        let todayKey = start
-        XCTAssertNotNil(totals[todayKey])
-        XCTAssertEqual(totals[todayKey]?.protein, 15)
-        XCTAssertEqual(totals[todayKey]?.carbs, 15)
-        XCTAssertEqual(totals[todayKey]?.fat, 15)
-    }
-    
-    func testAverages() throws {
-        // Given: Meals on two different days
-        let day1 = Date()
-        let day2 = Calendar.current.date(byAdding: .day, value: -1, to: day1)!
-        
-        // Day 1 Meal (10, 10, 10)
-        let meal1 = MealEntity(context: context)
-        meal1.timestamp = day1
-        meal1.totalProtein = 10
-        meal1.totalCarbs = 10
-        meal1.totalFat = 10
-        
-        // Day 2 Meal (20, 20, 20)
-        let meal2 = MealEntity(context: context)
-        meal2.timestamp = day2
-        meal2.totalProtein = 20
-        meal2.totalCarbs = 20
-        meal2.totalFat = 20
-        
-        try context.save()
-        
-        // When: Calculate averages for the range covering both days
-        let start = Calendar.current.startOfDay(for: day2)
-        let end = Calendar.current.date(byAdding: .day, value: 2, to: start)!
-        
-        let average = MacroStatsService.averages(from: start, to: end, context: context)
-        
-        // Then: (10+20)/2 = 15
-        XCTAssertEqual(average.protein, 15)
-        XCTAssertEqual(average.dayCount, 2)
-    }
-    
-    // MARK: - Model Decoding Tests
-    
-    func testParsedFoodIntentDecoding() throws {
-        // Given: JSON similar to what Gemini returns
-        let json = """
-        {
-            "items": [
-                { "search_term": "chicken breast", "estimated_weight_grams": 200.0 },
-                { "search_term": "rice", "estimated_weight_grams": 150.0 }
-            ]
+        // 2. Tap Add Button (Plus Circle Icon)
+        // Note: Images in buttons sometimes tricky to find, but we can search by the button role
+        let addButton = app.buttons["plus.circle.fill"]
+        if addButton.exists {
+            addButton.tap()
+        } else {
+            // Fallback if accessibility identifier isn't set, try finding the last button in toolbar
+            app.toolbars.buttons.element(boundBy: 1).tap()
         }
-        """.data(using: .utf8)!
         
-        // When
-        let result = try JSONDecoder().decode(ParsedFoodIntent.self, from: json)
+        // 3. Check Add Meal Sheet appeared
+        XCTAssertTrue(app.navigationBars["Add Meal"].exists)
         
-        // Then
-        XCTAssertEqual(result.items.count, 2)
-        XCTAssertEqual(result.items[0].search_term, "chicken breast")
-        XCTAssertEqual(result.items[0].estimated_weight_grams, 200.0)
+        // 4. Fill in Details
+        let descField = app.textFields["Description (e.g. Chicken)"]
+        XCTAssertTrue(descField.waitForExistence(timeout: 2))
+        descField.tap()
+        descField.typeText("UI Test Apple")
+        
+        let portionField = app.textFields["Portion"]
+        portionField.tap()
+        portionField.typeText("1")
+        
+        // 5. Fill in Macros
+        let fatField = app.textFields["0"].firstMatch // Finding by placeholder "0"
+        fatField.tap()
+        fatField.typeText("0")
+        
+        // Tap next text field (Carbs)
+        // Since we have multiple "0" fields, we iterate or rely on keyboard Next
+        // Simpler way for UI tests is often tapping coordinates or unique identifiers
+        // But let's try tapping the second "0" field found
+        
+        // Try saving directly to keep test simple (Macros = 0)
+        
+        // 6. Save
+        app.buttons["Save"].tap()
+        
+        // 7. Verify it appears on Dashboard
+        // We wait for the sheet to dismiss and list to update
+        let mealCell = app.staticTexts["UI Test Apple"]
+        XCTAssertTrue(mealCell.waitForExistence(timeout: 2), "The added meal should appear in the list")
+    }
+    
+    func testNavigationToInsights() {
+        // Tap the Chart icon
+        let chartButton = app.buttons["chart.xyaxis.line"]
+        if chartButton.exists {
+            chartButton.tap()
+            XCTAssertTrue(app.navigationBars["Insights"].exists)
+        }
+    }
+    
+    func testNavigationToSettings() {
+        // Tap the Gear icon
+        let gearButton = app.buttons["gear"]
+        if gearButton.exists {
+            gearButton.tap()
+            XCTAssertTrue(app.navigationBars["Settings"].exists)
+        }
     }
 }
