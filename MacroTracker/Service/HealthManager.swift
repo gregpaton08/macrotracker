@@ -6,30 +6,43 @@
 //
 
 import Foundation
+import OSLog
 #if os(iOS)
 import HealthKit
 #endif
 
 class HealthManager: ObservableObject {
     static let shared = HealthManager()
-    
+    private let logger = Logger(subsystem: "com.macrotracker", category: "HealthManager")
+
+    @Published var authorizationDenied = false
+
     #if os(iOS)
     let healthStore = HKHealthStore()
     #endif
-    
+
     func requestAuthorization() {
         #if os(iOS)
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        
+        guard HKHealthStore.isHealthDataAvailable() else {
+            logger.warning("HealthKit not available on this device.")
+            return
+        }
+
         // 1. Add .workoutType() to the read list
         let activeEnergy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
         let workoutType = HKObjectType.workoutType()
-        
+
         let readTypes: Set<HKObjectType> = [activeEnergy, workoutType]
-        
+
         healthStore.requestAuthorization(toShare: [], read: readTypes) { success, error in
             if let error = error {
-                print("HealthKit Auth Error: \(error.localizedDescription)")
+                self.logger.error("HealthKit auth error: \(error.localizedDescription)")
+            }
+            if !success {
+                self.logger.warning("HealthKit authorization denied. Calorie data will be unavailable.")
+                DispatchQueue.main.async {
+                    self.authorizationDenied = true
+                }
             }
         }
         #endif

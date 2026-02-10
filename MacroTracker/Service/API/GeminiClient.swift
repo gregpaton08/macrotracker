@@ -15,33 +15,24 @@ struct ApiResponse: Codable {
 // MARK: - Gemini Client
 class GeminiClient {
     private let session = URLSession.shared
-    
-    private let useDummyData = false
-//    let logger: Logging.Logger
-    private let logger = Logger(subsystem: "com.yourdomain.yourapp", category: "GeminiClient")
-    
+    private let logger = Logger(subsystem: "com.macrotracker", category: "GeminiClient")
+
     private let apiKey: String
 
     init(apiKey: String) {
         self.apiKey = apiKey
     }
-    
-    // Recursive function with retry logic
+
     func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
-        if useDummyData {
-            return [
-                ParsedFoodIntent.ParsedItem(search_term: "honey", estimated_weight_grams: 61.0),
-//                ParsedFoodIntent.ParsedItem(search_term: "avocado", estimated_weight_grams: 150.0),
-//                ParsedFoodIntent.ParsedItem(search_term: "sourdough bread", estimated_weight_grams: 40.0)
-            ]
-        }
+
+        // TODO: allow user to select model based on what is available.
 //        let model = "gemini-pro-latest"
 //        let model = "gemini-2.0-flash"
         let model = "gemini-3-flash-preview"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         
-        logger.warning("Parsing: '\(userText)'")
+        logger.debug("Parsing: '\(userText)'")
         
         let prompt = """
         Analyze this food description for earching the USDA database for macronutrients: "\(userText)".
@@ -89,13 +80,13 @@ class GeminiClient {
         
         // Strip Markdown
         jsonText = jsonText.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
-        logger.warning("jsonText = \(jsonText)")
+        logger.debug("jsonText = \(jsonText)")
         
         guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
         let result = try JSONDecoder().decode(ParsedFoodIntent.self, from: cleanData).items
         
         
-        logger.warning("result: \(result)")
+        logger.debug("result: \(result)")
         return result
     }
 }

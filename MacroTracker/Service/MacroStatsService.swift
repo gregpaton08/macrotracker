@@ -10,6 +10,7 @@
 
 import Foundation
 import CoreData
+import OSLog
 
 struct DailyMacroTotal: Identifiable {
     let id: Date          // start-of-day, used as unique key
@@ -34,6 +35,7 @@ struct MacroAverage {
 }
 
 struct MacroStatsService {
+    private static let logger = Logger(subsystem: "com.macrotracker", category: "MacroStatsService")
 
     /// Fetches all meals in `[start, end)` and groups them into per-day totals.
     static func dailyTotals(
@@ -49,7 +51,13 @@ struct MacroStatsService {
         )
         request.sortDescriptors = [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: true)]
 
-        guard let meals = try? context.fetch(request) else { return [:] }
+        let meals: [MealEntity]
+        do {
+            meals = try context.fetch(request)
+        } catch {
+            logger.error("Failed to fetch meals: \(error.localizedDescription)")
+            return [:]
+        }
 
         let calendar = Calendar.current
         var grouped: [Date: (p: Double, c: Double, f: Double)] = [:]
@@ -64,20 +72,12 @@ struct MacroStatsService {
             grouped[dayKey] = bucket
         }
 
-        return grouped.mapValues { val in
-            DailyMacroTotal(
-                id: Date(),   // placeholder, overwritten below
-                protein: val.p,
-                carbs: val.c,
-                fat: val.f
-            )
-        }.reduce(into: [:]) { result, pair in
-            // Re-key with proper date as id
+        return grouped.reduce(into: [:]) { result, pair in
             result[pair.key] = DailyMacroTotal(
                 id: pair.key,
-                protein: pair.value.protein,
-                carbs: pair.value.carbs,
-                fat: pair.value.fat
+                protein: pair.value.p,
+                carbs: pair.value.c,
+                fat: pair.value.f
             )
         }
     }

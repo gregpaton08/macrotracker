@@ -21,8 +21,7 @@ build:
 	xcodebuild build \
 		-project $(PROJECT_NAME) \
 		-scheme $(SCHEME_NAME) \
-		-destination $(DESTINATION_IOS) \
-		-quiet
+		-destination 'platform=iOS Simulator,name=iPhone 16'
 
 # 2. Run Unit Tests (Fast logic checks)
 test:
