@@ -25,6 +25,11 @@ struct AddMealView: View {
     @State private var carbs: String = ""
     @State private var protein: String = ""
     
+    // API key check
+    @AppStorage("google_api_key") private var googleKey: String = ""
+    @AppStorage("usda_api_key") private var usdaKey: String = ""
+    private var apiKeysConfigured: Bool { !googleKey.isEmpty && !usdaKey.isEmpty }
+
     // Logic
     @State private var activeCachedMeal: CachedMealEntity? = nil
     
@@ -51,6 +56,23 @@ struct AddMealView: View {
     var body: some View {
         NavigationView {
             Form {
+                // MARK: - API KEY BANNER
+                if !apiKeysConfigured {
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "key.fill")
+                                .foregroundColor(.orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("API Keys Required")
+                                    .font(.subheadline).bold()
+                                Text("Add your Gemini and USDA keys in Settings to enable AI auto-fill.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
                 // MARK: - SECTION 1: FOOD DETAILS
                 Section(header: Text("Food Details")) {
                     // Description
@@ -262,10 +284,10 @@ struct AddMealView: View {
     }
     
     private func saveMeal() {
-        let p = Double(protein) ?? 0
-        let f = Double(fat) ?? 0
-        let c = Double(carbs) ?? 0
-        let amount = Double(portionSize) ?? 0
+        let p = max(0, Double(protein) ?? 0)
+        let f = max(0, Double(fat) ?? 0)
+        let c = max(0, Double(carbs) ?? 0)
+        let amount = max(0, Double(portionSize) ?? 0)
 
         let success = viewModel.saveMeal(
             description: description,

@@ -10,9 +10,10 @@ import SwiftUI
 struct EditLogEntryView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) var viewContext
-    
+
     @ObservedObject var meal: MealEntity
-    
+
+    @State private var showSaveError = false
     @State private var summary: String = ""
     @State private var timestamp: Date = Date()
     @State private var protein: String = ""
@@ -84,6 +85,11 @@ struct EditLogEntryView: View {
                 }
             }
             .onAppear(perform: loadData)
+            .alert("Save Failed", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Could not save changes. Please try again.")
+            }
         }
     }
     
@@ -131,18 +137,23 @@ struct EditLogEntryView: View {
     private func saveChanges() {
         meal.summary = summary
         meal.timestamp = timestamp
-        meal.totalProtein = Double(protein) ?? 0
-        meal.totalCarbs = Double(carbs) ?? 0
-        meal.totalFat = Double(fat) ?? 0
-        
+        meal.totalProtein = max(0, Double(protein) ?? 0)
+        meal.totalCarbs = max(0, Double(carbs) ?? 0)
+        meal.totalFat = max(0, Double(fat) ?? 0)
+
         // Save new portion data
-        meal.portion = Double(portion) ?? 0
+        meal.portion = max(0, Double(portion) ?? 0)
         meal.portionUnit = portionUnit
         
-        try? viewContext.save()
-        presentationMode.wrappedValue.dismiss()
+        do {
+            try viewContext.save()
+            presentationMode.wrappedValue.dismiss()
+        } catch {
+            viewContext.rollback()
+            showSaveError = true
+        }
     }
-    
+
     private func moveFocus(_ direction: Int) {
         let order: [Field] = [.summary, .portion, .fat, .carbs, .protein]
         guard let current = focusedField, let index = order.firstIndex(of: current) else { return }

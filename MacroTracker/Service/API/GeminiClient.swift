@@ -34,6 +34,7 @@ class GeminiClient {
         
         logger.debug("Parsing: '\(userText)'")
         
+        // TODO: improve prompt. Include portion size if provided. Maybe rethink the RAG approach.
         let prompt = """
         Analyze this food description for earching the USDA database for macronutrients: "\(userText)".
         Complex foods should be broken down into a list of ingredients.

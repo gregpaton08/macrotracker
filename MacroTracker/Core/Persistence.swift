@@ -8,31 +8,32 @@
 import CoreData
 import OSLog
 
-struct PersistenceController {
+class PersistenceController {
     static let shared = PersistenceController()
 
     private let logger = Logger(subsystem: "com.macrotracker", category: "Persistence")
     let container: NSPersistentCloudKitContainer
+    var loadError: NSError?
 
     init(inMemory: Bool = false) {
-        // Ensure your .xcdatamodeld file is named "MacroTracker"
         container = NSPersistentCloudKitContainer(name: "MacroTracker")
-        
+
         let description = container.persistentStoreDescriptions.first
-        description?.shouldMigrateStoreAutomatically = true // Must be true
-        description?.shouldInferMappingModelAutomatically = true // Must be true
-        
+        description?.shouldMigrateStoreAutomatically = true
+        description?.shouldInferMappingModelAutomatically = true
+
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
-        
+
         // Enable automatic iCloud syncing
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-        
-        container.loadPersistentStores { (storeDescription, error) in
+
+        container.loadPersistentStores { [self] (storeDescription, error) in
             if let error = error as NSError? {
-                fatalError("CoreData failed to load: \(error), \(error.userInfo)")
+                logger.error("CoreData failed to load: \(error), \(error.userInfo)")
+                self.loadError = error
             }
         }
     }

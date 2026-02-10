@@ -9,14 +9,29 @@ import SwiftUI
 
 @main
 struct MacroTrackerApp: App {
-    // Initialize the persistence controller (CloudKit + CoreData)
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                // INJECT THE CONTEXT HERE
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            if let error = persistenceController.loadError {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.orange)
+                    Text("Unable to Load Data")
+                        .font(.title2).bold()
+                    Text("MacroTracker could not open its database. Try restarting the app or freeing up storage.")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    Text(error.localizedDescription)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+            } else {
+                ContentView()
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            }
         }
     }
 }

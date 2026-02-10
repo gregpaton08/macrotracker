@@ -8,6 +8,12 @@
 import SwiftUI
 import CoreData
 
+private struct LazyView<Content: View>: View {
+    let build: () -> Content
+    init(_ build: @autoclosure @escaping () -> Content) { self.build = build }
+    var body: Content { build() }
+}
+
 struct TrackerView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
@@ -27,8 +33,8 @@ struct TrackerView: View {
             TabView(selection: $selectedIndex) {
                 // Render range of +/- 10 years
                 // TODO: NOTE: this only allows you to scroll back 10 days. If you set this number too large then perform suffers (there is a huge delay in the middle of swiping).
-                ForEach((centerIndex - 10)...(centerIndex + 10), id: \.self) { index in
-                    DailyDashboard(date: dateFromIndex(index))
+                ForEach((centerIndex - 20)...(centerIndex + 2), id: \.self) { index in
+                    LazyView(DailyDashboard(date: dateFromIndex(index)))
                         .tag(index)
                         .padding(.top, 60) // Push content below floating header
                 }

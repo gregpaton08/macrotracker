@@ -33,6 +33,8 @@
 		946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFA2F3970DB00E4F2E4 /* AveragesMacroView.swift */; };
 		946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
 		946AAE002F3988C800E4F2E4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFF2F3988C800E4F2E4 /* Theme.swift */; };
+		946AAE012F3ACEC200E4F2E4 /* MacroStatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADFC2F39789300E4F2E4 /* MacroStatsService.swift */; };
+		946AAE022F3ACEC500E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
 		94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C22F26F51100ED36F8 /* MacroTrackerApp.swift */; };
 		94AFB0C52F26F51100ED36F8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0C42F26F51100ED36F8 /* ContentView.swift */; };
 		94AFB0C72F26F51300ED36F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94AFB0C62F26F51300ED36F8 /* Assets.xcassets */; };
@@ -491,7 +493,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				946AAE012F3ACEC200E4F2E4 /* MacroStatsService.swift in Sources */,
 				94AFB0D42F26F51400ED36F8 /* MacroTrackerTests.swift in Sources */,
+				946AAE022F3ACEC500E4F2E4 /* MealEntity+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

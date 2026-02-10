@@ -13,7 +13,8 @@ struct EditCachedMealView: View {
     @Environment(\.managedObjectContext) var viewContext
     
     var mealToEdit: CachedMealEntity?
-    
+
+    @State private var showSaveError = false
     @State private var name: String = ""
     @State private var portion: String = ""
     @State private var unit: String = "grams"
@@ -111,6 +112,11 @@ struct EditCachedMealView: View {
                 }
             }
         }
+        .alert("Save Failed", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Could not save changes. Please try again.")
+        }
         .onAppear {
             if let meal = mealToEdit {
                 name = meal.name ?? ""
@@ -137,9 +143,9 @@ struct EditCachedMealView: View {
     }
     
     private func save() {
-        let p = Double(protein) ?? 0
-        let c = Double(carbs) ?? 0
-        let f = Double(fat) ?? 0
+        let p = max(0, Double(protein) ?? 0)
+        let c = max(0, Double(carbs) ?? 0)
+        let f = max(0, Double(fat) ?? 0)
         
         if let meal = mealToEdit {
             meal.name = name
@@ -155,7 +161,12 @@ struct EditCachedMealView: View {
                 portion: portion, unit: unit
             )
         }
-        try? viewContext.save()
-        presentationMode.wrappedValue.dismiss()
+        do {
+            try viewContext.save()
+            presentationMode.wrappedValue.dismiss()
+        } catch {
+            viewContext.rollback()
+            showSaveError = true
+        }
     }
 }
