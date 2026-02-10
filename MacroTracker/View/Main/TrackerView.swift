@@ -26,6 +26,7 @@ struct TrackerView: View {
             // MARK: - Layer 1: Paging Dashboard
             TabView(selection: $selectedIndex) {
                 // Render range of +/- 10 years
+                // TODO: NOTE: this only allows you to scroll back 10 days. If you set this number too large then perform suffers (there is a huge delay in the middle of swiping).
                 ForEach((centerIndex - 10)...(centerIndex + 10), id: \.self) { index in
                     DailyDashboard(date: dateFromIndex(index))
                         .tag(index)

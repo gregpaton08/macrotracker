@@ -134,10 +134,16 @@ class DataTransferManager: ObservableObject {
                     count += 1
                 }
             }
-            
-            // B. Import Templates (Merge using CacheManager logic)
+
+            // C. Save
+            if self.context.hasChanges {
+                try self.context.save()
+            }
+        }
+
+        // B. Import Templates (on MainActor for CoreData thread safety)
+        await MainActor.run {
             for item in importData.savedTemplates {
-                // Using existing manager logic ensures we don't create duplicate templates
                 MealCacheManager.shared.cacheMeal(
                     name: item.name,
                     p: item.protein,
@@ -147,12 +153,8 @@ class DataTransferManager: ObservableObject {
                     unit: item.unit
                 )
             }
-            
-            // C. Save
-            if self.context.hasChanges {
-                try self.context.save()
-            }
         }
+
         return count
     }
     

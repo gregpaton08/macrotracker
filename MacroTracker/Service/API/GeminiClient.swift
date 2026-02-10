@@ -38,7 +38,7 @@ class GeminiClient {
 //        let model = "gemini-pro-latest"
 //        let model = "gemini-2.0-flash"
         let model = "gemini-3-flash-preview"
-        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         
         logger.warning("Parsing: '\(userText)'")
@@ -59,6 +59,7 @@ class GeminiClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = try JSONEncoder().encode(requestBody)
         
         let (data, response) = try await session.data(for: request)

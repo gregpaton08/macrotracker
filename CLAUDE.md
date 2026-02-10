@@ -59,3 +59,7 @@ Users configure two API keys in-app via SettingsView, stored in UserDefaults:
 ## Entitlements
 
 CloudKit and HealthKit are enabled. The app reads active energy burned and workout data from HealthKit.
+
+## TODO directives
+
+If you see a comment containing TODO be sure to keep it in the code. Do not remove it when rewriting code.

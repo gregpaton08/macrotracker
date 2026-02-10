@@ -266,19 +266,21 @@ struct AddMealView: View {
         let f = Double(fat) ?? 0
         let c = Double(carbs) ?? 0
         let amount = Double(portionSize) ?? 0
-        
-        viewModel.saveMeal(
+
+        let success = viewModel.saveMeal(
             description: description,
             p: p, f: f, c: c,
             portion: amount,
             portionUnit: selectedUnit,
             date: targetDate
         )
-        
+
+        guard success else { return }
+
         MealCacheManager.shared.cacheMeal(
             name: description, p: p, f: f, c: c, portion: portionSize, unit: selectedUnit
         )
-        
+
         presentationMode.wrappedValue.dismiss()
     }
 }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 struct EditCachedMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) var viewContext

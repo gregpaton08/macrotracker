@@ -36,10 +36,20 @@ class USDAClient {
         
         self.logger.debug("Searching USDA: \(query)")
         
-        guard let url = URL(string: urlString) else { return nil }
+        guard let url = URL(string: urlString) else {
+            throw URLError(.badURL, userInfo: [NSLocalizedDescriptionKey: "Invalid USDA search URL."])
+        }
         let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return nil }
+
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            let message: String
+            switch httpResponse.statusCode {
+            case 401, 403: message = "Invalid USDA API key. Check Settings."
+            case 429: message = "USDA rate limit reached. Try again shortly."
+            default: message = "USDA request failed (HTTP \(httpResponse.statusCode))."
+            }
+            throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: message])
+        }
         
         let searchResponse = try JSONDecoder().decode(USDAFoodSearchResponse.self, from: data)
         

@@ -53,19 +53,37 @@ class MacroViewModel: ObservableObject {
             
             // 3. USDA Lookup
             var totalP = 0.0, totalC = 0.0, totalF = 0.0, totalK = 0.0
-            
+            var failedItems: [String] = []
+
             for item in ingredients {
-                if let nutrients = try await usda.fetchNutrients(query: item.search_term) {
-                    let weight = item.estimated_weight_grams > 0 ? item.estimated_weight_grams : 100.0
-                    let ratio = weight / 100.0
-                    
-                    totalP += (nutrients.protein * ratio)
-                    totalF += (nutrients.fat * ratio)
-                    totalC += (nutrients.carbs * ratio)
-                    totalK += (nutrients.kcal * ratio)
+                do {
+                    if let nutrients = try await usda.fetchNutrients(query: item.search_term) {
+                        let weight = item.estimated_weight_grams > 0 ? item.estimated_weight_grams : 100.0
+                        let ratio = weight / 100.0
+
+                        totalP += (nutrients.protein * ratio)
+                        totalF += (nutrients.fat * ratio)
+                        totalC += (nutrients.carbs * ratio)
+                        totalK += (nutrients.kcal * ratio)
+                    } else {
+                        failedItems.append(item.search_term)
+                    }
+                } catch {
+                    logger.error("USDA lookup failed for '\(item.search_term)': \(error.localizedDescription)")
+                    failedItems.append(item.search_term)
                 }
             }
-            
+
+            if failedItems.count == ingredients.count {
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Could not find nutrition data for any ingredients."])
+            }
+
+            if !failedItems.isEmpty {
+                let missing = failedItems.joined(separator: ", ")
+                errorMessage = "Partial results — no data for: \(missing)"
+                showError = true
+            }
+
             return (totalP, totalC, totalF, totalK)
             
         } catch {
@@ -76,7 +94,8 @@ class MacroViewModel: ObservableObject {
         }
     }
     
-    func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) {
+    @discardableResult
+    func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) -> Bool {
         let newMeal = MealEntity(context: context)
         newMeal.id = UUID()
         newMeal.timestamp = combineDate(date, withTime: Date())
@@ -86,13 +105,16 @@ class MacroViewModel: ObservableObject {
         newMeal.totalCarbs = c
         newMeal.portion = portion
         newMeal.portionUnit = portionUnit
-        
+
         do {
             try context.save()
+            return true
         } catch {
             logger.error("Failed to save context: \(error.localizedDescription)")
-            errorMessage = "Failed to save meal to database."
+            context.rollback()
+            errorMessage = "Failed to save meal. Please try again."
             showError = true
+            return false
         }
     }
     
