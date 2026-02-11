@@ -18,6 +18,7 @@ I want a dead simple way to track my macros. I'm prioritizing ease of use over h
 * Weekly and monthly calendar
 * Daily notes
 * Handle data migrations when data model changes
+* AI analysis of how well you ate in a given day/week/timeframe, i.e. quality as opposed to quantity. Will need to design a prompt for this. Should be user activated, not automatic.
 
 ## APIs
 
