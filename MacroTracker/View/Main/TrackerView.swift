@@ -17,14 +17,32 @@ private struct LazyView<Content: View>: View {
 struct TrackerView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    // Infinite Pagination Logic
+    // Config
     private let centerIndex = 5000
-    @State private var selectedIndex: Int = 5000
-    @State private var selectedDate = Date()
+    private let isRoot: Bool // New flag to hide toolbar items if deep-linked
+    
+    // State
+    @State private var selectedIndex: Int
+    @State private var selectedDate: Date
     
     @State private var showCalendar = false
     @State private var showAddMeal = false
     @State private var showSettings = false
+    
+    // MARK: - Custom Init for Deep Linking
+    init(initialDate: Date = Date(), isRoot: Bool = true) {
+        self.isRoot = isRoot
+        
+        // 1. Calculate the offset from Today
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let target = calendar.startOfDay(for: initialDate)
+        let diff = calendar.dateComponents([.day], from: today, to: target).day ?? 0
+        
+        // 2. Set initial state
+        _selectedDate = State(initialValue: target)
+        _selectedIndex = State(initialValue: 5000 + diff)
+    }
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -61,15 +79,12 @@ struct TrackerView: View {
                     Button(action: { showCalendar = true }) {
                         HStack(spacing: 6) {
                             Image(systemName: "calendar")
-                            Text(selectedDate, style: .date)
-                                .font(.headline)
+                            Text(selectedDate, style: .date).font(.headline)
                             
                             if Calendar.current.isDateInToday(selectedDate) {
                                 Text("Today")
-                                    .font(.caption)
-                                    .bold()
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
+                                    .font(.caption).bold()
+                                    .padding(.horizontal, 6).padding(.vertical, 2)
                                     .background(Theme.tint.opacity(0.1))
                                     .foregroundColor(Theme.tint)
                                     .cornerRadius(4)
@@ -101,25 +116,22 @@ struct TrackerView: View {
                 Divider()
             }
         }
-        .navigationTitle("Tracker")
+        .navigationTitle(isRoot ? "Tracker" : "Detail") // Change title if drilled down
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         
         // MARK: - Toolbar Logic
         .toolbar {
-            // LEFT: Navigation (Settings + Insights)
-            ToolbarItem(placement: .navigationBarLeading) {
-                HStack(spacing: 16) {
-                    Button(action: { showSettings.toggle() }) {
-                        Image(systemName: "gear")
+            // LEFT: Navigation (Only show if this is the Root view)
+            if isRoot {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 16) {
+                        Button(action: { showSettings.toggle() }) { Image(systemName: "gear") }
+                        NavigationLink(destination: InsightsView()) { Image(systemName: "chart.xyaxis.line") }
                     }
-                    
-                    NavigationLink(destination: InsightsView()) {
-                        Image(systemName: "chart.xyaxis.line")
-                    }
+                    .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
             }
             
             // RIGHT: Actions (Today + Add)
@@ -142,12 +154,9 @@ struct TrackerView: View {
             }
         }
         
-        // MARK: - Sheets
+        // MARK: - Sheets & Logic
         .sheet(isPresented: $showAddMeal) {
-            AddMealView(
-                viewModel: MacroViewModel(context: viewContext),
-                targetDate: selectedDate
-            )
+            AddMealView(viewModel: MacroViewModel(context: viewContext), targetDate: selectedDate)
         }
         .sheet(isPresented: $showSettings) {
             NavigationView { SettingsView() }

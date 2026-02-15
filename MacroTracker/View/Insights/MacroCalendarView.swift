@@ -14,6 +14,9 @@ import SwiftUI
 struct MacroCalendarView: View {
     let month: Date
     let dailyTotals: [Date: DailyMacroTotal]
+    
+    // New Callback
+    var onSelectDate: (Date) -> Void
 
     // Goal ranges
     let pMin: Double, pMax: Double
@@ -41,18 +44,26 @@ struct MacroCalendarView: View {
             LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(dayCells, id: \.id) { cell in
                     if cell.isPlaceholder {
-                        Color.clear
-                            .frame(height: 44)
+                        Color.clear.frame(height: 44)
                     } else {
-                        dayCellView(for: cell)
+                        // MARK: - Tap Interaction
+                        Button(action: {
+                            onSelectDate(cell.date)
+                        }) {
+                            dayCellView(for: cell)
+                        }
+                        .buttonStyle(.plain) // Keeps the custom look
                     }
                 }
             }
         }
     }
 
-    // MARK: - Day Cell View
-
+    // ... (Keep dayCellView, dotView, and DayCell struct exactly as they were) ...
+    // Copy the rest of the existing file here.
+    // Just ensure the helper functions (dayCellView, dotView, dayCells) are present.
+    
+    // MARK: - Day Cell View (Helper)
     private func dayCellView(for cell: DayCell) -> some View {
         let dayKey = calendar.startOfDay(for: cell.date)
         let totals = dailyTotals[dayKey]
@@ -63,6 +74,10 @@ struct MacroCalendarView: View {
             Text("\(calendar.component(.day, from: cell.date))")
                 .font(.system(size: 14, weight: isToday ? .bold : .regular))
                 .foregroundColor(isToday ? .blue : (isFuture ? .secondary.opacity(0.4) : .primary))
+                // Add a small background circle for touch target
+                .frame(width: 28, height: 28)
+                .background(isToday ? Color.blue.opacity(0.1) : Color.clear)
+                .clipShape(Circle())
 
             if let totals = totals {
                 // Three dots: Fat, Carbs, Protein
@@ -86,27 +101,24 @@ struct MacroCalendarView: View {
             }
         }
         .frame(height: 44)
+        .contentShape(Rectangle()) // Ensures the whole cell is tappable
     }
-
+    
+    // ... (Keep dotView and DayCell logic) ...
     // MARK: - Dot Views
-
     private func dotView(value: Double, min: Double, max: Double) -> some View {
         let color: Color = {
-            if value < min { return .yellow }
-            if value > max { return .red }
-            return .green
+            if value < min { return Theme.under }
+            if value > max { return Theme.over }
+            return Theme.good
         }()
         return dotView(color: color)
     }
 
     private func dotView(color: Color) -> some View {
-        Circle()
-            .fill(color)
-            .frame(width: 6, height: 6)
+        Circle().fill(color).frame(width: 6, height: 6)
     }
-
-    // MARK: - Calendar Math
-
+    
     private struct DayCell: Identifiable {
         let id: String
         let date: Date
@@ -117,10 +129,8 @@ struct MacroCalendarView: View {
     /// to align the first day with the correct weekday column.
     private var dayCells: [DayCell] {
         guard let monthInterval = calendar.dateInterval(of: .month, for: month),
-              let monthRange = calendar.range(of: .day, in: .month, for: month) else {
-            return []
-        }
-
+              let monthRange = calendar.range(of: .day, in: .month, for: month) else { return [] }
+        
         var cells: [DayCell] = []
 
         // Leading empty cells for weekday offset
@@ -136,7 +146,6 @@ struct MacroCalendarView: View {
                 cells.append(DayCell(id: "day-\(day)", date: date, isPlaceholder: false))
             }
         }
-
         return cells
     }
 }

@@ -16,6 +16,10 @@ struct InsightsView: View {
     // Calendar state
     @State private var displayedMonth = Date()
     @State private var dailyTotals: [Date: DailyMacroTotal] = [:]
+    
+    // Navigation State
+    @State private var selectedDateToNavigate: Date?
+    @State private var isNavigating = false
 
     // Averages state
     @State private var selectedRange: DateRangeOption = .week
@@ -51,38 +55,44 @@ struct InsightsView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        
+        // MARK: - Navigation Trigger
+        // This hidden link activates when isNavigating becomes true
+        .navigationDestination(isPresented: $isNavigating) {
+            if let date = selectedDateToNavigate {
+                // Initialize TrackerView with the clicked date, and isRoot=false
+                TrackerView(initialDate: date, isRoot: false)
+            }
+        }
+        
+        // Refresh Logic
         .onAppear { refreshAll() }
-        .onChange(of: displayedMonth) { _ in refreshCalendar() }
-        .onChange(of: selectedRange) { _ in refreshAverages() }
-        .onChange(of: customStart) { _ in
-            if selectedRange == .custom { refreshAverages() }
-        }
-        .onChange(of: customEnd) { _ in
-            if selectedRange == .custom { refreshAverages() }
-        }
+        .onChange(of: displayedMonth) { refreshCalendar() }
+        .onChange(of: selectedRange) { refreshAverages() }
+        .onChange(of: customStart) { if selectedRange == .custom { refreshAverages() } }
+        .onChange(of: customEnd) { if selectedRange == .custom { refreshAverages() } }
     }
 
     // MARK: - Calendar Section
-
     private var calendarSection: some View {
         VStack(spacing: 12) {
             HStack {
-                Button { changeMonth(by: -1) } label: {
-                    Image(systemName: "chevron.left").padding(.horizontal, 8)
-                }
+                Button { changeMonth(by: -1) } label: { Image(systemName: "chevron.left").padding(.horizontal, 8) }
                 Spacer()
-                Text(monthYearString(for: displayedMonth))
-                    .font(.headline)
+                Text(monthYearString(for: displayedMonth)).font(.headline)
                 Spacer()
-                Button { changeMonth(by: 1) } label: {
-                    Image(systemName: "chevron.right").padding(.horizontal, 8)
-                }
+                Button { changeMonth(by: 1) } label: { Image(systemName: "chevron.right").padding(.horizontal, 8) }
             }
             .padding(.horizontal)
 
             MacroCalendarView(
                 month: displayedMonth,
                 dailyTotals: dailyTotals,
+                onSelectDate: { date in
+                    // Trigger Navigation
+                    self.selectedDateToNavigate = date
+                    self.isNavigating = true
+                },
                 pMin: pMin, pMax: pMax,
                 cMin: cMin, cMax: cMax,
                 fMin: fMin, fMax: fMax
@@ -91,13 +101,13 @@ struct InsightsView: View {
         }
     }
 
-    // MARK: - Averages Section
-
+    // ... (Keep averagesSection, refreshAll, refreshCalendar, refreshAverages, dateRange, Helpers) ...
+    // These functions can remain exactly as they were in previous steps.
+    
+    // MARK: - Averages Section (Copy from previous file if needed)
     private var averagesSection: some View {
         VStack(spacing: 16) {
-            Text("Daily Averages")
-                .font(.headline)
-
+            Text("Daily Averages").font(.headline)
             Picker("Range", selection: $selectedRange) {
                 ForEach(DateRangeOption.allCases) { option in
                     Text(option.rawValue).tag(option)
@@ -128,36 +138,29 @@ struct InsightsView: View {
                     fMin: fMin, fMax: fMax
                 )
                 .padding(.horizontal)
-
+                
                 Text("Based on \(averages.dayCount) day\(averages.dayCount == 1 ? "" : "s") with logged meals")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.caption).foregroundColor(.secondary)
             }
         }
     }
-
-    // MARK: - Data Refresh
-
+    
     private func refreshAll() {
         refreshCalendar()
         refreshAverages()
     }
-
+    
     private func refreshCalendar() {
         let calendar = Calendar.current
         guard let monthInterval = calendar.dateInterval(of: .month, for: displayedMonth) else { return }
-        dailyTotals = MacroStatsService.dailyTotals(
-            from: monthInterval.start,
-            to: monthInterval.end,
-            context: viewContext
-        )
+        dailyTotals = MacroStatsService.dailyTotals(from: monthInterval.start, to: monthInterval.end, context: viewContext)
     }
-
+    
     private func refreshAverages() {
         let (start, end) = dateRange(for: selectedRange)
         averages = MacroStatsService.averages(from: start, to: end, context: viewContext)
     }
-
+    
     private func dateRange(for option: DateRangeOption) -> (Date, Date) {
         let calendar = Calendar.current
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date()))!
@@ -174,15 +177,13 @@ struct InsightsView: View {
             return (start, end)
         }
     }
-
-    // MARK: - Helpers
-
+    
     private func changeMonth(by value: Int) {
         withAnimation {
             displayedMonth = Calendar.current.date(byAdding: .month, value: value, to: displayedMonth) ?? displayedMonth
         }
     }
-
+    
     private func monthYearString(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
