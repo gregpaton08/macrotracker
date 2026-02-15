@@ -40,6 +40,7 @@
 		94AFB0D42F26F51400ED36F8 /* MacroTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0D32F26F51400ED36F8 /* MacroTrackerTests.swift */; };
 		94AFB0DE2F26F51400ED36F8 /* MacroTrackerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0DD2F26F51400ED36F8 /* MacroTrackerUITests.swift */; };
 		94AFB0E02F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */; };
+		94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD12F41572A00780134 /* InfinitePageView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +98,7 @@
 		94AFB0D92F26F51400ED36F8 /* MacroTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacroTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		94AFB0DD2F26F51400ED36F8 /* MacroTrackerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerUITests.swift; sourceTree = "<group>"; };
 		94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		94CF1DD12F41572A00780134 /* InfinitePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfinitePageView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -245,6 +247,7 @@
 			children = (
 				946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */,
 				946AADF22F3580E000E4F2E4 /* ProgressRings.swift */,
+				94CF1DD12F41572A00780134 /* InfinitePageView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -483,6 +486,7 @@
 				9444E04E2F2D94FB007F24A8 /* SavedMealsView.swift in Sources */,
 				946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */,
 				946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */,
+				94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

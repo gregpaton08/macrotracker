@@ -48,3 +48,6 @@
   ---
   The top 6 are the ones I'd fix before submitting to App Review. Want me to tackle those?
 ```
+
+
+* Add cancel button to 'Analyzing' display when loading AI generated macros.
