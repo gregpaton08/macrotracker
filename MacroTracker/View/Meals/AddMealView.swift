@@ -29,6 +29,12 @@ struct AddMealView: View {
     @AppStorage("google_api_key") private var googleKey: String = ""
     @AppStorage("usda_api_key") private var usdaKey: String = ""
     private var apiKeysConfigured: Bool { !googleKey.isEmpty && !usdaKey.isEmpty }
+    private var geminiKeyConfigured: Bool { !googleKey.isEmpty }
+
+    // Camera / Photo
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
+    @State private var showImageSourcePicker = false
 
     // Logic
     @State private var activeCachedMeal: CachedMealEntity? = nil
@@ -127,6 +133,22 @@ struct AddMealView: View {
                         }
                     }
                     .disabled(description.isEmpty || viewModel.isLoading)
+
+                    // Scan Nutrition Label Button
+                    Button(action: { showImageSourcePicker = true }) {
+                        HStack {
+                            Image(systemName: "camera")
+                            Text("Scan Nutrition Label")
+                        }
+                    }
+                    .disabled(!geminiKeyConfigured || viewModel.isLoading)
+                    .confirmationDialog("Choose Image Source", isPresented: $showImageSourcePicker) {
+                        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                            Button("Take Photo") { showCamera = true }
+                        }
+                        Button("Choose from Library") { showPhotoLibrary = true }
+                        Button("Cancel", role: .cancel) {}
+                    }
                 }
                 
                 // MARK: - SECTION 2: MACROS (Compact Row)
@@ -211,6 +233,16 @@ struct AddMealView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
+            .sheet(isPresented: $showCamera) {
+                CameraPicker(sourceType: .camera, isPresented: $showCamera) { image in
+                    processNutritionLabelImage(image)
+                }
+            }
+            .sheet(isPresented: $showPhotoLibrary) {
+                CameraPicker(sourceType: .photoLibrary, isPresented: $showPhotoLibrary) { image in
+                    processNutritionLabelImage(image)
+                }
+            }
         }
         // Loading Overlay
         .overlay {
@@ -269,6 +301,29 @@ struct AddMealView: View {
         }
     }
     
+    private func processNutritionLabelImage(_ image: UIImage) {
+        focusedField = nil
+        Task {
+            if let result = await viewModel.scanNutritionLabel(image: image) {
+                fat = String(format: "%.1f", result.fat_grams)
+                carbs = String(format: "%.1f", result.carbs_grams)
+                protein = String(format: "%.1f", result.protein_grams)
+
+                if let size = result.serving_size, !size.isEmpty {
+                    portionSize = size
+                }
+                if let unit = result.serving_unit, MealEntity.validUnits.contains(unit) {
+                    selectedUnit = unit
+                }
+                if let desc = result.description, !desc.isEmpty, description.isEmpty {
+                    description = desc
+                }
+
+                activeCachedMeal = nil
+            }
+        }
+    }
+
     private func performAIAnalysis() {
         guard !description.isEmpty else { return }
         focusedField = nil

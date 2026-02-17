@@ -41,6 +41,7 @@
 		94AFB0DE2F26F51400ED36F8 /* MacroTrackerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0DD2F26F51400ED36F8 /* MacroTrackerUITests.swift */; };
 		94AFB0E02F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */; };
 		94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD12F41572A00780134 /* InfinitePageView.swift */; };
+		94CF1DD42F42000000780134 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD32F42000000780134 /* CameraPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +100,7 @@
 		94AFB0DD2F26F51400ED36F8 /* MacroTrackerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerUITests.swift; sourceTree = "<group>"; };
 		94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		94CF1DD12F41572A00780134 /* InfinitePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfinitePageView.swift; sourceTree = "<group>"; };
+		94CF1DD32F42000000780134 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -245,6 +247,7 @@
 		946AADEF2F3580BB00E4F2E4 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				94CF1DD32F42000000780134 /* CameraPicker.swift */,
 				946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */,
 				946AADF22F3580E000E4F2E4 /* ProgressRings.swift */,
 				94CF1DD12F41572A00780134 /* InfinitePageView.swift */,
@@ -487,6 +490,7 @@
 				946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */,
 				946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */,
 				94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */,
+				94CF1DD42F42000000780134 /* CameraPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -654,6 +658,7 @@
 				DEVELOPMENT_TEAM = 4UDF68884M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MacroTracker uses the camera to scan nutrition facts labels.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app needs to read your active energy to calculate your net calories.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app uses this to sync your nutrition data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -688,6 +693,7 @@
 				DEVELOPMENT_TEAM = 4UDF68884M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MacroTracker uses the camera to scan nutrition facts labels.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app needs to read your active energy to calculate your net calories.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app uses this to sync your nutrition data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

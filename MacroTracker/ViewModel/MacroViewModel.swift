@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import CoreData
 import OSLog
 
@@ -94,6 +95,28 @@ class MacroViewModel: ObservableObject {
         }
     }
     
+    func scanNutritionLabel(image: UIImage) async -> ParsedNutritionLabel? {
+        setupClients()
+
+        guard let gemini = geminiClient else {
+            errorMessage = "Gemini API Key missing. Please add it in Settings."
+            showError = true
+            return nil
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            return try await gemini.parseNutritionLabel(image: image)
+        } catch {
+            logger.error("Label scan failed: \(error.localizedDescription)")
+            errorMessage = error.localizedDescription
+            showError = true
+            return nil
+        }
+    }
+
     @discardableResult
     func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) -> Bool {
         let newMeal = MealEntity(context: context)

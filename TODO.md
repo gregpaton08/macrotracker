@@ -51,3 +51,4 @@
 
 
 * Add cancel button to 'Analyzing' display when loading AI generated macros.
+* Add option to choose Gemini model from available (hit the API for a list)
