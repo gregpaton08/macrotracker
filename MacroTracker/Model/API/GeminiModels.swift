@@ -32,6 +32,24 @@ struct GeminiResponse: Codable {
     let candidates: [Candidate]?
 }
 
+// MARK: - The "Direct" AI Analysis Result
+// We ask Gemini to fill THIS struct directly.
+struct AIAnalysisResult: Codable {
+    let summary: String        // e.g. "Chicken and Rice"
+    let total_calories: Double
+    let total_protein: Double
+    let total_carbs: Double
+    let total_fat: Double
+    
+    // Optional: Breakdown for transparency
+    let items: [FoodItem]
+    
+    struct FoodItem: Codable {
+        let name: String
+        let estimated_calories: Double
+    }
+}
+
 // The Strict Schema for Gemini
 struct ParsedFoodIntent: Codable {
     let items: [ParsedItem]

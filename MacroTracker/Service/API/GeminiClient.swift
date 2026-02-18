@@ -24,6 +24,72 @@ class GeminiClient {
         self.apiKey = apiKey
     }
 
+    // MARK: - Direct Analysis
+    func analyzeFood(userText: String) async throws -> AIAnalysisResult {
+        // Use a fast, smart model
+        let model = "gemini-2.0-flash"
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
+        
+        guard let url = URL(string: urlString) else { throw URLError(.badURL) }
+        
+        // The "One-Shot" Prompt
+        let promptText = """
+        You are a nutritionist. Analyze this food log: "\(userText)".
+        
+        1. Identify the food items and estimate portion sizes if not specified.
+        2. Calculate the total macronutrients (Protein, Fat, Carbs) and Calories.
+        3. Return ONLY valid JSON matching this schema:
+        {
+            "summary": "Short readable summary of food",
+            "total_calories": number,
+            "total_protein": number (grams),
+            "total_carbs": number (grams),
+            "total_fat": number (grams),
+            "items": [
+                { "name": "Item Name", "estimated_calories": number }
+            ]
+        }
+        """
+        
+        let requestBody = GeminiRequest(
+            contents: [.init(parts: [.init(text: promptText)])],
+            generationConfig: .init(response_mime_type: "application/json")
+        )
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        
+        let (data, response) = try await session.data(for: request)
+        
+        // Error Handling
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            self.logger.error("HTTP Error: \(httpResponse.statusCode)")
+            throw URLError(.badServerResponse)
+        }
+        
+        // Decode Gemini Wrapper
+        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        
+        guard var jsonText = geminiResponse.candidates?.first?.content.parts.first?.text else {
+            throw URLError(.cannotParseResponse)
+        }
+        
+        // Clean Markdown if present
+        jsonText = jsonText
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Decode Final Result
+        guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
+        
+        let result = try JSONDecoder().decode(AIAnalysisResult.self, from: cleanData)
+        return result
+    }
+
     func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
 
         // TODO: allow user to select model based on what is available.
@@ -37,7 +103,7 @@ class GeminiClient {
 
         // TODO: improve prompt. Include portion size if provided. Maybe rethink the RAG approach.
         let prompt = """
-        Analyze this food description for earching the USDA database for macronutrients: "\(userText)".
+        Analyze this food description for searching the USDA database for macronutrients: "\(userText)".
         Complex foods should be broken down into a list of ingredients.
         Return ONLY valid JSON. Do not use Markdown formatting.
         Schema:
