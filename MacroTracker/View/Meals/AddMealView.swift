@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import VisionKit
 
 struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -27,15 +28,18 @@ struct AddMealView: View {
     
     // API key check
     @AppStorage("google_api_key") private var googleKey: String = ""
-    @AppStorage("usda_api_key") private var usdaKey: String = ""
-    private var apiKeysConfigured: Bool { !googleKey.isEmpty && !usdaKey.isEmpty }
+    private var apiKeyConfigured: Bool { !googleKey.isEmpty }
     private var geminiKeyConfigured: Bool { !googleKey.isEmpty }
-
+    
     // Camera / Photo
     @State private var showCamera = false
     @State private var showPhotoLibrary = false
     @State private var showImageSourcePicker = false
-
+    
+    // Scanner State
+    @State private var showScanner = false
+    private let barcodeClient = OpenFoodFactsClient()
+    
     // Logic
     @State private var activeCachedMeal: CachedMealEntity? = nil
     
@@ -58,27 +62,27 @@ struct AddMealView: View {
             ($0.name ?? "").localizedCaseInsensitiveContains(description)
         }
     }
-
+    
     var body: some View {
         NavigationView {
             Form {
                 // MARK: - API KEY BANNER
-                if !apiKeysConfigured {
+                if !apiKeyConfigured {
                     Section {
                         HStack(spacing: 12) {
                             Image(systemName: "key.fill")
                                 .foregroundColor(.orange)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("API Keys Required")
+                                Text("API Key Required")
                                     .font(.subheadline).bold()
-                                Text("Add your Gemini and USDA keys in Settings to enable AI auto-fill.")
+                                Text("Add your Google API key in Settings to enable AI auto-fill.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
                     }
                 }
-
+                
                 // MARK: - SECTION 1: FOOD DETAILS
                 Section(header: Text("Food Details")) {
                     // Description
@@ -86,7 +90,7 @@ struct AddMealView: View {
                         TextField("Description (e.g. Chicken)", text: $description)
                             .focused($focusedField, equals: .description)
                             .submitLabel(.next)
-                            .onChange(of: description) { newValue in
+                            .onChange(of: description) { _, newValue in
                                 if let active = activeCachedMeal, active.name != newValue {
                                     // activeCachedMeal = nil
                                 }
@@ -114,7 +118,7 @@ struct AddMealView: View {
                         TextField("Portion", text: $portionSize)
                             .focused($focusedField, equals: .portion)
                             .keyboardType(.decimalPad)
-                            .onChange(of: portionSize) { _ in recalculateMacros() }
+                            .onChange(of: portionSize) { _, _ in recalculateMacros() }
                         
                         Picker("Unit", selection: $selectedUnit) {
                             ForEach(MealEntity.validUnits, id: \.self) { unit in
@@ -122,33 +126,49 @@ struct AddMealView: View {
                             }
                         }
                         .labelsHidden()
-                        .onChange(of: selectedUnit) { _ in recalculateMacros() }
+                        .onChange(of: selectedUnit) { _, _ in recalculateMacros() }
                     }
                     
-                    // AI Button
-                    Button(action: performAIAnalysis) {
-                        HStack {
-                            Image(systemName: "sparkles")
-                            Text("Auto-Fill with AI")
+                    // MARK: - Action Buttons
+                    HStack(spacing: 12) {
+                        // AI Button
+                        Button(action: performAIAnalysis) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                Text("Fill with AI")
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                    }
-                    .disabled(description.isEmpty || viewModel.isLoading)
-
-                    // Scan Nutrition Label Button
-                    Button(action: { showImageSourcePicker = true }) {
-                        HStack {
-                            Image(systemName: "camera")
-                            Text("Scan Nutrition Label")
+                        .buttonStyle(.bordered)
+                        .disabled(description.isEmpty || viewModel.isLoading)
+                        
+                        // Scan Nutrition Label Button
+                        Button(action: { showImageSourcePicker = true }) {
+                            HStack {
+                                Image(systemName: "camera")
+                                Text("Scan Nutrition Label")
+                            }
                         }
-                    }
-                    .disabled(!geminiKeyConfigured || viewModel.isLoading)
-                    .confirmationDialog("Choose Image Source", isPresented: $showImageSourcePicker) {
-                        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                            Button("Take Photo") { showCamera = true }
+                        .disabled(!geminiKeyConfigured || viewModel.isLoading)
+                        .confirmationDialog("Choose Image Source", isPresented: $showImageSourcePicker) {
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                                Button("Take Photo") { showCamera = true }
+                            }
+                            Button("Choose from Library") { showPhotoLibrary = true }
+                            Button("Cancel", role: .cancel) {}
                         }
-                        Button("Choose from Library") { showPhotoLibrary = true }
-                        Button("Cancel", role: .cancel) {}
+                        
+                        // Scan Button
+                        Button(action: { showScanner = true }) {
+                            HStack {
+                                Image(systemName: "barcode.viewfinder")
+                                Text("Scan")
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
                     }
+                    .padding(.top, 4)
                 }
                 
                 // MARK: - SECTION 2: MACROS (Compact Row)
@@ -221,7 +241,7 @@ struct AddMealView: View {
                 }
             }
             // Auto-Select Text Logic
-            .onChange(of: focusedField) { newValue in
+            .onChange(of: focusedField) { _, newValue in
                 guard newValue != nil else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
@@ -241,6 +261,28 @@ struct AddMealView: View {
             .sheet(isPresented: $showPhotoLibrary) {
                 CameraPicker(sourceType: .photoLibrary, isPresented: $showPhotoLibrary) { image in
                     processNutritionLabelImage(image)
+                }
+            }
+            // Scanner Sheet
+            .sheet(isPresented: $showScanner) {
+                if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
+                    BarcodeScannerView { code in
+                        handleBarcode(code)
+                    }
+                } else {
+                    VStack {
+                        Image(systemName: "camera.fill.badge.ellipsis")
+                            .font(.largeTitle)
+                            .foregroundColor(.secondary)
+                        Text("Camera not available")
+                            .font(.headline)
+                        Text("Barcode scanning requires a physical device with a camera.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                    }
+                    .presentationDetents([.medium])
                 }
             }
         }
@@ -308,7 +350,7 @@ struct AddMealView: View {
                 fat = String(format: "%.1f", result.fat_grams)
                 carbs = String(format: "%.1f", result.carbs_grams)
                 protein = String(format: "%.1f", result.protein_grams)
-
+                
                 if let size = result.serving_size, !size.isEmpty {
                     portionSize = size
                 }
@@ -318,12 +360,12 @@ struct AddMealView: View {
                 if let desc = result.description, !desc.isEmpty, description.isEmpty {
                     description = desc
                 }
-
+                
                 activeCachedMeal = nil
             }
         }
     }
-
+    
     private func performAIAnalysis() {
         guard !description.isEmpty else { return }
         focusedField = nil
@@ -338,12 +380,44 @@ struct AddMealView: View {
         }
     }
     
+    private func handleBarcode(_ code: String) {
+        viewModel.isLoading = true
+        
+        Task {
+            if let product = try? await barcodeClient.fetchProduct(barcode: code) {
+                // Update UI on Main Actor
+                await MainActor.run {
+                    self.description = product.name
+                    self.selectedUnit = "g"
+                    self.portionSize = "100" // OFF data is always per 100g
+                    
+                    // Auto-fill Macros (per 100g base)
+                    self.protein = String(format: "%.1f", product.p)
+                    self.carbs = String(format: "%.1f", product.c)
+                    self.fat = String(format: "%.1f", product.f)
+                    
+                    // Treat this like a "Cached Meal" so scaling works if they change portion
+                    // We mock a CachedMeal logic or just leave it raw.
+                    // For now, raw update is safer.
+                    
+                    viewModel.isLoading = false
+                }
+            } else {
+                await MainActor.run {
+                    viewModel.errorMessage = "Product not found."
+                    viewModel.showError = true
+                    viewModel.isLoading = false
+                }
+            }
+        }
+    }
+    
     private func saveMeal() {
         let p = max(0, Double(protein) ?? 0)
         let f = max(0, Double(fat) ?? 0)
         let c = max(0, Double(carbs) ?? 0)
         let amount = max(0, Double(portionSize) ?? 0)
-
+        
         let success = viewModel.saveMeal(
             description: description,
             p: p, f: f, c: c,
@@ -351,13 +425,13 @@ struct AddMealView: View {
             portionUnit: selectedUnit,
             date: targetDate
         )
-
+        
         guard success else { return }
-
+        
         MealCacheManager.shared.cacheMeal(
             name: description, p: p, f: f, c: c, portion: portionSize, unit: selectedUnit
         )
-
+        
         presentationMode.wrappedValue.dismiss()
     }
 }

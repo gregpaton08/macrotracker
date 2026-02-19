@@ -42,6 +42,8 @@
 		94AFB0E02F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */; };
 		94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD12F41572A00780134 /* InfinitePageView.swift */; };
 		94CF1DD42F42000000780134 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD32F42000000780134 /* CameraPicker.swift */; };
+		94CF1DD42F46A4BB00780134 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */; };
+		94CF1DD62F46A4D700780134 /* OpenFoodFactsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +103,8 @@
 		94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroTrackerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		94CF1DD12F41572A00780134 /* InfinitePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfinitePageView.swift; sourceTree = "<group>"; };
 		94CF1DD32F42000000780134 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
+		94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
+		94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFoodFactsClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -231,6 +235,7 @@
 			children = (
 				946AADE62F35801900E4F2E4 /* GeminiModels.swift */,
 				946AADE82F35802700E4F2E4 /* USDAModels.swift */,
+				94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -251,6 +256,7 @@
 				946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */,
 				946AADF22F3580E000E4F2E4 /* ProgressRings.swift */,
 				94CF1DD12F41572A00780134 /* InfinitePageView.swift */,
+				94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -462,6 +468,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94CF1DD42F46A4BB00780134 /* BarcodeScannerView.swift in Sources */,
+				94CF1DD62F46A4D700780134 /* OpenFoodFactsClient.swift in Sources */,
 				946AAE002F3988C800E4F2E4 /* Theme.swift in Sources */,
 				9444E0482F2D9157007F24A8 /* AddMealView.swift in Sources */,
 				946AADEC2F35807400E4F2E4 /* GeminiClient.swift in Sources */,
