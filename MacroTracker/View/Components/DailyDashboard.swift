@@ -153,8 +153,17 @@ struct DailyDashboard: View {
                                 }
                             }
                         }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    viewContext.delete(meal)
+                                    try? viewContext.save()
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
-                    .onDelete(perform: deleteItems)
                 }
             }
         }
@@ -176,12 +185,6 @@ struct DailyDashboard: View {
         }
     }
     
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { meals[$0] }.forEach(viewContext.delete)
-            try? viewContext.save()
-        }
-    }
 }
 
 // Helper to name workouts nicely
