@@ -53,7 +53,7 @@ class MacroViewModel: ObservableObject {
             
         } catch {
             logger.error("AI Analysis Failed: \(error.localizedDescription)")
-            errorMessage = "Could not analyze food. Please try again."
+            errorMessage = "Could not analyze food. Please try again. \(error.localizedDescription)"
             showError = true
             return nil
         }

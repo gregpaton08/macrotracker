@@ -155,3 +155,7 @@ code2prompt . \
   - Test on a real device — CloudKit sync and HealthKit don't work in the simulator
   - Handle no-network gracefully — reviewers often test in airplane mode
 ```
+
+
+https://aistudio.google.com/usage?timeRange=last-hour
+

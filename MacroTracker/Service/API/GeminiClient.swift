@@ -27,7 +27,8 @@ class GeminiClient {
     // MARK: - Direct Analysis
     func analyzeFood(userText: String) async throws -> AIAnalysisResult {
         // Use a fast, smart model
-        let model = "gemini-2.0-flash"
+//        let model = "gemini-2.0-flash"
+        let model = "gemini-3-flash-preview"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
