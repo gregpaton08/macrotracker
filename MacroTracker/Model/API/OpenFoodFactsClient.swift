@@ -18,11 +18,6 @@ struct Product: Codable {
     let nutriments: Nutriments?
     let serving_quantity: Double?
     let serving_quantity_unit: String?
-    
-//    enum CodingKeys: String, CodingKey {
-//        case serving_quantity = "serving_quantity"
-//        case serving_quantity_unit = "serving_quantity_unit"
-//    }
 }
 
 struct Nutriments: Codable {

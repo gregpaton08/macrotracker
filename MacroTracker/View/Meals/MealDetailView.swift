@@ -9,9 +9,12 @@ import SwiftUI
 import CoreData
 
 struct MealDetailView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
     // Make meal ObservedObject so the view updates instantly when you edit it
     @ObservedObject var meal: MealEntity
     @State private var isEditing = false
+    @State private var showDeleteConfirmation = false
     
     var body: some View {
         List {
@@ -54,9 +57,20 @@ struct MealDetailView: View {
                     Text("\(Int(meal.totalProtein))g")
                 }
             }
+
+            Section {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    HStack {
+                        Spacer()
+                        Label("Delete Meal", systemImage: "trash")
+                        Spacer()
+                    }
+                }
+            }
         }
         .navigationTitle(meal.summary ?? "Meal")
-        // ADD EDIT BUTTON HERE
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
@@ -66,6 +80,13 @@ struct MealDetailView: View {
         }
         .sheet(isPresented: $isEditing) {
             EditLogEntryView(meal: meal)
+        }
+        .confirmationDialog("Delete this meal?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                viewContext.delete(meal)
+                try? viewContext.save()
+                dismiss()
+            }
         }
     }
 }
