@@ -13,21 +13,24 @@ import CoreData
 struct InsightsView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
-    // Calendar state
+    // MARK: - Calendar State
+
     @State private var displayedMonth = Date()
     @State private var dailyTotals: [Date: DailyMacroTotal] = [:]
-    
-    // Navigation State
+
+    /// Tapping a calendar day navigates to that date's TrackerView.
     @State private var selectedDateToNavigate: Date?
     @State private var isNavigating = false
 
-    // Averages state
+    // MARK: - Averages State
+
     @State private var selectedRange: DateRangeOption = .week
     @State private var customStart = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var customEnd = Date()
     @State private var averages = MacroAverage(protein: 0, carbs: 0, fat: 0, dayCount: 0)
 
-    // Goals (same keys as DailyDashboard / SettingsView)
+    // MARK: - Goal Ranges (shared with DailyDashboard / SettingsView)
+
     @AppStorage("goal_p_min") private var pMin: Double = 150
     @AppStorage("goal_p_max") private var pMax: Double = 180
     @AppStorage("goal_c_min") private var cMin: Double = 200
@@ -35,6 +38,7 @@ struct InsightsView: View {
     @AppStorage("goal_f_min") private var fMin: Double = 60
     @AppStorage("goal_f_max") private var fMax: Double = 80
 
+    /// Time period options for the daily averages section.
     enum DateRangeOption: String, CaseIterable, Identifiable {
         case week = "Week"
         case month = "Month"
@@ -101,10 +105,8 @@ struct InsightsView: View {
         }
     }
 
-    // ... (Keep averagesSection, refreshAll, refreshCalendar, refreshAverages, dateRange, Helpers) ...
-    // These functions can remain exactly as they were in previous steps.
-    
-    // MARK: - Averages Section (Copy from previous file if needed)
+    // MARK: - Averages Section
+
     private var averagesSection: some View {
         VStack(spacing: 16) {
             Text("Daily Averages").font(.headline)
@@ -145,6 +147,8 @@ struct InsightsView: View {
         }
     }
     
+    // MARK: - Data Refresh
+
     private func refreshAll() {
         refreshCalendar()
         refreshAverages()
@@ -161,6 +165,7 @@ struct InsightsView: View {
         averages = MacroStatsService.averages(from: start, to: end, context: viewContext)
     }
     
+    /// Computes the `[start, end)` interval for the selected date range option.
     private func dateRange(for option: DateRangeOption) -> (Date, Date) {
         let calendar = Calendar.current
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date()))!
@@ -178,6 +183,9 @@ struct InsightsView: View {
         }
     }
     
+    // MARK: - Helpers
+
+    /// Advances or reverses the displayed calendar month.
     private func changeMonth(by value: Int) {
         withAnimation {
             displayedMonth = Calendar.current.date(byAdding: .month, value: value, to: displayedMonth) ?? displayedMonth

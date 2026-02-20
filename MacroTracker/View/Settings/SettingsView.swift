@@ -4,11 +4,16 @@
 //
 //  Created by Gregory Paton on 1/30/26.
 //
+//  App-wide settings screen.
+//  Sections: Saved Meals management, Backup/Restore (JSON import/export),
+//  macro goal ranges (Fat, Carbs, Protein min/max), and API key entry.
+//
 
 import SwiftUI
 
 struct SettingsView: View {
-    // API Keys & Goals
+    // MARK: - Persisted Settings
+
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("usda_api_key") var usdaKey: String = ""
     @AppStorage("goal_f_min") var fMin: Double = 60
@@ -17,13 +22,14 @@ struct SettingsView: View {
     @AppStorage("goal_c_max") var cMax: Double = 300
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
-    
-    // Import/Export State
+
+    // MARK: - Import/Export State
+
     @State private var showFileImporter = false
     @State private var importAlertMessage = ""
     @State private var showImportAlert = false
-    
-    // We generate the URL on demand
+
+    /// Generates a temporary JSON export file URL on demand for the ShareLink.
     var exportURL: URL? {
         DataTransferManager.shared.generateJSON()
     }

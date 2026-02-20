@@ -4,6 +4,11 @@
 //
 //  Created by Gregory Paton on 1/30/26.
 //
+//  Searchable list of all CachedMealEntity templates.
+//  Users can add, edit, and swipe-to-delete saved meals.
+//  Search filtering is handled by the inner FilteredSavedMealList
+//  which rebuilds its @FetchRequest predicate on each keystroke.
+//
 
 import SwiftUI
 import CoreData
@@ -11,9 +16,8 @@ import CoreData
 struct SavedMealsView: View {
     @State private var showAddSheet = false
     @State private var searchText = ""
-    
+
     var body: some View {
-        // We pass the search text into the sub-view
         FilteredSavedMealList(filter: searchText)
             .navigationTitle("Saved Database")
             // NATIVE SEARCH BAR (iOS 15+)
@@ -39,7 +43,7 @@ struct SavedMealsView: View {
     }
 }
 
-// Sub-View that handles the dynamic filtering
+/// Inner list view that re-creates its `@FetchRequest` whenever the filter text changes.
 struct FilteredSavedMealList: View {
     @Environment(\.managedObjectContext) var viewContext
     
@@ -85,10 +89,9 @@ struct FilteredSavedMealList: View {
         }
     }
     
-    // Helper to safely get calories regardless of your data model state
+    /// Computes calories via Atwater factors (P*4 + C*4 + F*9).
     private func calculateCalories(_ meal: CachedMealEntity) -> Double {
-        // Uses the extension logic: (P*4 + C*4 + F*9)
-        return (meal.protein * 4) + (meal.carbs * 4) + (meal.fat * 9)
+        (meal.protein * 4) + (meal.carbs * 4) + (meal.fat * 9)
     }
     
     private func deleteItems(offsets: IndexSet) {

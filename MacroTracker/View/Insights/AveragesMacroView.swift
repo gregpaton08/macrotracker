@@ -4,20 +4,18 @@
 //
 //  Created by Gregory Paton on 2/8/26.
 //
-
-//
-//  AveragesMacroView.swift
-//  MacroTracker
-//
 //  Displays average daily macros using the existing ProgressRing component,
-//  plus a numeric summary row.
+//  plus a numeric summary row. Shown inside InsightsView.
 //
 
 import SwiftUI
 
+/// Card component that visualizes average daily macros as progress rings
+/// and a compact numeric row (Avg Cal / Fat / Carbs / Protein).
 struct AveragesMacroView: View {
     let averages: MacroAverage
 
+    // Goal ranges (passed in from InsightsView)
     let pMin: Double, pMax: Double
     let cMin: Double, cMax: Double
     let fMin: Double, fMax: Double
@@ -51,6 +49,7 @@ struct AveragesMacroView: View {
         )
     }
 
+    /// Small vertical stat column (value on top, label below).
     private func macroStat(label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)

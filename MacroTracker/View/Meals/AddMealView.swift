@@ -4,6 +4,13 @@
 //
 //  Created by Gregory Paton on 1/30/26.
 //
+//  Modal form for logging a new meal. Supports three input methods:
+//    1. "Fill with AI"          — Gemini one-shot macro estimation
+//    2. "Scan Nutrition Label"  — Gemini Vision extracts label macros
+//    3. "Scan" (barcode)        — Open Food Facts lookup
+//  Also provides smart autocomplete from CachedMealEntity templates
+//  with automatic portion-based macro scaling.
+//
 
 import SwiftUI
 import CoreData
@@ -12,50 +19,54 @@ import VisionKit
 struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: MacroViewModel
-    
-    // External Date Logic
+
+    /// The calendar day this meal will be logged to.
     var targetDate: Date
-    
-    // Inputs
+
+    // MARK: - Input State
+
     @State private var description: String = ""
     @State private var portionSize: String = ""
     @State private var selectedUnit: String = "g"
-    
-    // Macros
+
     @State private var fat: String = ""
     @State private var carbs: String = ""
     @State private var protein: String = ""
-    
-    // API key check
+
+    // MARK: - API Key Check
+
     @AppStorage("google_api_key") private var googleKey: String = ""
     private var apiKeyConfigured: Bool { !googleKey.isEmpty }
     private var geminiKeyConfigured: Bool { !googleKey.isEmpty }
-    
-    // Camera / Photo
+
+    // MARK: - Sheet State
+
     @State private var showCamera = false
     @State private var showPhotoLibrary = false
     @State private var showImageSourcePicker = false
-    
-    // Scanner State
     @State private var showScanner = false
+
     private let barcodeClient = OpenFoodFactsClient()
-    
-    // Logic
+
+    /// The cached template currently driving portion-based macro scaling (if any).
     @State private var activeCachedMeal: CachedMealEntity? = nil
-    
-    // Focus
+
+    // MARK: - Focus
+
     @FocusState private var focusedField: Field?
     enum Field: Hashable {
         case description, portion, fat, carbs, protein
     }
-    
-    // Autocomplete
+
+    // MARK: - Autocomplete
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \CachedMealEntity.lastUsed, ascending: false)],
         animation: .default
     )
     private var cachedMeals: FetchedResults<CachedMealEntity>
     
+    /// Cached meals whose name contains the current description text (case-insensitive).
     var suggestions: [CachedMealEntity] {
         if description.isEmpty { return [] }
         return cachedMeals.filter {
@@ -308,8 +319,9 @@ struct AddMealView: View {
         }
     }
     
-    // MARK: - Logic
-    
+    // MARK: - Focus Navigation
+
+    /// Moves keyboard focus up (-1) or down (+1) through the field order.
     private func moveFocus(_ direction: Int) {
         let order: [Field] = [.description, .portion, .fat, .carbs, .protein]
         guard let current = focusedField, let index = order.firstIndex(of: current) else { return }
@@ -317,6 +329,9 @@ struct AddMealView: View {
         if next >= 0 && next < order.count { focusedField = order[next] }
     }
     
+    // MARK: - Autocomplete Logic
+
+    /// Populates fields from a cached meal template and triggers macro scaling.
     private func applyCachedMeal(_ meal: CachedMealEntity) {
         self.activeCachedMeal = meal
         self.description = meal.name ?? ""
@@ -326,6 +341,8 @@ struct AddMealView: View {
         focusedField = nil
     }
     
+    /// Scales macros proportionally when the user changes portion size
+    /// while an `activeCachedMeal` template is selected.
     private func recalculateMacros() {
         guard let cached = activeCachedMeal else { return }
         let currentSize = Double(portionSize) ?? 0
@@ -343,6 +360,9 @@ struct AddMealView: View {
         }
     }
     
+    // MARK: - AI / Scan Actions
+
+    /// Sends a photo to Gemini Vision and populates fields from the extracted label data.
     private func processNutritionLabelImage(_ image: UIImage) {
         focusedField = nil
         Task {
@@ -366,6 +386,7 @@ struct AddMealView: View {
         }
     }
     
+    /// Sends the description (with optional portion context) to Gemini for macro estimation.
     private func performAIAnalysis() {
         guard !description.isEmpty else { return }
         focusedField = nil
@@ -380,6 +401,7 @@ struct AddMealView: View {
         }
     }
     
+    /// Looks up a barcode via Open Food Facts and populates fields with per-serving data.
     private func handleBarcode(_ code: String) {
         viewModel.isLoading = true
         
@@ -411,6 +433,9 @@ struct AddMealView: View {
         }
     }
     
+    // MARK: - Save
+
+    /// Validates inputs, persists the meal, caches the template, and dismisses.
     private func saveMeal() {
         let p = max(0, Double(protein) ?? 0)
         let f = max(0, Double(fat) ?? 0)

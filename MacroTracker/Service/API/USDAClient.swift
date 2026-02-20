@@ -4,32 +4,34 @@
 //
 //  Created by Gregory Paton on 2/5/26.
 //
+//  HTTP client for the USDA Food Data Central API.
+//  Searches for a food item and returns per-100 g macronutrient values
+//  (protein, fat, carbs, calories) from the first matching result.
+//
 
 import Foundation
 import OSLog
 
 // MARK: - USDA Client
+
 class USDAClient {
-    // Standard Nutrient IDs
+    /// Standard USDA nutrient IDs used to extract macro values from search results.
     private let PROTEIN_ID = 1003
     private let FAT_ID = 1004
     private let CARBS_ID = 1005
     private let KCAL_ID = 1008
-//    let logger: Logging.Logger
-    private let logger = Logger(subsystem: "com.yourdomain.yourapp", category: "USDAClient")
-    
+
+    private let logger = Logger(subsystem: "com.macrotracker", category: "USDAClient")
     private let apiKey: String
 
     init(apiKey: String) {
         self.apiKey = apiKey
     }
-//    init() {
-//        var logger = parentLogger
-//        logger[metadataKey: "class"] = "USDAClient"
-//        logger.logLevel = .debug
-//        self.logger = logger
-//    }
-    
+
+    /// Searches USDA FDC for `query` and returns per-100 g macros from the top result.
+    ///
+    /// Only Foundation and SR Legacy data types are searched (most reliable).
+    /// Returns `nil` when no results match the query.
     func fetchNutrients(query: String) async throws -> (protein: Double, fat: Double, carbs: Double, kcal: Double)? {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let urlString = "https://api.nal.usda.gov/fdc/v1/foods/search?query=\(encodedQuery)&dataType=Foundation,SR%20Legacy&pageSize=1&api_key=\(apiKey)"

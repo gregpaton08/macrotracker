@@ -4,42 +4,51 @@
 //
 //  Created by Gregory Paton on 2/5/26.
 //
+//  Circular progress ring that visualizes a macro value against a
+//  min/max goal range. Three visual states:
+//    - Under (yellow): value < min
+//    - Good  (green):  min ≤ value ≤ max
+//    - Over  (red):    value > max — shows a full red ring plus an
+//      overflow arc indicating how far past the limit.
+//
 
 import Foundation
 import SwiftUI
 
-// MARK: - The Custom Ring Component
+// MARK: - Progress Ring
+
 struct ProgressRing: View {
     let label: String
     let value: Double
     let min: Double
     let max: Double
 
-    // 1. Math Helpers
+    /// Guards against NaN / Infinity so the ring never renders garbage.
     private func sanitize(_ val: Double) -> Double {
         if val.isNaN || val.isInfinite { return 0.0 }
         return val
     }
 
+    /// Max goal, clamped to at least 100 to avoid divide-by-zero.
     var safeMax: Double {
         let m = sanitize(max)
         return m > 0 ? m : 100
     }
 
-    // The "Goal Zone" arc (Min to Max)
+    /// Fraction of the ring where the "goal zone" arc begins (min / max).
     var minFraction: CGFloat {
         let val = sanitize(min) / safeMax
         return CGFloat(sanitize(val))
     }
 
-    // Standard Progress (0.0 to 1.0)
+    /// Current value as a fraction of max (0.0 – 1.0+).
     var currentFraction: CGFloat {
         let val = sanitize(value) / safeMax
         return CGFloat(sanitize(val))
     }
 
-    // Overflow Logic (How much past 100% are we?)
-    // Uses modulo to handle lapping multiple times if needed
+    /// Overflow arc fraction (> 0 only when value exceeds max).
+    /// Uses modulo to handle lapping multiple times.
     var overflowFraction: CGFloat {
         let fraction = currentFraction
         if fraction > 1.0 {
@@ -48,6 +57,7 @@ struct ProgressRing: View {
         return 0.0
     }
 
+    /// Determines the visual state based on value vs. goal range.
     var state: RingState {
         let val = sanitize(value)
         if val < sanitize(min) { return .under }
@@ -140,6 +150,9 @@ struct ProgressRing: View {
     }
 }
 
+// MARK: - Ring State
+
+/// Visual state of a progress ring relative to the user's goal range.
 enum RingState {
     case under, good, over
 

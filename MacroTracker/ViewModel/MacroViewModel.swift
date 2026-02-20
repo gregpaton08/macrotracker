@@ -1,3 +1,12 @@
+//
+//  MacroViewModel.swift
+//  MacroTracker
+//
+//  Central orchestrator for meal logging.
+//  Coordinates Gemini API calls, macro calculation, nutrition-label
+//  scanning, and CoreData writes.
+//
+
 import SwiftUI
 import UIKit
 import CoreData
@@ -7,18 +16,20 @@ import OSLog
 class MacroViewModel: ObservableObject {
     let context: NSManagedObjectContext
     private let logger = Logger(subsystem: "com.macrotracker", category: "ViewModel")
-    
+
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var showError = false // Controls the alert presentation
-    
+    @Published var showError = false
+
     private var geminiClient: GeminiClient?
-    
+
     init(context: NSManagedObjectContext) {
         self.context = context
         setupClient()
     }
-    
+
+    /// (Re)creates the Gemini client from the current UserDefaults API key.
+    /// Called on init and before each API request so key changes take effect immediately.
     private func setupClient() {
         let defaults = UserDefaults.standard
         if let googleKey = defaults.string(forKey: "google_api_key"), !googleKey.isEmpty {
@@ -26,8 +37,9 @@ class MacroViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Core Logic (Simplified)
-    
+    // MARK: - AI Macro Analysis
+
+    /// Sends a food description to Gemini and returns estimated macros in one round-trip.
     func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {
         setupClient()
         
@@ -59,6 +71,10 @@ class MacroViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Nutrition Label Scanning
+
+    /// Sends a photo of a nutrition facts label to Gemini Vision and returns
+    /// the extracted macro values. Returns `nil` on failure (error is shown via alert).
     func scanNutritionLabel(image: UIImage) async -> ParsedNutritionLabel? {
         setupClient()
 
@@ -81,7 +97,10 @@ class MacroViewModel: ObservableObject {
         }
     }
     
-    // ... (keep saveMeal and combineDate exactly as they were) ...
+    // MARK: - Persistence
+
+    /// Creates and saves a new `MealEntity`. Returns `true` on success.
+    /// The timestamp combines the target `date` with the current wall-clock time.
     @discardableResult
     func saveMeal(description: String, p: Double, f: Double, c: Double, portion: Double, portionUnit: String, date: Date) -> Bool {
         let newMeal = MealEntity(context: context)
@@ -105,6 +124,7 @@ class MacroViewModel: ObservableObject {
         }
     }
     
+    /// Merges the year/month/day from `date` with the hour/minute/second from `time`.
     private func combineDate(_ date: Date, withTime time: Date) -> Date {
         let calendar = Calendar.current
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)

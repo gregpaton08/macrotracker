@@ -4,12 +4,18 @@
 //
 //  Created by Gregory Paton on 2/8/26.
 //
+//  JSON export/import for backup & restore.
+//  Exports all MealEntity rows and CachedMealEntity templates into a
+//  single versioned JSON file. Imports de-duplicate meals by UUID.
+//
 
 import Foundation
 import CoreData
 import SwiftUI
 
-// MARK: - JSON Models
+// MARK: - JSON Export Models
+
+/// Top-level envelope for a MacroTracker data export file.
 struct AppDataExport: Codable {
     let version: Int
     let exportedAt: Date
@@ -17,6 +23,7 @@ struct AppDataExport: Codable {
     let savedTemplates: [SavedTemplateExport]
 }
 
+/// A single logged meal serialized for export.
 struct MealExport: Codable {
     let id: UUID?
     let timestamp: Date
@@ -28,6 +35,7 @@ struct MealExport: Codable {
     let unit: String
 }
 
+/// A saved meal template (CachedMealEntity) serialized for export.
 struct SavedTemplateExport: Codable {
     let name: String
     let protein: Double
@@ -38,12 +46,16 @@ struct SavedTemplateExport: Codable {
     let lastUsed: Date?
 }
 
-// MARK: - Manager Class
+// MARK: - Manager
+
 class DataTransferManager: ObservableObject {
     static let shared = DataTransferManager()
     private let context = PersistenceController.shared.container.viewContext
-    
-    // MARK: - Export Logic
+
+    // MARK: - Export
+
+    /// Serializes all meals and saved templates to a pretty-printed JSON file
+    /// in the temporary directory. Returns the file URL for sharing, or `nil` on failure.
     func generateJSON() -> URL? {
         // 1. Fetch All Logged Meals
         let mealRequest: NSFetchRequest<MealEntity> = MealEntity.fetchRequest()
@@ -103,7 +115,13 @@ class DataTransferManager: ObservableObject {
         }
     }
     
-    // MARK: - Import Logic
+    // MARK: - Import
+
+    /// Reads a MacroTracker JSON backup file and imports its contents.
+    ///
+    /// - Meals are de-duplicated by UUID — existing meals are skipped.
+    /// - Templates are upserted via `MealCacheManager.cacheMeal`.
+    /// - Returns the number of **new** meals imported.
     func importJSON(from url: URL) async throws -> Int {
         // 1. Read & Decode
         // (Security scoped resource access is handled by the View modifier usually, but good practice to check)
@@ -158,6 +176,7 @@ class DataTransferManager: ObservableObject {
         return count
     }
     
+    /// Returns `true` if a MealEntity with the given UUID already exists in the store.
     private func mealExists(id: UUID?) -> Bool {
         guard let id = id else { return false }
         let fetch: NSFetchRequest<MealEntity> = MealEntity.fetchRequest()

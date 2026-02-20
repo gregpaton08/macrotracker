@@ -4,6 +4,10 @@
 //
 //  Created by Gregory Paton on 1/30/26.
 //
+//  Modal form for creating or editing a CachedMealEntity template.
+//  When `mealToEdit` is nil, a new template is created via MealCacheManager.
+//  When editing, changes are written directly to the existing entity.
+//
 
 import SwiftUI
 
@@ -11,19 +15,21 @@ import SwiftUI
 struct EditCachedMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) var viewContext
-    
+
+    /// Pass `nil` to create a new template; pass an existing entity to edit it.
     var mealToEdit: CachedMealEntity?
+
+    // MARK: - Form State
 
     @State private var showSaveError = false
     @State private var name: String = ""
     @State private var portion: String = ""
     @State private var unit: String = "grams"
-    
+
     @State private var protein: String = ""
     @State private var carbs: String = ""
     @State private var fat: String = ""
-    
-    // 1. FOCUS STATE
+
     enum Field: Hashable {
         case name, portion, protein, carbs, fat
     }
@@ -129,7 +135,9 @@ struct EditCachedMealView: View {
         }
     }
     
-    // 4. LOGIC
+    // MARK: - Logic
+
+    /// Moves keyboard focus up (-1) or down (+1) through the field order.
     private func moveFocus(direction: Int) {
         let order: [Field] = [.name, .portion, .protein, .carbs, .fat]
         
@@ -142,6 +150,7 @@ struct EditCachedMealView: View {
         }
     }
     
+    /// Saves the template — updates the existing entity or creates a new one.
     private func save() {
         let p = max(0, Double(protein) ?? 0)
         let c = max(0, Double(carbs) ?? 0)

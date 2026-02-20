@@ -14,11 +14,11 @@ import SwiftUI
 struct MacroCalendarView: View {
     let month: Date
     let dailyTotals: [Date: DailyMacroTotal]
-    
-    // New Callback
+
+    /// Called when the user taps a day cell to navigate to that date.
     var onSelectDate: (Date) -> Void
 
-    // Goal ranges
+    // Goal ranges (passed in from InsightsView)
     let pMin: Double, pMax: Double
     let cMin: Double, cMax: Double
     let fMin: Double, fMax: Double
@@ -59,11 +59,9 @@ struct MacroCalendarView: View {
         }
     }
 
-    // ... (Keep dayCellView, dotView, and DayCell struct exactly as they were) ...
-    // Copy the rest of the existing file here.
-    // Just ensure the helper functions (dayCellView, dotView, dayCells) are present.
-    
-    // MARK: - Day Cell View (Helper)
+    // MARK: - Day Cell View
+
+    /// Renders a single day: day number + three colored dots for Fat/Carbs/Protein.
     private func dayCellView(for cell: DayCell) -> some View {
         let dayKey = calendar.startOfDay(for: cell.date)
         let totals = dailyTotals[dayKey]
@@ -104,8 +102,9 @@ struct MacroCalendarView: View {
         .contentShape(Rectangle()) // Ensures the whole cell is tappable
     }
     
-    // ... (Keep dotView and DayCell logic) ...
     // MARK: - Dot Views
+
+    /// Returns a colored dot based on whether the value is under/in/over the goal range.
     private func dotView(value: Double, min: Double, max: Double) -> some View {
         let color: Color = {
             if value < min { return Theme.under }
@@ -115,10 +114,12 @@ struct MacroCalendarView: View {
         return dotView(color: color)
     }
 
+    /// Renders a small filled circle with the given color.
     private func dotView(color: Color) -> some View {
         Circle().fill(color).frame(width: 6, height: 6)
     }
     
+    /// Represents one cell in the calendar grid — either a real day or a leading placeholder.
     private struct DayCell: Identifiable {
         let id: String
         let date: Date

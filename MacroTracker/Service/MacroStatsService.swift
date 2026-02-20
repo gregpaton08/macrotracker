@@ -12,23 +12,27 @@ import Foundation
 import CoreData
 import OSLog
 
+/// Aggregated macros for a single calendar day, keyed by start-of-day `Date`.
 struct DailyMacroTotal: Identifiable {
     let id: Date          // start-of-day, used as unique key
     let protein: Double
     let carbs: Double
     let fat: Double
 
+    /// Calories computed via Atwater factors (P*4 + C*4 + F*9).
     var calories: Double {
         caloriesFromMacros(fat: fat, carbohydrates: carbs, protein: protein)
     }
 }
 
+/// Average daily macros over a date range. Only days with logged meals count.
 struct MacroAverage {
     let protein: Double
     let carbs: Double
     let fat: Double
-    let dayCount: Int
+    let dayCount: Int       // number of days that had at least one meal
 
+    /// Calories computed via Atwater factors (P*4 + C*4 + F*9).
     var calories: Double {
         caloriesFromMacros(fat: fat, carbohydrates: carbs, protein: protein)
     }

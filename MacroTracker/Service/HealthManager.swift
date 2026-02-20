@@ -4,6 +4,10 @@
 //
 //  Created by Gregory Paton on 2/2/26.
 //
+//  Singleton that reads active energy burned and workout data from HealthKit.
+//  Provides async helpers consumed by DailyDashboard to display calorie burn
+//  and workout breakdowns.
+//
 
 import Foundation
 import OSLog
@@ -15,12 +19,16 @@ class HealthManager: ObservableObject {
     static let shared = HealthManager()
     private let logger = Logger(subsystem: "com.macrotracker", category: "HealthManager")
 
+    /// `true` when the user has denied HealthKit access; drives a UI banner.
     @Published var authorizationDenied = false
 
     #if os(iOS)
     let healthStore = HKHealthStore()
     #endif
 
+    // MARK: - Authorization
+
+    /// Requests read-only access to active energy burned and workout samples.
     func requestAuthorization() {
         #if os(iOS)
         guard HKHealthStore.isHealthDataAvailable() else {
@@ -48,7 +56,9 @@ class HealthManager: ObservableObject {
         #endif
     }
     
-    // Fetch Total Active Calories (Existing)
+    // MARK: - Active Energy
+
+    /// Returns total active energy burned (kcal) for the given calendar day.
     func fetchCaloriesBurned(for date: Date) async -> Double {
         #if os(iOS)
         guard HKHealthStore.isHealthDataAvailable() else { return 0 }
@@ -73,7 +83,10 @@ class HealthManager: ObservableObject {
         #endif
     }
     
-    // 2. NEW: Fetch Specific Workouts
+    // MARK: - Workouts
+
+    /// Returns all `HKWorkout` samples recorded on the given calendar day,
+    /// sorted by end date (newest first).
     func fetchWorkouts(for date: Date) async -> [HKWorkout] {
         #if os(iOS)
         guard HKHealthStore.isHealthDataAvailable() else { return [] }

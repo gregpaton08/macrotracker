@@ -4,14 +4,19 @@
 //
 //  Created by Gregory Paton on 2/18/26.
 //
+//  SwiftUI wrapper around VisionKit's DataScannerViewController.
+//  Scans for barcodes and returns the first detected payload string
+//  via the `onResult` callback, then auto-dismisses.
+//
 
 import SwiftUI
 import VisionKit
 
 struct BarcodeScannerView: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
+    /// Called with the barcode payload string when a barcode is detected.
     var onResult: (String) -> Void
-    
+
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let scanner = DataScannerViewController(
             recognizedDataTypes: [.barcode()],
@@ -34,6 +39,8 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
         Coordinator(self)
     }
     
+    /// Handles DataScanner delegate callbacks. Uses `isProcessing` flag
+    /// to prevent duplicate results from rapid-fire detections.
     class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let parent: BarcodeScannerView
         var isProcessing = false

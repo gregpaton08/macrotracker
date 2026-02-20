@@ -4,15 +4,23 @@
 //
 //  Created by Gregory Paton on 2/18/26.
 //
+//  HTTP client for the Open Food Facts API.
+//  Looks up a product by barcode and returns per-serving macros.
+//  No API key required — only a descriptive User-Agent header.
+//
 
 import Foundation
 import OSLog
 
+// MARK: - Response Models
+
+/// Top-level wrapper for the Open Food Facts product endpoint.
 struct OpenFoodFactsResponse: Codable {
     let product: Product?
     let status: Int?
 }
 
+/// A single product record from Open Food Facts.
 struct Product: Codable {
     let product_name: String?
     let nutriments: Nutriments?
@@ -20,6 +28,8 @@ struct Product: Codable {
     let serving_quantity_unit: String?
 }
 
+/// Nutrient values from Open Food Facts. Per-serving values are preferred
+/// over per-100 g because barcode scans typically represent a single serving.
 struct Nutriments: Codable {
     let energy_kcal_100g: Double?
     let proteins_100g: Double?
@@ -28,9 +38,7 @@ struct Nutriments: Codable {
     let fat_serving: Double?
     let carbohydrates_serving: Double?
     let proteins_serving: Double?
-    
-    
-    // API sometimes uses different keys, but these are standard for OFF
+
     enum CodingKeys: String, CodingKey {
         case energy_kcal_100g = "energy-kcal_100g"
         case proteins_100g = "proteins_100g"
@@ -42,10 +50,14 @@ struct Nutriments: Codable {
     }
 }
 
+// MARK: - Client
+
 class OpenFoodFactsClient {
     private let session = URLSession.shared
     private let logger = Logger(subsystem: "com.macrotracker", category: "OpenFoodFacts")
-    
+
+    /// Fetches a product by barcode and returns per-serving macro values.
+    /// Returns `nil` if the barcode is not found or nutriment data is missing.
     func fetchProduct(barcode: String) async throws -> (name: String, sq: Double, squ: String, f: Double, c: Double, p: Double)? {
         let urlString = "https://world.openfoodfacts.org/api/v0/product/\(barcode).json"
         guard let url = URL(string: urlString) else { return nil }

@@ -4,6 +4,10 @@
 //
 //  Created by Gregory Paton on 1/29/26.
 //
+//  Read-only detail screen for a logged meal.
+//  Shows date, time, portion, and full macro breakdown.
+//  Provides Edit (sheet) and Delete (confirmation dialog) actions.
+//
 
 import SwiftUI
 import CoreData
@@ -11,7 +15,8 @@ import CoreData
 struct MealDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    // Make meal ObservedObject so the view updates instantly when you edit it
+
+    /// `@ObservedObject` so the view refreshes instantly after editing.
     @ObservedObject var meal: MealEntity
     @State private var isEditing = false
     @State private var showDeleteConfirmation = false

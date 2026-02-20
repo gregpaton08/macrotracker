@@ -4,10 +4,17 @@
 //
 //  Created by Gregory Paton on 1/28/26.
 //
+//  Horizontally-paged daily tracker. Each page is a DailyDashboard for
+//  one calendar day. A floating date header with chevrons and a calendar
+//  picker allows quick date navigation. The toolbar provides access to
+//  Settings, Insights, and the Add Meal sheet.
+//
 
 import SwiftUI
 import CoreData
 
+/// Defers view body evaluation until the view is actually rendered,
+/// preventing all 20+ dashboard pages from computing at once.
 private struct LazyView<Content: View>: View {
     let build: () -> Content
     init(_ build: @autoclosure @escaping () -> Content) { self.build = build }
@@ -16,20 +23,29 @@ private struct LazyView<Content: View>: View {
 
 struct TrackerView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
-    // Config
+
+    // MARK: - Configuration
+
+    /// Index that maps to "today" in the paging TabView.
     private let centerIndex = 5000
-    private let isRoot: Bool // New flag to hide toolbar items if deep-linked
-    
-    // State
+    /// When `false`, toolbar navigation items (gear, chart) are hidden
+    /// so this view can be pushed from InsightsView without duplicate controls.
+    private let isRoot: Bool
+
+    // MARK: - State
+
     @State private var selectedIndex: Int
     @State private var selectedDate: Date
-    
+
     @State private var showCalendar = false
     @State private var showAddMeal = false
     @State private var showSettings = false
-    
-    // MARK: - Custom Init for Deep Linking
+
+    // MARK: - Initializer
+
+    /// - Parameters:
+    ///   - initialDate: The calendar day to show on first appearance (defaults to today).
+    ///   - isRoot: Pass `false` when pushing from InsightsView to hide redundant toolbar items.
     init(initialDate: Date = Date(), isRoot: Bool = true) {
         self.isRoot = isRoot
         
@@ -181,13 +197,16 @@ struct TrackerView: View {
         }
     }
     
-    // MARK: - Helpers
+    // MARK: - Index ↔ Date Helpers
+
+    /// Converts a TabView page index to a calendar date relative to today.
     private func dateFromIndex(_ index: Int) -> Date {
         let diff = index - centerIndex
         let today = Calendar.current.startOfDay(for: Date())
         return Calendar.current.date(byAdding: .day, value: diff, to: today) ?? today
     }
     
+    /// Converts a calendar date to the corresponding TabView page index.
     private func indexFromDate(_ date: Date) -> Int {
         let today = Calendar.current.startOfDay(for: Date())
         let target = Calendar.current.startOfDay(for: date)

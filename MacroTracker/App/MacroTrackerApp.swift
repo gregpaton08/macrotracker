@@ -4,6 +4,10 @@
 //
 //  Created by Gregory Paton on 1/25/26.
 //
+//  App entry point. Initializes CoreData persistence and injects
+//  the managed object context into the SwiftUI environment.
+//  Displays an error screen if the persistent store fails to load.
+//
 
 import SwiftUI
 
@@ -14,6 +18,7 @@ struct MacroTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             if let error = persistenceController.loadError {
+                // MARK: - Database Error Screen
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 48))

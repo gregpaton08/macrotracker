@@ -4,39 +4,44 @@
 //
 //  Created by Gregory Paton on 2/5/26.
 //
+//  HTTP client for the Google Gemini API. Provides three capabilities:
+//    1. analyzeFood     — One-shot macro estimation (text → macros).
+//    2. parseInput       — Two-step pipeline (text → USDA search terms).
+//    3. parseNutritionLabel — Multimodal vision (photo → label macros).
+//
 
 import Foundation
 import UIKit
 import OSLog
 
+/// Generic Gemini error body (used when decoding non-200 responses).
 struct ApiResponse: Codable {
     let message: String
 }
 
 // MARK: - Gemini Client
+
 class GeminiClient {
     private let session = URLSession.shared
     private let logger = Logger(subsystem: "com.macrotracker", category: "GeminiClient")
-
     private let apiKey: String
 
     init(apiKey: String) {
         self.apiKey = apiKey
     }
 
-    // MARK: - Direct Analysis
+    // MARK: - One-Shot Analysis
+
+    /// Sends a food description directly to Gemini and receives complete macro
+    /// estimates in a single round-trip — no USDA lookup needed.
     func analyzeFood(userText: String) async throws -> AIAnalysisResult {
-        // Use a fast, smart model
-//        let model = "gemini-2.0-flash"
         let model = "gemini-3-flash-preview"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
-        
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
-        
-        // The "One-Shot" Prompt
+
         let promptText = """
         You are a nutritionist. Analyze this food log: "\(userText)".
-        
+
         1. Identify the food items and estimate portion sizes if not specified.
         2. Calculate the total macronutrients (Protein, Fat, Carbs) and Calories.
         3. Return ONLY valid JSON matching this schema:
@@ -51,51 +56,25 @@ class GeminiClient {
             ]
         }
         """
-        
+
         let requestBody = GeminiRequest(
             contents: [.init(parts: [.init(text: promptText)])],
             generationConfig: .init(response_mime_type: "application/json")
         )
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
-        
-        let (data, response) = try await session.data(for: request)
-        
-        // Error Handling
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-            self.logger.error("HTTP Error: \(httpResponse.statusCode)")
-            throw URLError(.badServerResponse)
-        }
-        
-        // Decode Gemini Wrapper
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        
-        guard var jsonText = geminiResponse.candidates?.first?.content.parts.first?.text else {
-            throw URLError(.cannotParseResponse)
-        }
-        
-        // Clean Markdown if present
-        jsonText = jsonText
-            .replacingOccurrences(of: "```json", with: "")
-            .replacingOccurrences(of: "```", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Decode Final Result
+
+        let data = try await performRequest(url: url, body: requestBody)
+        let jsonText = try extractJSON(from: data)
         guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
-        
-        let result = try JSONDecoder().decode(AIAnalysisResult.self, from: cleanData)
-        return result
+
+        return try JSONDecoder().decode(AIAnalysisResult.self, from: cleanData)
     }
 
-    func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
+    // MARK: - Two-Step Pipeline (Gemini → USDA)
 
+    /// Parses a food description into USDA-optimized search terms and estimated weights.
+    /// The caller then queries `USDAClient` for per-100g nutrient data.
+    func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
         // TODO: allow user to select model based on what is available.
-//        let model = "gemini-pro-latest"
-//        let model = "gemini-2.0-flash"
         let model = "gemini-3-flash-preview"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
@@ -116,44 +95,12 @@ class GeminiClient {
             generationConfig: .init(response_mime_type: "application/json")
         )
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
-
-        let (data, response) = try await session.data(for: request)
-//        Logger.logResponse(data: data, response: response, error: nil, category: .gemini)
-
-        if let httpResponse = response as? HTTPURLResponse {
-            if httpResponse.statusCode == 429 {
-                self.logger.warning("Rate Limited.")
-                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Rate limited by Gemini API. Please try again shortly."])
-            }
-            if httpResponse.statusCode != 200 {
-                self.logger.error("Received HTTP response: \(httpResponse.statusCode)")
-
-                if let decodedData = try? JSONDecoder().decode(ApiResponse.self, from: data) {
-                    let userInfo: [String: Any] = [NSLocalizedDescriptionKey: decodedData.message]
-                    throw URLError(.badServerResponse, userInfo: userInfo)
-                }
-                throw URLError(.badServerResponse)
-            }
-        }
-
-        // Clean and Decode
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard var jsonText = geminiResponse.candidates?.first?.content.parts.first?.text else {
-            throw URLError(.cannotParseResponse)
-        }
-
-        // Strip Markdown
-        jsonText = jsonText.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
+        let data = try await performRequest(url: url, body: requestBody)
+        let jsonText = try extractJSON(from: data)
         logger.debug("jsonText = \(jsonText)")
 
         guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
         let result = try JSONDecoder().decode(ParsedFoodIntent.self, from: cleanData).items
-
 
         logger.debug("result: \(result)")
         return result
@@ -161,6 +108,8 @@ class GeminiClient {
 
     // MARK: - Nutrition Label Scanning
 
+    /// Sends a photo of a nutrition facts label to Gemini Vision and extracts
+    /// macro values directly from the label — no USDA lookup required.
     func parseNutritionLabel(image: UIImage) async throws -> ParsedNutritionLabel {
         guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
             throw URLError(.cannotParseResponse, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG."])
@@ -194,36 +143,8 @@ class GeminiClient {
             generationConfig: .init(response_mime_type: "application/json")
         )
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
-
-        let (data, response) = try await session.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse {
-            if httpResponse.statusCode == 429 {
-                self.logger.warning("Rate Limited.")
-                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Rate limited by Gemini API. Please try again shortly."])
-            }
-            if httpResponse.statusCode != 200 {
-                self.logger.error("Received HTTP response: \(httpResponse.statusCode)")
-
-                if let decodedData = try? JSONDecoder().decode(ApiResponse.self, from: data) {
-                    let userInfo: [String: Any] = [NSLocalizedDescriptionKey: decodedData.message]
-                    throw URLError(.badServerResponse, userInfo: userInfo)
-                }
-                throw URLError(.badServerResponse)
-            }
-        }
-
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard var jsonText = geminiResponse.candidates?.first?.content.parts.first?.text else {
-            throw URLError(.cannotParseResponse, userInfo: [NSLocalizedDescriptionKey: "Could not read the nutrition label. Try a clearer photo."])
-        }
-
-        jsonText = jsonText.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
+        let data = try await performRequest(url: url, body: requestBody)
+        let jsonText = try extractJSON(from: data)
         logger.debug("Nutrition label JSON: \(jsonText)")
 
         guard let cleanData = jsonText.data(using: .utf8) else {
@@ -231,5 +152,50 @@ class GeminiClient {
         }
 
         return try JSONDecoder().decode(ParsedNutritionLabel.self, from: cleanData)
+    }
+
+    // MARK: - Shared Helpers
+
+    /// Sends an encoded request body to the Gemini API and returns the raw response data.
+    /// Handles 429 rate-limiting and other HTTP errors with descriptive messages.
+    private func performRequest(url: URL, body: GeminiRequest) async throws -> Data {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await session.data(for: request)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 429 {
+                logger.warning("Rate Limited.")
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Rate limited by Gemini API. Please try again shortly."])
+            }
+            if httpResponse.statusCode != 200 {
+                logger.error("HTTP \(httpResponse.statusCode)")
+                if let decoded = try? JSONDecoder().decode(ApiResponse.self, from: data) {
+                    throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: decoded.message])
+                }
+                throw URLError(.badServerResponse)
+            }
+        }
+
+        return data
+    }
+
+    /// Decodes a `GeminiResponse`, pulls the first candidate's text, and strips
+    /// any Markdown code-fence wrappers that Gemini sometimes adds.
+    private func extractJSON(from data: Data) throws -> String {
+        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        guard var jsonText = geminiResponse.candidates?.first?.content.parts.first?.text else {
+            throw URLError(.cannotParseResponse, userInfo: [NSLocalizedDescriptionKey: "Could not read the AI response."])
+        }
+        // Strip Markdown code fences
+        jsonText = jsonText
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return jsonText
     }
 }

@@ -4,6 +4,11 @@
 //
 //  Created by Gregory Paton on 1/30/26.
 //
+//  Modal form for editing an existing MealEntity.
+//  Supports inline portion scaling: changing the portion amount
+//  proportionally adjusts macros using per-unit "density" values
+//  computed from the original meal data.
+//
 
 import SwiftUI
 
@@ -13,22 +18,24 @@ struct EditLogEntryView: View {
 
     @ObservedObject var meal: MealEntity
 
+    // MARK: - Form State
+
     @State private var showSaveError = false
     @State private var summary: String = ""
     @State private var timestamp: Date = Date()
     @State private var protein: String = ""
     @State private var carbs: String = ""
     @State private var fat: String = ""
-    
-    // Portion Scaling
+
     @State private var portion: String = ""
-    @State private var portionUnit: String = "g" // Default
-    
-    // Density Logic (Macros per 1 unit of portion)
+    @State private var portionUnit: String = "g"
+
+    /// Macro amount per 1 unit of portion (e.g. grams of protein per slice).
+    /// Used to proportionally scale macros when the portion amount changes.
     @State private var densityP: Double = 0
     @State private var densityC: Double = 0
     @State private var densityF: Double = 0
-    
+
     enum Field: Hashable { case summary, portion, fat, carbs, protein }
     @FocusState private var focusedField: Field?
     
@@ -93,8 +100,9 @@ struct EditLogEntryView: View {
         }
     }
     
-    // MARK: - LOGIC
-    
+    // MARK: - Data Loading
+
+    /// Populates form state from the MealEntity and computes per-unit densities.
     private func loadData() {
         summary = meal.summary ?? ""
         timestamp = meal.timestamp ?? Date()
@@ -121,6 +129,9 @@ struct EditLogEntryView: View {
         }
     }
     
+    // MARK: - Portion Scaling
+
+    /// Recalculates macros from portion × density when the portion text changes.
     private func scaleMacros() {
         let newPortion = Double(portion) ?? 0
         guard newPortion > 0 else { return }
@@ -134,6 +145,9 @@ struct EditLogEntryView: View {
         fat = String(format: "%.1f", newPortion * densityF)
     }
     
+    // MARK: - Save
+
+    /// Writes form values back to the MealEntity and saves the context.
     private func saveChanges() {
         meal.summary = summary
         meal.timestamp = timestamp
@@ -154,6 +168,7 @@ struct EditLogEntryView: View {
         }
     }
 
+    /// Moves keyboard focus up (-1) or down (+1) through the field order.
     private func moveFocus(_ direction: Int) {
         let order: [Field] = [.summary, .portion, .fat, .carbs, .protein]
         guard let current = focusedField, let index = order.firstIndex(of: current) else { return }

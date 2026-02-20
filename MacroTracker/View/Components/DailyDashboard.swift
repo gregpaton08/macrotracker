@@ -4,6 +4,13 @@
 //
 //  Created by Gregory Paton on 2/5/26.
 //
+//  Full-day summary shown inside each TrackerView page.
+//  Displays:
+//    - Calorie math row (Eaten − Burned = Net)
+//    - Three macro progress rings (Fat / Carbs / Protein)
+//    - HealthKit workout breakdown (iOS only)
+//    - Scrollable meal list with context-menu deletion
+//
 
 import Foundation
 import SwiftUI
@@ -11,25 +18,29 @@ import HealthKit
 
 struct DailyDashboard: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+
+    /// Meals for this specific day, fetched via a date-range predicate.
     @FetchRequest var meals: FetchedResults<MealEntity>
-    
+
     @State private var caloriesBurned: Double = 0.0
     #if os(iOS)
     @State private var workouts: [HKWorkout] = []
     #endif
-    
+
+    /// When `true`, HealthKit active-energy and workout calories are combined.
     @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
-    
+
+    // MARK: - Goal Ranges (synced via @AppStorage with SettingsView)
+
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
     @AppStorage("goal_c_min") var cMin: Double = 200
     @AppStorage("goal_c_max") var cMax: Double = 300
     @AppStorage("goal_f_min") var fMin: Double = 60
     @AppStorage("goal_f_max") var fMax: Double = 80
-    
+
     let date: Date
-    
+
     init(date: Date) {
         self.date = date
         let calendar = Calendar.current
@@ -43,11 +54,14 @@ struct DailyDashboard: View {
         )
     }
     
+    // MARK: - Computed Totals
+
     var totalP: Double { meals.reduce(0) { $0 + $1.totalProtein } }
     var totalC: Double { meals.reduce(0) { $0 + $1.totalCarbs } }
     var totalF: Double { meals.reduce(0) { $0 + $1.totalFat } }
     var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
-    
+
+    /// Total calories from HealthKit workout samples (iOS only).
     var workoutKcal: Double {
         #if os(iOS)
         return workouts.reduce(0) { $0 + ($1.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0) }
@@ -56,6 +70,7 @@ struct DailyDashboard: View {
         #endif
     }
     
+    /// Active energy to display — optionally includes workout calories.
     var finalBurned: Double {
         if combineSources { return caloriesBurned + workoutKcal }
         else { return caloriesBurned }
@@ -178,6 +193,7 @@ struct DailyDashboard: View {
         .onAppear { HealthManager.shared.requestAuthorization() }
     }
     
+    /// Small vertical label + number used in the calorie math row.
     private func statColumn(title: String, value: Double, color: Color) -> some View {
         VStack(spacing: 2) {
             Text(title).font(.caption).bold().foregroundColor(.secondary)
@@ -187,10 +203,12 @@ struct DailyDashboard: View {
     
 }
 
-// Helper to name workouts nicely
+// MARK: - HKWorkoutActivityType Display Name
+
 #if os(iOS)
 import HealthKit
 extension HKWorkoutActivityType {
+    /// Human-readable short name for common workout types.
     var name: String {
         switch self {
         case .running: return "Run"
