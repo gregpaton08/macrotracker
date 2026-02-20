@@ -16,6 +16,13 @@ struct OpenFoodFactsResponse: Codable {
 struct Product: Codable {
     let product_name: String?
     let nutriments: Nutriments?
+    let serving_quantity: Double?
+    let serving_quantity_unit: String?
+    
+//    enum CodingKeys: String, CodingKey {
+//        case serving_quantity = "serving_quantity"
+//        case serving_quantity_unit = "serving_quantity_unit"
+//    }
 }
 
 struct Nutriments: Codable {
@@ -23,6 +30,10 @@ struct Nutriments: Codable {
     let proteins_100g: Double?
     let carbohydrates_100g: Double?
     let fat_100g: Double?
+    let fat_serving: Double?
+    let carbohydrates_serving: Double?
+    let proteins_serving: Double?
+    
     
     // API sometimes uses different keys, but these are standard for OFF
     enum CodingKeys: String, CodingKey {
@@ -30,6 +41,9 @@ struct Nutriments: Codable {
         case proteins_100g = "proteins_100g"
         case carbohydrates_100g = "carbohydrates_100g"
         case fat_100g = "fat_100g"
+        case fat_serving = "fat_serving"
+        case carbohydrates_serving = "carbohydrates_serving"
+        case proteins_serving = "proteins_serving"
     }
 }
 
@@ -37,7 +51,7 @@ class OpenFoodFactsClient {
     private let session = URLSession.shared
     private let logger = Logger(subsystem: "com.macrotracker", category: "OpenFoodFacts")
     
-    func fetchProduct(barcode: String) async throws -> (name: String, p: Double, c: Double, f: Double, kcal: Double)? {
+    func fetchProduct(barcode: String) async throws -> (name: String, sq: Double, squ: String, f: Double, c: Double, p: Double)? {
         let urlString = "https://world.openfoodfacts.org/api/v0/product/\(barcode).json"
         guard let url = URL(string: urlString) else { return nil }
         
@@ -50,12 +64,15 @@ class OpenFoodFactsClient {
         
         guard let product = decoded.product, let nuts = product.nutriments else { return nil }
         
+        self.logger.debug("product = \(String(describing: nuts))")
+        
         return (
             name: product.product_name ?? "Unknown Product",
-            p: nuts.proteins_100g ?? 0,
-            c: nuts.carbohydrates_100g ?? 0,
-            f: nuts.fat_100g ?? 0,
-            kcal: nuts.energy_kcal_100g ?? 0
+            sq: product.serving_quantity ?? 0,
+            squ: product.serving_quantity_unit ?? "",
+            f: nuts.fat_serving ?? 0,
+            c: nuts.carbohydrates_serving ?? 0,
+            p: nuts.proteins_serving ?? 0
         )
     }
 }

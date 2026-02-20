@@ -388,13 +388,12 @@ struct AddMealView: View {
                 // Update UI on Main Actor
                 await MainActor.run {
                     self.description = product.name
-                    self.selectedUnit = "g"
-                    self.portionSize = "100" // OFF data is always per 100g
+                    self.selectedUnit = product.squ
+                    self.portionSize = "\(product.sq)"
                     
-                    // Auto-fill Macros (per 100g base)
-                    self.protein = String(format: "%.1f", product.p)
-                    self.carbs = String(format: "%.1f", product.c)
                     self.fat = String(format: "%.1f", product.f)
+                    self.carbs = String(format: "%.1f", product.c)
+                    self.protein = String(format: "%.1f", product.p)
                     
                     // Treat this like a "Cached Meal" so scaling works if they change portion
                     // We mock a CachedMeal logic or just leave it raw.

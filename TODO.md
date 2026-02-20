@@ -50,5 +50,7 @@
 ```
 
 
-* Add cancel button to 'Analyzing' display when loading AI generated macros.
-* Add option to choose Gemini model from available (hit the API for a list)
+- [ ] Add cancel button to 'Analyzing' display when loading AI generated macros.
+- [ ] Add option to choose Gemini model from available (hit the API for a list)
+- [ ] Sort meals by macros, e.g. user can see meals high in fat
+- [ ] Option to have Gemini analyze my diet for the past week.
