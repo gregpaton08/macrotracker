@@ -30,6 +30,17 @@ struct DailyDashboard: View {
     /// When `true`, HealthKit active-energy and workout calories are combined.
     @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
 
+    // MARK: - Workout Type Filters
+
+    @AppStorage("workout_filter_run") var filterRun: Bool = true
+    @AppStorage("workout_filter_cycle") var filterCycle: Bool = true
+    @AppStorage("workout_filter_walk") var filterWalk: Bool = true
+    @AppStorage("workout_filter_strength") var filterStrength: Bool = true
+    @AppStorage("workout_filter_hiit") var filterHIIT: Bool = true
+    @AppStorage("workout_filter_yoga") var filterYoga: Bool = true
+    @AppStorage("workout_filter_swim") var filterSwim: Bool = true
+    @AppStorage("workout_filter_other") var filterOther: Bool = true
+
     // MARK: - Goal Ranges (synced via @AppStorage with SettingsView)
 
     @AppStorage("goal_p_min") var pMin: Double = 150
@@ -61,10 +72,22 @@ struct DailyDashboard: View {
     var totalF: Double { meals.reduce(0) { $0 + $1.totalFat } }
     var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
 
+    #if os(iOS)
+    /// Workouts filtered by user-enabled workout types.
+    var filteredWorkouts: [HKWorkout] {
+        let enabled: [String: Bool] = [
+            "run": filterRun, "cycle": filterCycle, "walk": filterWalk,
+            "strength": filterStrength, "hiit": filterHIIT, "yoga": filterYoga,
+            "swim": filterSwim, "other": filterOther
+        ]
+        return workouts.filter { enabled[$0.workoutActivityType.filterKey] ?? true }
+    }
+    #endif
+
     /// Total calories from HealthKit workout samples (iOS only).
     var workoutKcal: Double {
         #if os(iOS)
-        return workouts.reduce(0) { $0 + ($1.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0) }
+        return filteredWorkouts.reduce(0) { $0 + ($1.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0) }
         #else
         return 0
         #endif
@@ -119,15 +142,15 @@ struct DailyDashboard: View {
                     
                     // 3. WORKOUTS (iOS only)
                     #if os(iOS)
-                    if !workouts.isEmpty {
+                    if !filteredWorkouts.isEmpty {
                         Divider()
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Workouts")
                                 .font(.caption).bold().foregroundColor(.secondary).textCase(.uppercase)
-                            
-                            ForEach(workouts, id: \.uuid) { workout in
+
+                            ForEach(filteredWorkouts, id: \.uuid) { workout in
                                 HStack {
-                                    Image(systemName: "figure.run.circle.fill")
+                                    Image(systemName: workout.workoutActivityType.icon)
                                         .foregroundColor(.orange)
                                     Text(workout.workoutActivityType.name).font(.subheadline).bold()
                                     Spacer()
@@ -208,6 +231,34 @@ struct DailyDashboard: View {
 #if os(iOS)
 import HealthKit
 extension HKWorkoutActivityType {
+    /// UserDefaults key suffix used for per-type workout filtering.
+    var filterKey: String {
+        switch self {
+        case .running: return "run"
+        case .cycling: return "cycle"
+        case .walking: return "walk"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return "strength"
+        case .highIntensityIntervalTraining: return "hiit"
+        case .yoga: return "yoga"
+        case .swimming: return "swim"
+        default: return "other"
+        }
+    }
+
+    /// SF Symbol name for each workout type.
+    var icon: String {
+        switch self {
+        case .running: return "figure.run.circle.fill"
+        case .cycling: return "figure.outdoor.cycle"
+        case .walking: return "figure.walk.circle.fill"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return "dumbbell.fill"
+        case .highIntensityIntervalTraining: return "bolt.heart.fill"
+        case .yoga: return "figure.yoga"
+        case .swimming: return "figure.pool.swim"
+        default: return "figure.run.circle.fill"
+        }
+    }
+
     /// Human-readable short name for common workout types.
     var name: String {
         switch self {

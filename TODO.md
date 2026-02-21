@@ -51,6 +51,11 @@
 
 
 - [ ] Add cancel button to 'Analyzing' display when loading AI generated macros.
-- [ ] Add option to choose Gemini model from available (hit the API for a list)
-- [ ] Sort meals by macros, e.g. user can see meals high in fat
-- [ ] Option to have Gemini analyze my diet for the past week.
+- [ ] Add option to choose Gemini model from available (hit the API for a list).
+- [ ] Sort meals by macros, e.g. user can see meals high in fat.
+- [ ] Option to have Gemini analyze my diet for the past week, or arbitrary time range. Idea here is to get actionable insights.
+- [ ] Show trends, like in Apple Health, e.g. "you've been eating 12 grams less fat per week over the past week compared to...".
+- [ ] Push data back to Apple Health (is this even possible?).
+- [ ] Add a disclaimer: I am not a dietician. I cannot control what Gemini says or does. This is purely for informational purposes. Consult your physician before making any lifestyle changes.
+- [ ] Store metadata in meal item, i.e. barcode value and Gemini prompt. Really just for debugging.
+- [ ] Get Gemini API limits and display in app? Is there an endpoint for this?

@@ -159,3 +159,6 @@ code2prompt . \
 
 https://aistudio.google.com/usage?timeRange=last-hour
 
+
+https://openfoodfacts.github.io/openfoodfacts-server/api/tutorials/scanning-barcodes/
+

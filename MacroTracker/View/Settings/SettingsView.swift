@@ -23,6 +23,17 @@ struct SettingsView: View {
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
 
+    // MARK: - Workout Type Filters
+
+    @AppStorage("workout_filter_run") var filterRun: Bool = true
+    @AppStorage("workout_filter_cycle") var filterCycle: Bool = true
+    @AppStorage("workout_filter_walk") var filterWalk: Bool = true
+    @AppStorage("workout_filter_strength") var filterStrength: Bool = true
+    @AppStorage("workout_filter_hiit") var filterHIIT: Bool = true
+    @AppStorage("workout_filter_yoga") var filterYoga: Bool = true
+    @AppStorage("workout_filter_swim") var filterSwim: Bool = true
+    @AppStorage("workout_filter_other") var filterOther: Bool = true
+
     // MARK: - Import/Export State
 
     @State private var showFileImporter = false
@@ -57,6 +68,18 @@ struct SettingsView: View {
                 }
             }
             
+            Section(header: Text("Workout Types"),
+                    footer: Text("Disabled types are hidden and excluded from burned calories.")) {
+                Toggle("Run", isOn: $filterRun)
+                Toggle("Cycle", isOn: $filterCycle)
+                Toggle("Walk", isOn: $filterWalk)
+                Toggle("Strength", isOn: $filterStrength)
+                Toggle("HIIT", isOn: $filterHIIT)
+                Toggle("Yoga", isOn: $filterYoga)
+                Toggle("Swim", isOn: $filterSwim)
+                Toggle("Other", isOn: $filterOther)
+            }
+
             // ... (Goal Sections) ...
             Section(header: Text("Fat Goals (g)")) {
                 HStack {
