@@ -17,7 +17,7 @@ struct ContentView: View {
                 .tabItem { Label("Tracker", systemImage: "fork.knife") }
 
             NavigationStack { InsightsView() }
-                .tabItem { Label("Insights", systemImage: "chart.xyaxis.line") }
+                .tabItem { Label("Calendar", systemImage: "calendar") }
 
             NavigationStack { TrendsView() }
                 .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }

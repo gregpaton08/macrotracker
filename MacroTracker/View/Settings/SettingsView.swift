@@ -15,7 +15,6 @@ struct SettingsView: View {
     // MARK: - Persisted Settings
 
     @AppStorage("google_api_key") var googleKey: String = ""
-    @AppStorage("usda_api_key") var usdaKey: String = ""
     @AppStorage("goal_f_min") var fMin: Double = 60
     @AppStorage("goal_f_max") var fMax: Double = 80
     @AppStorage("goal_c_min") var cMin: Double = 200
@@ -50,21 +49,6 @@ struct SettingsView: View {
             Section(header: Text("Data Management")) {
                 NavigationLink(destination: SavedMealsView()) {
                     Label("Manage Saved Meals", systemImage: "archivebox")
-                }
-            }
-            
-            // MARK: - NEW: Import / Export
-            Section(header: Text("Backup & Restore")) {
-                // Export
-                if let url = exportURL {
-                    ShareLink(item: url, preview: SharePreview("MacroTracker Data", image: Image(systemName: "chart.pie.fill"))) {
-                        Label("Export Data to JSON", systemImage: "square.and.arrow.up")
-                    }
-                }
-                
-                // Import
-                Button(action: { showFileImporter = true }) {
-                    Label("Import Data from JSON", systemImage: "square.and.arrow.down")
                 }
             }
             
@@ -105,14 +89,29 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("API Keys")) {
+            Section(header: Text("Gemini API Key")) {
                 SecureField("Google Gemini Key", text: $googleKey)
-                SecureField("USDA API Key", text: $usdaKey)
             }
+            
+            // TODO: add option to choose model?
             
             Section(header: Text("Links")) {
                 Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                Link("Get USDA Key", destination: URL(string: "https://api.data.gov/signup/")!)
+            }
+            
+            // MARK: - Import / Export
+            Section(header: Text("Backup & Restore")) {
+                // Export
+                if let url = exportURL {
+                    ShareLink(item: url, preview: SharePreview("MacroTracker Data", image: Image(systemName: "chart.pie.fill"))) {
+                        Label("Export Data to JSON", systemImage: "square.and.arrow.up")
+                    }
+                }
+                
+                // Import
+                Button(action: { showFileImporter = true }) {
+                    Label("Import Data from JSON", systemImage: "square.and.arrow.down")
+                }
             }
         }
         .navigationTitle("Settings")
