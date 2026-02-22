@@ -4,10 +4,9 @@
 //
 //  Created by Gregory Paton on 2/5/26.
 //
-//  HTTP client for the Google Gemini API. Provides three capabilities:
-//    1. analyzeFood     — One-shot macro estimation (text → macros).
-//    2. parseInput       — Two-step pipeline (text → USDA search terms).
-//    3. parseNutritionLabel — Multimodal vision (photo → label macros).
+//  HTTP client for the Google Gemini API. Provides capabilities:
+//    analyzeFood     — One-shot macro estimation (text → macros).
+//    parseNutritionLabel — Multimodal vision (photo → label macros).
 //
 
 import Foundation
@@ -33,7 +32,7 @@ class GeminiClient {
     // MARK: - One-Shot Analysis
 
     /// Sends a food description directly to Gemini and receives complete macro
-    /// estimates in a single round-trip — no USDA lookup needed.
+    /// estimates in a single round-trip.
     func analyzeFood(userText: String) async throws -> AIAnalysisResult {
         let model = "gemini-3-flash-preview"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
@@ -69,47 +68,10 @@ class GeminiClient {
         return try JSONDecoder().decode(AIAnalysisResult.self, from: cleanData)
     }
 
-    // MARK: - Two-Step Pipeline (Gemini → USDA)
-
-    /// Parses a food description into USDA-optimized search terms and estimated weights.
-    /// The caller then queries `USDAClient` for per-100g nutrient data.
-    func parseInput(userText: String) async throws -> [ParsedFoodIntent.ParsedItem] {
-        // TODO: allow user to select model based on what is available.
-        let model = "gemini-3-flash-preview"
-        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
-        guard let url = URL(string: urlString) else { throw URLError(.badURL) }
-
-        logger.debug("Parsing: '\(userText)'")
-
-        // TODO: improve prompt. Include portion size if provided. Maybe rethink the RAG approach.
-        let prompt = """
-        Analyze this food description for searching the USDA database for macronutrients: "\(userText)".
-        Complex foods should be broken down into a list of ingredients.
-        Return ONLY valid JSON. Do not use Markdown formatting.
-        Schema:
-        { "items": [ { "search_term": "string (USDA database optimized)", "estimated_weight_grams": number } ] }
-        """
-
-        let requestBody = GeminiRequest(
-            contents: [.init(parts: [.init(text: prompt, inlineData: nil)])],
-            generationConfig: .init(response_mime_type: "application/json")
-        )
-
-        let data = try await performRequest(url: url, body: requestBody)
-        let jsonText = try extractJSON(from: data)
-        logger.debug("jsonText = \(jsonText)")
-
-        guard let cleanData = jsonText.data(using: .utf8) else { throw URLError(.cannotParseResponse) }
-        let result = try JSONDecoder().decode(ParsedFoodIntent.self, from: cleanData).items
-
-        logger.debug("result: \(result)")
-        return result
-    }
-
     // MARK: - Nutrition Label Scanning
 
     /// Sends a photo of a nutrition facts label to Gemini Vision and extracts
-    /// macro values directly from the label — no USDA lookup required.
+    /// macro values directly from the label.
     func parseNutritionLabel(image: UIImage) async throws -> ParsedNutritionLabel {
         guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
             throw URLError(.cannotParseResponse, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG."])

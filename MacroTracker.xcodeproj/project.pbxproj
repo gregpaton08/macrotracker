@@ -21,9 +21,7 @@
 		946AADD52F303E7C00E4F2E4 /* MealEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */; };
 		946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADD62F31858700E4F2E4 /* HealthManager.swift */; };
 		946AADE72F35801900E4F2E4 /* GeminiModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADE62F35801900E4F2E4 /* GeminiModels.swift */; };
-		946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADE82F35802700E4F2E4 /* USDAModels.swift */; };
 		946AADEC2F35807400E4F2E4 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADEB2F35807400E4F2E4 /* GeminiClient.swift */; };
-		946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADED2F35807C00E4F2E4 /* USDAClient.swift */; };
 		946AADF12F3580D200E4F2E4 /* DailyDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */; };
 		946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF22F3580E000E4F2E4 /* ProgressRings.swift */; };
 		946AADF52F3935AD00E4F2E4 /* DataTransferManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */; };
@@ -80,9 +78,7 @@
 		946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealEntity+Extensions.swift"; sourceTree = "<group>"; };
 		946AADD62F31858700E4F2E4 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
 		946AADE62F35801900E4F2E4 /* GeminiModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModels.swift; sourceTree = "<group>"; };
-		946AADE82F35802700E4F2E4 /* USDAModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAModels.swift; sourceTree = "<group>"; };
 		946AADEB2F35807400E4F2E4 /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
-		946AADED2F35807C00E4F2E4 /* USDAClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAClient.swift; sourceTree = "<group>"; };
 		946AADF02F3580D200E4F2E4 /* DailyDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDashboard.swift; sourceTree = "<group>"; };
 		946AADF22F3580E000E4F2E4 /* ProgressRings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressRings.swift; sourceTree = "<group>"; };
 		946AADF42F3935AD00E4F2E4 /* DataTransferManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransferManager.swift; sourceTree = "<group>"; };
@@ -237,7 +233,6 @@
 			isa = PBXGroup;
 			children = (
 				946AADE62F35801900E4F2E4 /* GeminiModels.swift */,
-				946AADE82F35802700E4F2E4 /* USDAModels.swift */,
 				94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */,
 			);
 			path = API;
@@ -247,7 +242,6 @@
 			isa = PBXGroup;
 			children = (
 				946AADEB2F35807400E4F2E4 /* GeminiClient.swift */,
-				946AADED2F35807C00E4F2E4 /* USDAClient.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -262,14 +256,6 @@
 				94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */,
 			);
 			path = Components;
-			sourceTree = "<group>";
-		};
-		94CF1DD92F4E000000780134 /* Trends */ = {
-			isa = PBXGroup;
-			children = (
-				94CF1DD72F4E000000780134 /* TrendsView.swift */,
-			);
-			path = Trends;
 			sourceTree = "<group>";
 		};
 		946AADFE2F397B1A00E4F2E4 /* Insights */ = {
@@ -341,6 +327,14 @@
 				94AFB0DF2F26F51400ED36F8 /* MacroTrackerUITestsLaunchTests.swift */,
 			);
 			path = MacroTrackerUITests;
+			sourceTree = "<group>";
+		};
+		94CF1DD92F4E000000780134 /* Trends */ = {
+			isa = PBXGroup;
+			children = (
+				94CF1DD72F4E000000780134 /* TrendsView.swift */,
+			);
+			path = Trends;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -496,12 +490,10 @@
 				946AADF72F39707400E4F2E4 /* InsightsView.swift in Sources */,
 				946AADF32F3580E000E4F2E4 /* ProgressRings.swift in Sources */,
 				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
-				946AADEE2F35807C00E4F2E4 /* USDAClient.swift in Sources */,
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
 				940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */,
 				946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */,
 				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
-				946AADE92F35802700E4F2E4 /* USDAModels.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,
 				9444E0542F2DA17C007F24A8 /* EditLogEntryView.swift in Sources */,
 				9444E04C2F2D94D9007F24A8 /* MealCacheManager.swift in Sources */,

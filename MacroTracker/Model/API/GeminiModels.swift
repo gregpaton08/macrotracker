@@ -48,7 +48,6 @@ struct GeminiResponse: Codable {
 // MARK: - Direct AI Analysis Result
 
 /// One-shot macro analysis returned by `GeminiClient.analyzeFood`.
-/// Gemini fills every field directly — no USDA lookup required.
 struct AIAnalysisResult: Codable {
     let summary: String
     let total_calories: Double
@@ -62,19 +61,6 @@ struct AIAnalysisResult: Codable {
     struct FoodItem: Codable {
         let name: String
         let estimated_calories: Double
-    }
-}
-
-// MARK: - Gemini → USDA Pipeline Result
-
-/// Intermediate result from Gemini when using the two-step pipeline:
-/// Gemini parses the description → USDA provides per-100g nutrients.
-struct ParsedFoodIntent: Codable {
-    let items: [ParsedItem]
-
-    struct ParsedItem: Codable {
-        let search_term: String           // Optimized for USDA search
-        let estimated_weight_grams: Double
     }
 }
 
