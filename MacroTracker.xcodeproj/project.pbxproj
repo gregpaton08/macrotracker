@@ -44,6 +44,7 @@
 		94CF1DD42F42000000780134 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD32F42000000780134 /* CameraPicker.swift */; };
 		94CF1DD42F46A4BB00780134 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */; };
 		94CF1DD62F46A4D700780134 /* OpenFoodFactsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */; };
+		94CF1DD82F4E000000780134 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD72F4E000000780134 /* TrendsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +106,7 @@
 		94CF1DD32F42000000780134 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 		94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFoodFactsClient.swift; sourceTree = "<group>"; };
+		94CF1DD72F4E000000780134 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				946AADFE2F397B1A00E4F2E4 /* Insights */,
+				94CF1DD92F4E000000780134 /* Trends */,
 				946AADEF2F3580BB00E4F2E4 /* Components */,
 				946AADE42F33FA9200E4F2E4 /* Settings */,
 				946AADE32F33FA8B00E4F2E4 /* Meals */,
@@ -259,6 +262,14 @@
 				94CF1DD32F46A4BB00780134 /* BarcodeScannerView.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		94CF1DD92F4E000000780134 /* Trends */ = {
+			isa = PBXGroup;
+			children = (
+				94CF1DD72F4E000000780134 /* TrendsView.swift */,
+			);
+			path = Trends;
 			sourceTree = "<group>";
 		};
 		946AADFE2F397B1A00E4F2E4 /* Insights */ = {
@@ -499,6 +510,7 @@
 				946AADFB2F3970DB00E4F2E4 /* AveragesMacroView.swift in Sources */,
 				94CF1DD22F41572A00780134 /* InfinitePageView.swift in Sources */,
 				94CF1DD42F42000000780134 /* CameraPicker.swift in Sources */,
+				94CF1DD82F4E000000780134 /* TrendsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

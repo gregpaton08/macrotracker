@@ -4,16 +4,26 @@
 //
 //  Created by Gregory Paton on 1/25/26.
 //
-//  Root view of the app. Wraps TrackerView in a single NavigationStack
-//  and applies the global tint color.
+//  Root view of the app. Provides a four-tab TabView with each tab
+//  wrapped in its own NavigationStack.
 //
 
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        NavigationStack {
-            TrackerView()
+        TabView {
+            NavigationStack { TrackerView() }
+                .tabItem { Label("Tracker", systemImage: "fork.knife") }
+
+            NavigationStack { InsightsView() }
+                .tabItem { Label("Insights", systemImage: "chart.xyaxis.line") }
+
+            NavigationStack { TrendsView() }
+                .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
+
+            NavigationStack { SettingsView() }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .tint(Theme.tint)
     }

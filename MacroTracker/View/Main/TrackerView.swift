@@ -7,7 +7,7 @@
 //  Horizontally-paged daily tracker. Each page is a DailyDashboard for
 //  one calendar day. A floating date header with chevrons and a calendar
 //  picker allows quick date navigation. The toolbar provides access to
-//  Settings, Insights, and the Add Meal sheet.
+//  the Add Meal sheet.
 //
 
 import SwiftUI
@@ -39,7 +39,6 @@ struct TrackerView: View {
 
     @State private var showCalendar = false
     @State private var showAddMeal = false
-    @State private var showSettings = false
 
     // MARK: - Initializer
 
@@ -139,32 +138,23 @@ struct TrackerView: View {
         
         // MARK: - Toolbar Logic
         .toolbar {
-            // LEFT: Navigation (Only show if this is the Root view)
+            // RIGHT: Actions (Today + Add) — only when used as root tab
             if isRoot {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 16) {
-                        Button(action: { showSettings.toggle() }) { Image(systemName: "gear") }
-                        NavigationLink(destination: InsightsView()) { Image(systemName: "chart.xyaxis.line") }
-                    }
-                    .foregroundColor(.primary)
-                }
-            }
-            
-            // RIGHT: Actions (Today + Add)
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 16) {
-                    if !Calendar.current.isDateInToday(selectedDate) {
-                        Button("Today") {
-                            withAnimation { selectedIndex = centerIndex }
+                        if !Calendar.current.isDateInToday(selectedDate) {
+                            Button("Today") {
+                                withAnimation { selectedIndex = centerIndex }
+                            }
+                            .font(.caption).bold()
+                            .buttonStyle(.bordered)
                         }
-                        .font(.caption).bold()
-                        .buttonStyle(.bordered)
-                    }
-                    
-                    Button(action: { showAddMeal.toggle() }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(Theme.tint)
+
+                        Button(action: { showAddMeal.toggle() }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundColor(Theme.tint)
+                        }
                     }
                 }
             }
@@ -173,9 +163,6 @@ struct TrackerView: View {
         // MARK: - Sheets & Logic
         .sheet(isPresented: $showAddMeal) {
             AddMealView(viewModel: MacroViewModel(context: viewContext), targetDate: selectedDate)
-        }
-        .sheet(isPresented: $showSettings) {
-            NavigationView { SettingsView() }
         }
         .sheet(isPresented: $showCalendar) {
             VStack {
