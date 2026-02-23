@@ -33,6 +33,12 @@ curl -s "https://api.nal.usda.gov/fdc/v1/foods/search?query=honey&dataType=Found
 curl -s "https://api.nal.usda.gov/fdc/v1/foods/search?query=honey&dataType=Foundation,SR%20Legacy&pageSize=1&api_key=$USDA_API_KEY" | jq '.foods[].foodNutrients[] | select(.nutrientName == "Protein" or .nutrientName == "Carbohydrate, by difference" or .nutrientName == "Total lipid (fat)")'
 ```
 
+## Format
+
+```bash
+xcrun swift format format -i --recursive .
+```
+
 ## Prompts
 
 half an omelette with bacon and american cheese from a diner
