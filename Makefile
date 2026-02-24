@@ -15,21 +15,21 @@ default: build
 # COMMANDS
 # -------------------------------------------------------------------------
 
-.PHONY: build clean test test-ui fmt lint code2prompt
+.PHONY: build install clean test test-ui fmt lint code2prompt
 
 # 1. Build the App (Verifies compilation)
 build:
-	xcodebuild -scheme $(SCHEME_NAME) -destination 'generic/platform=iOS' -configuration Debug build CONFIGURATION_BUILD_DIR=$(BUILD_DIR) -allowProvisioningUpdates
-# 	xcodebuild build CONFIGURATION_BUILD_DIR=$(PWD)/build \
-# 		-project $(PROJECT_NAME) \
-# 		-scheme $(SCHEME_NAME) \
-# 		-destination 'platform=iOS Simulator,name=iPhone 17' \
-# 		-allowProvisioningUpdates
-# # 		-configuration Debug \
-# # 		-allowProvisioningUpdates \
-# # 		-sdk iphoneos build
+	xcodebuild \
+		-project $(PROJECT_NAME) \
+		-scheme $(SCHEME_NAME) \
+		-destination 'generic/platform=iOS' \
+		-configuration Debug \
+		build \
+		CONFIGURATION_BUILD_DIR=$(BUILD_DIR) \
+		-allowProvisioningUpdates \
+		ENABLE_USER_SCRIPT_SANDBOXING=NO
 
-# xcrun devicectl list devices
+# 2. Install on connected device (use: xcrun devicectl list devices to find device ID)
 install:
 	@echo "📱 Finding device and installing..."
 	@DEVICE_ID=$$(xcrun devicectl list devices 2>/dev/null | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -n 1); \
@@ -40,7 +40,7 @@ install:
 	echo "🚀 Installing to device: $$DEVICE_ID"; \
 	xcrun devicectl device install app --device $$DEVICE_ID $(BUILD_DIR)/$(APP_NAME).app
 
-# 2. Run Unit Tests (Fast logic checks)
+# 3. Run Unit Tests (Fast logic checks)
 test:
 	xcodebuild test \
 		-project $(PROJECT_NAME) \
@@ -48,7 +48,7 @@ test:
 		-destination $(DESTINATION_IOS) \
 		-quiet
 
-# 3. Run UI Tests (Slower, full app automation)
+# 4. Run UI Tests (Slower, full app automation)
 test-ui:
 	xcodebuild test \
 		-project $(PROJECT_NAME) \
@@ -56,18 +56,18 @@ test-ui:
 		-destination $(DESTINATION_IOS) \
 		-quiet
 
-# 4. Clean Build Artifacts (Fixes weird Xcode caching issues)
+# 5. Clean Build Artifacts (Fixes weird Xcode caching issues)
 clean:
 	xcodebuild clean \
 		-project $(PROJECT_NAME) \
 		-scheme $(SCHEME_NAME)
 	rm -rf ~/Library/Developer/Xcode/DerivedData/$(APP_NAME)-*
 
-# 5. Format Code
+# 6. Format Code
 fmt:
 	xcrun swift format format -i --recursive .
 
-# 6. Lint Code (Requires: brew install swiftlint)
+# 7. Lint Code (Requires: brew install swiftlint)
 lint:
 	swiftlint
 
