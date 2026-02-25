@@ -153,6 +153,9 @@ struct EditLogEntryView: View {
   private func scaleMacros() {
     let newPortion = Double(portion) ?? 0
     guard newPortion > 0 else { return }
+    // If the original portion was 0 or unset, densities were never computed —
+    // skip scaling so existing macro values are preserved.
+    guard densityP > 0 || densityC > 0 || densityF > 0 else { return }
 
     // Simple Scaling: NewAmount * Density
     // This works perfectly for "Slices", "Pieces", etc.
