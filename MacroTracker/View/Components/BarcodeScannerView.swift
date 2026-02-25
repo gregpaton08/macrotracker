@@ -9,6 +9,7 @@
 //  via the `onResult` callback, then auto-dismisses.
 //
 
+import OSLog
 import SwiftUI
 import VisionKit
 
@@ -16,6 +17,8 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
   @Environment(\.presentationMode) var presentationMode
   /// Called with the barcode payload string when a barcode is detected.
   var onResult: (String) -> Void
+
+  private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
 
   func makeUIViewController(context: Context) -> DataScannerViewController {
     let scanner = DataScannerViewController(
@@ -31,7 +34,11 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
   func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {
     if !uiViewController.isScanning {
-      try? uiViewController.startScanning()
+      do {
+        try uiViewController.startScanning()
+      } catch {
+        logger.error("startScanning failed: \(error)")
+      }
     }
   }
 
@@ -44,6 +51,7 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
   class Coordinator: NSObject, DataScannerViewControllerDelegate {
     let parent: BarcodeScannerView
     var isProcessing = false
+    private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
 
     init(_ parent: BarcodeScannerView) {
       self.parent = parent
@@ -67,7 +75,13 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
       switch item {
       case .barcode(let code):
-        guard let value = code.payloadStringValue else { return }
+        guard let value = code.payloadStringValue else {
+          logger.warning(
+            "Barcode detected but payloadStringValue is nil (symbology: \(String(describing: code.observation.symbology)))"
+          )
+          return
+        }
+        logger.info("Barcode scanned: \(value)")
         isProcessing = true
         parent.onResult(value)
         parent.presentationMode.wrappedValue.dismiss()

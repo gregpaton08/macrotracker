@@ -61,17 +61,37 @@ class OpenFoodFactsClient {
   func fetchProduct(barcode: String) async throws -> (
     name: String, sq: Double, squ: String, f: Double, c: Double, p: Double
   )? {
+    logger.info("Looking up barcode: \(barcode)")
+
     let urlString = "https://world.openfoodfacts.org/api/v0/product/\(barcode).json"
-    guard let url = URL(string: urlString) else { return nil }
+    guard let url = URL(string: urlString) else {
+      logger.error("Could not construct URL for barcode: \(barcode)")
+      return nil
+    }
 
     var request = URLRequest(url: url)
     // OFF requests a User-Agent to identify the app
     request.setValue("MacroTracker - iOS - Version 1.0", forHTTPHeaderField: "User-Agent")
 
-    let (data, _) = try await session.data(for: request)
+    let (data, response) = try await session.data(for: request)
+
+    if let http = response as? HTTPURLResponse {
+      logger.debug("HTTP \(http.statusCode) for barcode \(barcode)")
+    }
+
     let decoded = try JSONDecoder().decode(OpenFoodFactsResponse.self, from: data)
 
-    guard let product = decoded.product, let nuts = product.nutriments else { return nil }
+    guard let product = decoded.product else {
+      logger.warning("No product in response for barcode \(barcode) (status: \(decoded.status ?? -1))")
+      return nil
+    }
+
+    guard let nuts = product.nutriments else {
+      logger.warning(
+        "Product '\(product.product_name ?? "unknown")' has no nutriments for barcode \(barcode)"
+      )
+      return nil
+    }
 
     self.logger.debug("product = \(String(describing: nuts))")
 

@@ -20,6 +20,14 @@ I want a dead simple way to track my macros. I'm prioritizing ease of use over h
 * Handle data migrations when data model changes
 * AI analysis of how well you ate in a given day/week/timeframe, i.e. quality as opposed to quantity. Will need to design a prompt for this. Should be user activated, not automatic.
 
+## Debug
+
+### Logs
+
+```bash
+log stream --predicate 'subsystem == "com.macrotracker" AND category == "BarcodeScanner"' --level debug
+```
+
 ## APIs
 
 https://fdc.nal.usda.gov/api-guide

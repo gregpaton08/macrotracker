@@ -13,6 +13,7 @@
 //
 
 import CoreData
+import OSLog
 import SwiftUI
 import VisionKit
 
@@ -47,6 +48,7 @@ struct AddMealView: View {
   @State private var showScanner = false
 
   private let barcodeClient = OpenFoodFactsClient()
+  private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
 
   /// The cached template currently driving portion-based macro scaling (if any).
   @State private var activeCachedMeal: CachedMealEntity? = nil
@@ -410,24 +412,34 @@ struct AddMealView: View {
     viewModel.isLoading = true
 
     Task {
-      if let product = try? await barcodeClient.fetchProduct(barcode: code) {
-        // Update UI on Main Actor
-        await MainActor.run {
-          self.description = product.name
-          self.selectedUnit = product.squ
-          self.portionSize = "\(product.sq)"
+      do {
+        if let product = try await barcodeClient.fetchProduct(barcode: code) {
+          // Update UI on Main Actor
+          await MainActor.run {
+            self.description = product.name
+            self.selectedUnit = product.squ
+            self.portionSize = "\(product.sq)"
 
-          self.fat = String(format: "%.1f", product.f)
-          self.carbs = String(format: "%.1f", product.c)
-          self.protein = String(format: "%.1f", product.p)
+            self.fat = String(format: "%.1f", product.f)
+            self.carbs = String(format: "%.1f", product.c)
+            self.protein = String(format: "%.1f", product.p)
 
-          // Treat this like a "Cached Meal" so scaling works if they change portion
-          // We mock a CachedMeal logic or just leave it raw.
-          // For now, raw update is safer.
+            // Treat this like a "Cached Meal" so scaling works if they change portion
+            // We mock a CachedMeal logic or just leave it raw.
+            // For now, raw update is safer.
 
-          viewModel.isLoading = false
+            viewModel.isLoading = false
+          }
+        } else {
+          logger.info("No product returned for barcode: \(code)")
+          await MainActor.run {
+            viewModel.errorMessage = "Product not found."
+            viewModel.showError = true
+            viewModel.isLoading = false
+          }
         }
-      } else {
+      } catch {
+        logger.error("Barcode lookup failed for \(code): \(error)")
         await MainActor.run {
           viewModel.errorMessage = "Product not found."
           viewModel.showError = true
