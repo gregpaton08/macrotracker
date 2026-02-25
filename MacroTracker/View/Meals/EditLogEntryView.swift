@@ -66,24 +66,30 @@ struct EditLogEntryView: View {
         }
 
         Section(header: Text("Total Macros")) {
-          HStack {
-            Text("Fat")
-            Spacer()
-            TextField("0", text: $fat).focused($focusedField, equals: .fat).keyboardType(
-              .decimalPad)
+          HStack(spacing: 20) {
+            VStack(alignment: .center, spacing: 4) {
+              Text("Fat").font(.caption).foregroundColor(.secondary)
+              TextField("0", text: $fat)
+                .focused($focusedField, equals: .fat)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+            }
+            VStack(alignment: .center, spacing: 4) {
+              Text("Carbs").font(.caption).foregroundColor(.secondary)
+              TextField("0", text: $carbs)
+                .focused($focusedField, equals: .carbs)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+            }
+            VStack(alignment: .center, spacing: 4) {
+              Text("Protein").font(.caption).foregroundColor(.secondary)
+              TextField("0", text: $protein)
+                .focused($focusedField, equals: .protein)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.center)
+            }
           }
-          HStack {
-            Text("Carbs")
-            Spacer()
-            TextField("0", text: $carbs).focused($focusedField, equals: .carbs).keyboardType(
-              .decimalPad)
-          }
-          HStack {
-            Text("Protein")
-            Spacer()
-            TextField("0", text: $protein).focused($focusedField, equals: .protein).keyboardType(
-              .decimalPad)
-          }
+          .padding(.vertical, 4)
         }
 
         Section { Button("Save Changes") { saveChanges() } }

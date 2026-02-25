@@ -46,21 +46,25 @@ struct MealDetailView: View {
           Spacer()
           Text("\(Int(meal.totalCalories))")
         }
-        HStack {
-          Text("Fat")
+        HStack(spacing: 0) {
           Spacer()
-          Text("\(Int(meal.totalFat))g")
-        }
-        HStack {
-          Text("Carbs")
+          VStack(spacing: 2) {
+            Text("Fat").font(.caption).foregroundColor(.secondary)
+            Text("\(Int(meal.totalFat))g").bold()
+          }
           Spacer()
-          Text("\(Int(meal.totalCarbs))g")
-        }
-        HStack {
-          Text("Protein")
+          VStack(spacing: 2) {
+            Text("Carbs").font(.caption).foregroundColor(.secondary)
+            Text("\(Int(meal.totalCarbs))g").bold()
+          }
           Spacer()
-          Text("\(Int(meal.totalProtein))g")
+          VStack(spacing: 2) {
+            Text("Protein").font(.caption).foregroundColor(.secondary)
+            Text("\(Int(meal.totalProtein))g").bold()
+          }
+          Spacer()
         }
+        .padding(.vertical, 4)
       }
 
       Section {
