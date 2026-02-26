@@ -170,11 +170,23 @@ struct AddMealView: View {
             .disabled(!geminiKeyConfigured || viewModel.isLoading)
             .confirmationDialog("Choose Scan Type", isPresented: $showImageSourcePicker) {
               if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                Button("Nutrition Label — Take Photo") { scanMode = .label; showCamera = true }
-                Button("Recipe — Take Photo") { scanMode = .recipe; showCamera = true }
+                Button("Nutrition Label — Take Photo") {
+                  scanMode = .label
+                  showCamera = true
+                }
+                Button("Recipe — Take Photo") {
+                  scanMode = .recipe
+                  showCamera = true
+                }
               }
-              Button("Nutrition Label — From Library") { scanMode = .label; showPhotoLibrary = true }
-              Button("Recipe — From Library") { scanMode = .recipe; showPhotoLibrary = true }
+              Button("Nutrition Label — From Library") {
+                scanMode = .label
+                showPhotoLibrary = true
+              }
+              Button("Recipe — From Library") {
+                scanMode = .recipe
+                showPhotoLibrary = true
+              }
               Button("Cancel", role: .cancel) {}
             }
 
@@ -276,12 +288,20 @@ struct AddMealView: View {
       }
       .sheet(isPresented: $showCamera) {
         CameraPicker(sourceType: .camera, isPresented: $showCamera) { image in
-          if scanMode == .recipe { processRecipeImage(image) } else { processNutritionLabelImage(image) }
+          if scanMode == .recipe {
+            processRecipeImage(image)
+          } else {
+            processNutritionLabelImage(image)
+          }
         }
       }
       .sheet(isPresented: $showPhotoLibrary) {
         CameraPicker(sourceType: .photoLibrary, isPresented: $showPhotoLibrary) { image in
-          if scanMode == .recipe { processRecipeImage(image) } else { processNutritionLabelImage(image) }
+          if scanMode == .recipe {
+            processRecipeImage(image)
+          } else {
+            processNutritionLabelImage(image)
+          }
         }
       }
       // Scanner Sheet
