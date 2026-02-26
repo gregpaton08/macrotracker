@@ -18,6 +18,7 @@ import SwiftUI
 
 struct DailyDashboard: View {
   @Environment(\.managedObjectContext) private var viewContext
+  @Environment(\.scenePhase) private var scenePhase
 
   /// Meals for this specific day, fetched via a date-range predicate.
   @FetchRequest var meals: FetchedResults<MealEntity>
@@ -220,6 +221,16 @@ struct DailyDashboard: View {
       #endif
     }
     .onAppear { HealthManager.shared.requestAuthorization() }
+    .onChange(of: scenePhase) { _, newPhase in
+      if newPhase == .active {
+        Task {
+          caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+          #if os(iOS)
+            workouts = await HealthManager.shared.fetchWorkouts(for: date)
+          #endif
+        }
+      }
+    }
   }
 
   /// Small vertical label + number used in the calorie math row.
