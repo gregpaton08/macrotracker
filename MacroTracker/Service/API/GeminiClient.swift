@@ -124,6 +124,65 @@ class GeminiClient {
     return try JSONDecoder().decode(ParsedNutritionLabel.self, from: cleanData)
   }
 
+  // MARK: - Recipe Scanning
+
+  /// Sends a photo of a cookbook recipe to Gemini Vision and estimates
+  /// per-serving macros by identifying ingredients and portion count.
+  func parseRecipe(image: UIImage) async throws -> ParsedNutritionLabel {
+    guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
+      throw URLError(
+        .cannotParseResponse,
+        userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG."])
+    }
+    let base64String = jpegData.base64EncodedString()
+
+    let model = "gemini-3-flash-preview"
+    let urlString =
+      "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
+    guard let url = URL(string: urlString) else { throw URLError(.badURL) }
+
+    // TODO: have this return the macros for the entire recipe, as well as the recipe weight in grams.
+    let prompt = """
+      Analyze this recipe photo from a cookbook. Identify the recipe name, all ingredients \
+      with their quantities, and the number of servings.
+      Estimate the total macronutrients for the entire recipe, then calculate per-serving values.
+      Return ONLY valid JSON with this schema:
+      {
+        "description": "recipe name",
+        "serving_size": "1",
+        "serving_unit": "serving",
+        "calories": number per serving or null,
+        "protein_grams": number per serving,
+        "fat_grams": number per serving,
+        "carbs_grams": number per serving
+      }
+      If the number of servings is not stated, estimate based on context or assume 4.
+      If a macro value cannot be determined, use 0.
+      """
+
+    let requestBody = GeminiRequest(
+      contents: [
+        .init(parts: [
+          .init(text: prompt, inlineData: nil),
+          .init(text: nil, inlineData: .init(mimeType: "image/jpeg", data: base64String)),
+        ])
+      ],
+      generationConfig: .init(response_mime_type: "application/json")
+    )
+
+    let data = try await performRequest(url: url, body: requestBody)
+    let jsonText = try extractJSON(from: data)
+    logger.debug("Recipe scan JSON: \(jsonText)")
+
+    guard let cleanData = jsonText.data(using: .utf8) else {
+      throw URLError(
+        .cannotParseResponse,
+        userInfo: [NSLocalizedDescriptionKey: "Could not parse the recipe response."])
+    }
+
+    return try JSONDecoder().decode(ParsedNutritionLabel.self, from: cleanData)
+  }
+
   // MARK: - Shared Helpers
 
   /// Sends an encoded request body to the Gemini API and returns the raw response data.

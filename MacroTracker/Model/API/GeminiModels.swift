@@ -68,6 +68,7 @@ struct AIAnalysisResult: Codable {
 
 /// Structured data extracted from a photographed nutrition facts label.
 /// All macro fields default to `0` if not visible on the label.
+/// TODO: change name. Also used for parsing recipes now.
 struct ParsedNutritionLabel: Codable {
   let description: String?  // Food name from the label, if visible
   let serving_size: String?  // Numeric value, e.g. "28"

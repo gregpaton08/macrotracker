@@ -47,6 +47,9 @@ struct AddMealView: View {
   @State private var showImageSourcePicker = false
   @State private var showScanner = false
 
+  private enum ScanMode { case label, recipe }
+  @State private var scanMode: ScanMode = .label
+
   private let barcodeClient = OpenFoodFactsClient()
   private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
 
@@ -165,11 +168,13 @@ struct AddMealView: View {
               }
             }
             .disabled(!geminiKeyConfigured || viewModel.isLoading)
-            .confirmationDialog("Choose Image Source", isPresented: $showImageSourcePicker) {
+            .confirmationDialog("Choose Scan Type", isPresented: $showImageSourcePicker) {
               if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                Button("Take Photo") { showCamera = true }
+                Button("Nutrition Label — Take Photo") { scanMode = .label; showCamera = true }
+                Button("Recipe — Take Photo") { scanMode = .recipe; showCamera = true }
               }
-              Button("Choose from Library") { showPhotoLibrary = true }
+              Button("Nutrition Label — From Library") { scanMode = .label; showPhotoLibrary = true }
+              Button("Recipe — From Library") { scanMode = .recipe; showPhotoLibrary = true }
               Button("Cancel", role: .cancel) {}
             }
 
@@ -271,12 +276,12 @@ struct AddMealView: View {
       }
       .sheet(isPresented: $showCamera) {
         CameraPicker(sourceType: .camera, isPresented: $showCamera) { image in
-          processNutritionLabelImage(image)
+          if scanMode == .recipe { processRecipeImage(image) } else { processNutritionLabelImage(image) }
         }
       }
       .sheet(isPresented: $showPhotoLibrary) {
         CameraPicker(sourceType: .photoLibrary, isPresented: $showPhotoLibrary) { image in
-          processNutritionLabelImage(image)
+          if scanMode == .recipe { processRecipeImage(image) } else { processNutritionLabelImage(image) }
         }
       }
       // Scanner Sheet
@@ -372,6 +377,30 @@ struct AddMealView: View {
     focusedField = nil
     Task {
       if let result = await viewModel.scanNutritionLabel(image: image) {
+        fat = String(format: "%.1f", result.fat_grams)
+        carbs = String(format: "%.1f", result.carbs_grams)
+        protein = String(format: "%.1f", result.protein_grams)
+
+        if let size = result.serving_size, !size.isEmpty {
+          portionSize = size
+        }
+        if let unit = result.serving_unit, MealEntity.validUnits.contains(unit) {
+          selectedUnit = unit
+        }
+        if let desc = result.description, !desc.isEmpty, description.isEmpty {
+          description = desc
+        }
+
+        activeCachedMeal = nil
+      }
+    }
+  }
+
+  /// Sends a cookbook recipe photo to Gemini Vision and populates fields with per-serving macros.
+  private func processRecipeImage(_ image: UIImage) {
+    focusedField = nil
+    Task {
+      if let result = await viewModel.scanRecipe(image: image) {
         fat = String(format: "%.1f", result.fat_grams)
         carbs = String(format: "%.1f", result.carbs_grams)
         protein = String(format: "%.1f", result.protein_grams)

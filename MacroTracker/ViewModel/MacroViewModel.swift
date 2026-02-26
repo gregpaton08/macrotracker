@@ -97,6 +97,32 @@ class MacroViewModel: ObservableObject {
     }
   }
 
+  // MARK: - Recipe Scanning
+
+  /// Sends a photo of a cookbook recipe to Gemini Vision and returns
+  /// estimated per-serving macros. Returns `nil` on failure (error is shown via alert).
+  func scanRecipe(image: UIImage) async -> ParsedNutritionLabel? {
+    setupClient()
+
+    guard let gemini = geminiClient else {
+      errorMessage = "Gemini API Key missing. Please add it in Settings."
+      showError = true
+      return nil
+    }
+
+    isLoading = true
+    defer { isLoading = false }
+
+    do {
+      return try await gemini.parseRecipe(image: image)
+    } catch {
+      logger.error("Recipe scan failed: \(error.localizedDescription)")
+      errorMessage = error.localizedDescription
+      showError = true
+      return nil
+    }
+  }
+
   // MARK: - Persistence
 
   /// Creates and saves a new `MealEntity`. Returns `true` on success.
