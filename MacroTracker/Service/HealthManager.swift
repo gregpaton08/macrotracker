@@ -39,9 +39,10 @@ class HealthManager: ObservableObject {
 
       // 1. Add .workoutType() to the read list
       let activeEnergy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+      let basalEnergy = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned)!
       let workoutType = HKObjectType.workoutType()
 
-      let readTypes: Set<HKObjectType> = [activeEnergy, workoutType]
+      let readTypes: Set<HKObjectType> = [activeEnergy, basalEnergy, workoutType]
 
       healthStore.requestAuthorization(toShare: [], read: readTypes) { success, error in
         if let error = error {
@@ -73,6 +74,36 @@ class HealthManager: ObservableObject {
       return await withCheckedContinuation { continuation in
         let query = HKStatisticsQuery(
           quantityType: calorieType, quantitySamplePredicate: predicate, options: .cumulativeSum
+        ) { _, result, error in
+          guard let result = result, let sum = result.sumQuantity() else {
+            continuation.resume(returning: 0.0)
+            return
+          }
+          continuation.resume(returning: sum.doubleValue(for: HKUnit.kilocalorie()))
+        }
+        healthStore.execute(query)
+      }
+    #else
+      return 0.0
+    #endif
+  }
+
+  // MARK: - Basal Energy
+
+  /// Returns total basal (resting) energy burned (kcal) for the given calendar day.
+  func fetchBasalEnergyBurned(for date: Date) async -> Double {
+    #if os(iOS)
+      guard HKHealthStore.isHealthDataAvailable() else { return 0 }
+      let basalType = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned)!
+      let calendar = Calendar.current
+      let startOfDay = calendar.startOfDay(for: date)
+      let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+      let predicate = HKQuery.predicateForSamples(
+        withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+      return await withCheckedContinuation { continuation in
+        let query = HKStatisticsQuery(
+          quantityType: basalType, quantitySamplePredicate: predicate, options: .cumulativeSum
         ) { _, result, error in
           guard let result = result, let sum = result.sumQuantity() else {
             continuation.resume(returning: 0.0)

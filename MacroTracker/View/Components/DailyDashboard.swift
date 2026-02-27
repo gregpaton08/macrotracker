@@ -18,6 +18,7 @@ import SwiftUI
 
 struct DailyDashboard: View {
   @Environment(\.managedObjectContext) private var viewContext
+  @Environment(\.scenePhase) private var scenePhase
 
   /// Meals for this specific day, fetched via a date-range predicate.
   @FetchRequest var meals: FetchedResults<MealEntity>
@@ -29,6 +30,13 @@ struct DailyDashboard: View {
 
   /// When `true`, HealthKit active-energy and workout calories are combined.
   @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
+
+  /// `"active"` uses active energy only; `"total"` adds basal (resting) energy.
+  @AppStorage("energy_source") var energySource: String = "active"
+  /// When in total-energy mode, controls whether workouts are shown in the dashboard.
+  @AppStorage("show_workouts_total_energy") var showWorkoutsInTotalMode: Bool = false
+
+  @State private var basalEnergy: Double = 0.0
 
   // MARK: - Workout Type Filters
 
@@ -96,9 +104,15 @@ struct DailyDashboard: View {
     #endif
   }
 
-  /// Active energy to display — optionally includes workout calories.
+  /// Active energy to display — varies by energy source setting.
   var finalBurned: Double {
-    if combineSources { return caloriesBurned + workoutKcal } else { return caloriesBurned }
+    if energySource == "total" {
+      return caloriesBurned + basalEnergy
+    } else if combineSources {
+      return caloriesBurned + workoutKcal
+    } else {
+      return caloriesBurned
+    }
   }
 
   var body: some View {
@@ -112,12 +126,19 @@ struct DailyDashboard: View {
 
             Text("-").foregroundColor(.secondary)
 
-            Button(action: { combineSources.toggle() }) {
+            Button(action: {
+              if energySource != "total" { combineSources.toggle() }
+            }) {
               VStack(spacing: 2) {
                 HStack(spacing: 2) {
                   Text("Burned")
-                  Image(systemName: combineSources ? "plus.circle.fill" : "flame.fill")
-                    .font(.caption2)
+                  if energySource == "total" {
+                    Image(systemName: "bolt.fill")
+                      .font(.caption2)
+                  } else {
+                    Image(systemName: combineSources ? "plus.circle.fill" : "flame.fill")
+                      .font(.caption2)
+                  }
                 }
                 .font(.caption).bold().foregroundColor(.secondary)
 
@@ -146,7 +167,9 @@ struct DailyDashboard: View {
 
           // 3. WORKOUTS (iOS only)
           #if os(iOS)
-            if !filteredWorkouts.isEmpty {
+            if !filteredWorkouts.isEmpty
+              && (energySource != "total" || showWorkoutsInTotalMode)
+            {
               Divider()
               VStack(alignment: .leading, spacing: 8) {
                 Text("Workouts")
@@ -215,11 +238,23 @@ struct DailyDashboard: View {
     .background(Theme.background)
     .task(id: date) {
       caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+      basalEnergy = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
       #if os(iOS)
         workouts = await HealthManager.shared.fetchWorkouts(for: date)
       #endif
     }
     .onAppear { HealthManager.shared.requestAuthorization() }
+    .onChange(of: scenePhase) { _, newPhase in
+      if newPhase == .active {
+        Task {
+          caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
+          basalEnergy = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
+          #if os(iOS)
+            workouts = await HealthManager.shared.fetchWorkouts(for: date)
+          #endif
+        }
+      }
+    }
   }
 
   /// Small vertical label + number used in the calorie math row.

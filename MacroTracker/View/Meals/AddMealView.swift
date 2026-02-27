@@ -49,6 +49,7 @@ struct AddMealView: View {
 
   private enum ScanMode { case label, recipe }
   @State private var scanMode: ScanMode = .label
+  @State private var analysisTask: Task<Void, Never>?
 
   private let barcodeClient = OpenFoodFactsClient()
   private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
@@ -332,14 +333,19 @@ struct AddMealView: View {
       if viewModel.isLoading {
         ZStack {
           Color.black.opacity(0.4).ignoresSafeArea()
-          VStack {
+          VStack(spacing: 12) {
             ProgressView()
               .scaleEffect(1.5)
               .tint(.white)
             Text("Analyzing...")
               .foregroundColor(.white)
               .bold()
-              .padding(.top, 8)
+            Button("Cancel") {
+              analysisTask?.cancel()
+              viewModel.isLoading = false
+            }
+            .foregroundColor(.white.opacity(0.9))
+            .font(.subheadline)
           }
           .padding(24)
           .background(.ultraThinMaterial)
@@ -395,7 +401,7 @@ struct AddMealView: View {
   /// Sends a photo to Gemini Vision and populates fields from the extracted label data.
   private func processNutritionLabelImage(_ image: UIImage) {
     focusedField = nil
-    Task {
+    analysisTask = Task {
       if let result = await viewModel.scanNutritionLabel(image: image) {
         fat = String(format: "%.1f", result.fat_grams)
         carbs = String(format: "%.1f", result.carbs_grams)
@@ -419,7 +425,7 @@ struct AddMealView: View {
   /// Sends a cookbook recipe photo to Gemini Vision and populates fields with per-serving macros.
   private func processRecipeImage(_ image: UIImage) {
     focusedField = nil
-    Task {
+    analysisTask = Task {
       if let result = await viewModel.scanRecipe(image: image) {
         fat = String(format: "%.1f", result.fat_grams)
         carbs = String(format: "%.1f", result.carbs_grams)
@@ -444,7 +450,7 @@ struct AddMealView: View {
   private func performAIAnalysis() {
     guard !description.isEmpty else { return }
     focusedField = nil
-    Task {
+    analysisTask = Task {
       let query =
         portionSize.isEmpty ? description : "\(portionSize) \(selectedUnit) \(description)"
       if let result = await viewModel.calculateMacros(description: query) {

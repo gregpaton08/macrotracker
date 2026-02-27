@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MacroTracker is a native iOS app (iOS 16.0+) for tracking daily macronutrient intake. It prioritizes simplicity and ease of use over high accuracy. Users log meals via natural language, and the app estimates macros using Google Gemini for parsing and the USDA Food Data Central API for nutritional data.
+MacroTracker is a native iOS app (iOS 16.0+) for tracking daily macronutrient intake. It prioritizes simplicity and ease of use over high accuracy. Users log meals via natural language, and the app estimates macros using Google Gemini.
 
 ## Build & Run
 
@@ -40,7 +40,6 @@ User text input → LocalParser (regex, instant)
 
 **Key services:**
 - `GeminiClient` — sends meal descriptions to Gemini, receives structured food items with estimated weights.
-- `USDAClient` — queries USDA FDC for macros per 100g.
 - `MealCacheManager` — CRUD for `CachedMealEntity`, which powers smart autocomplete and portion scaling.
 - `HealthManager` — reads active energy and workouts from HealthKit.
 
@@ -52,9 +51,8 @@ User text input → LocalParser (regex, instant)
 
 ## API Keys
 
-Users configure two API keys in-app via SettingsView, stored in UserDefaults:
+Users configure an API key in-app via SettingsView, stored in UserDefaults:
 - `"google_api_key"` — Google Gemini
-- `"usda_api_key"` — USDA Food Data Central
 
 ## Entitlements
 

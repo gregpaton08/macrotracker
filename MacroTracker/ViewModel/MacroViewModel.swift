@@ -63,6 +63,8 @@ class MacroViewModel: ObservableObject {
         result.total_calories
       )
 
+    } catch is CancellationError {
+      return nil
     } catch {
       logger.error("AI Analysis Failed: \(error.localizedDescription)")
       errorMessage = "Could not analyze food. Please try again. \(error.localizedDescription)"
@@ -89,6 +91,8 @@ class MacroViewModel: ObservableObject {
 
     do {
       return try await gemini.parseNutritionLabel(image: image)
+    } catch is CancellationError {
+      return nil
     } catch {
       logger.error("Label scan failed: \(error.localizedDescription)")
       errorMessage = error.localizedDescription
@@ -115,6 +119,8 @@ class MacroViewModel: ObservableObject {
 
     do {
       return try await gemini.parseRecipe(image: image)
+    } catch is CancellationError {
+      return nil
     } catch {
       logger.error("Recipe scan failed: \(error.localizedDescription)")
       errorMessage = error.localizedDescription

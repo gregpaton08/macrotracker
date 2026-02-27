@@ -22,6 +22,11 @@ struct SettingsView: View {
   @AppStorage("goal_p_min") var pMin: Double = 150
   @AppStorage("goal_p_max") var pMax: Double = 180
 
+  // MARK: - Energy Source
+
+  @AppStorage("energy_source") var energySource: String = "active"
+  @AppStorage("show_workouts_total_energy") var showWorkoutsInTotalMode: Bool = false
+
   // MARK: - Workout Type Filters
 
   @AppStorage("workout_filter_run") var filterRun: Bool = true
@@ -49,6 +54,22 @@ struct SettingsView: View {
       Section(header: Text("Data Management")) {
         NavigationLink(destination: SavedMealsView()) {
           Label("Manage Saved Meals", systemImage: "archivebox")
+        }
+      }
+
+      Section(
+        header: Text("Energy Source"),
+        footer: Text(
+          energySource == "total"
+            ? "Total Energy includes active + resting (basal) calories."
+            : "Active Energy shows only calories from movement and exercise.")
+      ) {
+        Picker("Energy Source", selection: $energySource) {
+          Text("Active Energy").tag("active")
+          Text("Total Energy").tag("total")
+        }
+        if energySource == "total" {
+          Toggle("Show Workouts", isOn: $showWorkoutsInTotalMode)
         }
       }
 
@@ -96,10 +117,6 @@ struct SettingsView: View {
       }
 
       // TODO: add option to choose model?
-
-      Section(header: Text("Links")) {
-        Link("Get Google Key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-      }
 
       // MARK: - Import / Export
       Section(header: Text("Backup & Restore")) {
