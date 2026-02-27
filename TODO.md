@@ -2,11 +2,10 @@
 
 ## Blockers (will prevent submission or cause rejection)
 
-- [ ] Add `PrivacyInfo.xcprivacy` manifest — required since April 2024; must declare HealthKit, network API usage (Gemini, USDA, Open Food Facts), and CloudKit
+- [ ] Add `PrivacyInfo.xcprivacy` manifest — required since April 2024; must declare HealthKit, network API usage (Gemini, Open Food Facts), and CloudKit
 - [ ] Create a public privacy policy and add the URL in App Store Connect — required for any app that collects health data or uses third-party APIs
 - [ ] Resolve API-key UX — Apple rejects apps that require users to supply their own API keys (guideline 4.2 Minimum Functionality). Options: ship a backend proxy, bundle a free tier, or accept the risk
 - [ ] Add a disclaimer: not a dietician, not medical advice, consult your physician, etc.
-- [ ] Verify USDA API key flow — `USDAClient` accepts an API key but Settings only exposes the Gemini key; either add a USDA key field or confirm it's unused
 
 ## High-impact polish
 
@@ -35,3 +34,5 @@
 - [ ] Store metadata in meal item, i.e. barcode value and Gemini prompt (for debugging)
 - [ ] Get Gemini API limits and display in app
 - [ ] Localization — all strings are hardcoded English; number formatting breaks in European locales
+- [ ] Add switch in settings to disable AI features.
+- [ ] From Gemini, for backend: To make it mathematically impossible to spoof requests, implement Apple's DeviceCheck / App Attest service. App Attest uses a hardware enclave on the iPhone to cryptographically sign requests, proving to the AWS backend that the request is coming from an untampered version of the app running on a genuine Apple device.
