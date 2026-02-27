@@ -87,6 +87,8 @@ class OpenFoodFactsClient {
         "No product in response for barcode \(barcode) (status: \(decoded.status ?? -1))")
       return nil
     }
+      
+    self.logger.debug("product = \(String(describing: product))")
 
     guard let nuts = product.nutriments else {
       logger.warning(
@@ -94,8 +96,6 @@ class OpenFoodFactsClient {
       )
       return nil
     }
-
-    self.logger.debug("product = \(String(describing: nuts))")
 
     let name =
       if product.brands != nil { "\(product.brands ?? "") \(product.product_name ?? "")" } else {
