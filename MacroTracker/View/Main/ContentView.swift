@@ -11,20 +11,20 @@
 import SwiftUI
 
 struct ContentView: View {
-  var body: some View {
-    TabView {
-      NavigationStack { TrackerView() }
-        .tabItem { Label("Tracker", systemImage: "fork.knife") }
+    var body: some View {
+        TabView {
+            NavigationStack { TrackerView() }
+                .tabItem { Label("Tracker", systemImage: "fork.knife") }
 
-      NavigationStack { InsightsView() }
-        .tabItem { Label("Calendar", systemImage: "calendar") }
+            NavigationStack { InsightsView() }
+                .tabItem { Label("Calendar", systemImage: "calendar") }
 
-      NavigationStack { TrendsView() }
-        .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
+            NavigationStack { TrendsView() }
+                .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
 
-      NavigationStack { SettingsView() }
-        .tabItem { Label("Settings", systemImage: "gearshape") }
+            NavigationStack { SettingsView() }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+        }
+        .tint(Theme.tint)
     }
-    .tint(Theme.tint)
-  }
 }
