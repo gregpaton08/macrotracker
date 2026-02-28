@@ -120,7 +120,7 @@ struct AddMealView: View {
                     VStack(alignment: .leading) {
                       Text(meal.name ?? "Unknown").foregroundColor(.primary)
                       Text(
-                        "Base: \(meal.portionSize ?? "100") \(meal.unit ?? "g") • P:\(Int(meal.protein))"
+                        "Base: \(meal.portionSize ?? "100") \(meal.unit ?? "g") • F:\(Int(meal.fat)) C:\(Int(meal.carbs)) P:\(Int(meal.protein))"
                       )
                       .font(.caption).foregroundColor(.secondary)
                     }
