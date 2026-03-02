@@ -146,7 +146,6 @@ struct TrackerView: View {
 
         // MARK: - Toolbar Logic
         .toolbar {
-            // RIGHT: Actions (Today + Add) — only when used as root tab
             if isRoot {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 16) {
@@ -154,14 +153,9 @@ struct TrackerView: View {
                             Button("Today") {
                                 withAnimation { selectedIndex = centerIndex }
                             }
-                            .font(.caption).bold()
-                            .buttonStyle(.bordered)
                         }
-
-                        Button(action: { showAddMeal.toggle() }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundColor(Theme.tint)
+                        Button(action: { showAddMeal = true }) {
+                            Image(systemName: "plus")
                         }
                     }
                 }
