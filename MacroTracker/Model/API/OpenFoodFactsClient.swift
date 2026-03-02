@@ -22,6 +22,7 @@ struct OpenFoodFactsResponse: Codable {
 
 /// A single product record from Open Food Facts.
 struct Product: Codable {
+  let brands: String?
   let product_name: String?
   let nutriments: Nutriments?
   let serving_quantity: Double?
@@ -82,9 +83,12 @@ class OpenFoodFactsClient {
     let decoded = try JSONDecoder().decode(OpenFoodFactsResponse.self, from: data)
 
     guard let product = decoded.product else {
-      logger.warning("No product in response for barcode \(barcode) (status: \(decoded.status ?? -1))")
+      logger.warning(
+        "No product in response for barcode \(barcode) (status: \(decoded.status ?? -1))")
       return nil
     }
+      
+    self.logger.debug("product = \(String(describing: product))")
 
     guard let nuts = product.nutriments else {
       logger.warning(
@@ -93,15 +97,32 @@ class OpenFoodFactsClient {
       return nil
     }
 
-    self.logger.debug("product = \(String(describing: nuts))")
+    let name =
+      if product.brands != nil { "\(product.brands ?? "") \(product.product_name ?? "")" } else {
+        "Unknown Product"
+      }
+
+    let (sq, squ, f, c, p) =
+      if nuts.fat_serving != nil, nuts.carbohydrates_serving != nil, nuts.proteins_serving != nil {
+        (
+          sq: product.serving_quantity ?? 0,
+          squ: product.serving_quantity_unit ?? "", f: nuts.fat_serving!,
+          c: nuts.carbohydrates_serving!, p: nuts.proteins_serving!
+        )
+      } else {
+        (
+          sq: 100, squ: "g", f: nuts.fat_100g ?? 0, c: nuts.carbohydrates_100g ?? 0,
+          p: nuts.proteins_100g ?? 0
+        )
+      }
 
     return (
-      name: product.product_name ?? "Unknown Product",
-      sq: product.serving_quantity ?? 0,
-      squ: product.serving_quantity_unit ?? "",
-      f: nuts.fat_serving ?? 0,
-      c: nuts.carbohydrates_serving ?? 0,
-      p: nuts.proteins_serving ?? 0
+      name: name,
+      sq: sq,
+      squ: squ,
+      f: f,
+      c: c,
+      p: p
     )
   }
 }

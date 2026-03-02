@@ -208,9 +208,7 @@ struct DailyDashboard: View {
               HStack {
                 VStack(alignment: .leading, spacing: 4) {
                   Text(meal.summary ?? "Meal").font(.headline)
-                  Text(
-                    "F: \(Int(meal.totalFat))  C: \(Int(meal.totalCarbs))  P: \(Int(meal.totalProtein))"
-                  )
+                  Text(String(format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein)))
                   .font(.caption).foregroundColor(.secondary).monospacedDigit()
                 }
                 Spacer()
