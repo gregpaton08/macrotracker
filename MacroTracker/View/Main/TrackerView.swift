@@ -32,6 +32,10 @@ struct TrackerView: View {
     /// so this view can be pushed from InsightsView without duplicate controls.
     private let isRoot: Bool
 
+    /// Page range for the TabView, centered on the initial date.
+    private let pageRangeStart: Int
+    private let pageRangeEnd: Int
+
     // MARK: - State
 
     @State private var selectedIndex: Int
@@ -55,8 +59,13 @@ struct TrackerView: View {
         let diff = calendar.dateComponents([.day], from: today, to: target).day ?? 0
 
         // 2. Set initial state
+        let initialIndex = 5000 + diff
         _selectedDate = State(initialValue: target)
-        _selectedIndex = State(initialValue: 5000 + diff)
+        _selectedIndex = State(initialValue: initialIndex)
+
+        // 3. Center page range on the initial date
+        pageRangeStart = initialIndex - 20
+        pageRangeEnd = initialIndex + 2
     }
 
     var body: some View {
@@ -64,12 +73,11 @@ struct TrackerView: View {
 
             // MARK: - Layer 1: Paging Dashboard
             TabView(selection: $selectedIndex) {
-                // Render range of +/- 10 years
-                // TODO: NOTE: this only allows you to scroll back 10 days. If you set this number too large then perform suffers (there is a huge delay in the middle of swiping).
-                ForEach((centerIndex - 20)...(centerIndex + 2), id: \.self) { index in
-                    LazyView(DailyDashboard(date: dateFromIndex(index)))
-                        .tag(index)
-                        .padding(.top, 60)  // Push content below floating header
+                // TODO: NOTE: this might cause serious lag when swiping since the range is huge.
+                ForEach(pageRangeStart...pageRangeEnd, id: \.self) { index in
+                LazyView(DailyDashboard(date: dateFromIndex(index)))
+                    .tag(index)
+                    .padding(.top, 60)  // Push content below floating header
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
