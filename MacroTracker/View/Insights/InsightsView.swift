@@ -61,7 +61,6 @@ struct InsightsView: View {
             }
             .padding(.vertical)
         }
-        .navigationTitle("Insights")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif

@@ -139,7 +139,6 @@ struct TrackerView: View {
                 Divider()
             }
         }
-        .navigationTitle(isRoot ? "Tracker" : "Detail")  // Change title if drilled down
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif

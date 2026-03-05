@@ -46,6 +46,7 @@ struct AddMealView: View {
     @State private var showPhotoLibrary = false
     @State private var showImageSourcePicker = false
     @State private var showScanner = false
+    @State private var showDescribeSheet = false
 
     private enum ScanMode { case label, recipe }
     @State private var scanMode: ScanMode = .label
@@ -98,6 +99,16 @@ struct AddMealView: View {
                             }
                         }
                     }
+                }
+
+                // MARK: - DESCRIBE TO AI
+                Section {
+                    Button(action: { showDescribeSheet = true }) {
+                        Label("Describe to AI", systemImage: "text.bubble")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!geminiKeyConfigured || viewModel.isLoading)
                 }
 
                 // MARK: - SECTION 1: FOOD DETAILS
@@ -287,6 +298,17 @@ struct AddMealView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
+            }
+            .sheet(isPresented: $showDescribeSheet) {
+                DescribeMealView(viewModel: viewModel) { fat, carbs, protein, summary, portionSz, portionUt in
+                    self.fat = String(format: "%.1f", fat)
+                    self.carbs = String(format: "%.1f", carbs)
+                    self.protein = String(format: "%.1f", protein)
+                    if self.description.isEmpty { self.description = summary }
+                    if let ps = portionSz, !ps.isEmpty { self.portionSize = ps }
+                    if let pu = portionUt, MealEntity.validUnits.contains(pu) { self.selectedUnit = pu }
+                    activeCachedMeal = nil
+                }
             }
             .sheet(isPresented: $showCamera) {
                 CameraPicker(sourceType: .camera, isPresented: $showCamera) { image in

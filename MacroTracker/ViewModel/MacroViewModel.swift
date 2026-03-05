@@ -74,6 +74,32 @@ class MacroViewModel: ObservableObject {
         }
     }
 
+    /// Sends a free-text meal description to Gemini and returns the full
+    /// `AIAnalysisResult`, including the per-item breakdown used by `DescribeMealView`.
+    func analyzeDescription(text: String) async -> AIAnalysisResult? {
+        setupClient()
+
+        guard let gemini = geminiClient else {
+            errorMessage = "Google API Key missing. Please check Settings."
+            showError = true
+            return nil
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            return try await gemini.analyzeFood(userText: text)
+        } catch is CancellationError {
+            return nil
+        } catch {
+            logger.error("AI description analysis failed: \(error.localizedDescription)")
+            errorMessage = "Could not analyze food. \(error.localizedDescription)"
+            showError = true
+            return nil
+        }
+    }
+
     // MARK: - Nutrition Label Scanning
 
     /// Sends a photo of a nutrition facts label to Gemini Vision and returns

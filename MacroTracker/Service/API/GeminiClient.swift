@@ -44,13 +44,18 @@ class GeminiClient {
 
             1. Identify the food items and estimate portion sizes if not specified.
             2. Calculate the total macronutrients (Protein, Fat, Carbs) and Calories.
-            3. Return ONLY valid JSON matching this schema:
+            3. If the input clearly states the total portion amount (e.g. "200g chicken", "1 cup oats"), \
+            extract the numeric value and unit. Only populate portion fields when unambiguous — \
+            if multiple foods are described or the amount is vague, leave them null.
+            4. Return ONLY valid JSON matching this schema:
             {
                 "summary": "Short readable summary of food",
                 "total_calories": number,
                 "total_protein": number (grams),
                 "total_carbs": number (grams),
                 "total_fat": number (grams),
+                "portion_size": "numeric string e.g. \\"200\\" or null if ambiguous",
+                "portion_unit": "unit string e.g. \\"g\\", \\"oz\\", \\"ml\\", \\"serving\\" or null if ambiguous",
                 "items": [
                     { "name": "Item Name", "estimated_calories": number }
                 ]

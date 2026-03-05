@@ -55,6 +55,11 @@ struct AIAnalysisResult: Codable {
     let total_carbs: Double
     let total_fat: Double
 
+    /// Numeric portion string (e.g. `"200"`) when unambiguously stated in the input; otherwise `nil`.
+    let portion_size: String?
+    /// Unit for `portion_size` (e.g. `"g"`, `"oz"`, `"serving"`); otherwise `nil`.
+    let portion_unit: String?
+
     /// Optional breakdown for transparency.
     let items: [FoodItem]
 

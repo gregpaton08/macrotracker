@@ -36,3 +36,7 @@
 - [ ] Localization — all strings are hardcoded English; number formatting breaks in European locales
 - [ ] Add switch in settings to disable AI features.
 - [ ] From Gemini, for backend: To make it mathematically impossible to spoof requests, implement Apple's DeviceCheck / App Attest service. App Attest uses a hardware enclave on the iPhone to cryptographically sign requests, proving to the AWS backend that the request is coming from an untampered version of the app running on a genuine Apple device.
+
+## Nice-to-have
+
+- [ ] Add a food database. Either embed something in the app, find a free third-party, or host something myself.
