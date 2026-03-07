@@ -102,7 +102,8 @@ struct TrackerView: View {
                     Button(action: { showCalendar = true }) {
                         HStack(spacing: 6) {
                             Image(systemName: "calendar")
-                            Text(selectedDate, style: .date).font(.headline)
+                            Text(selectedDate, format: Calendar.current.component(.year, from: selectedDate) == Calendar.current.component(.year, from: Date()) ? .dateTime.month(.wide).day() : .dateTime.month(.wide).day().year())
+                                .font(.headline)
 
                             if Calendar.current.isDateInToday(selectedDate) {
                                 Text("Today")
