@@ -24,9 +24,11 @@ class GeminiClient {
     private let session = URLSession.shared
     private let logger = Logger(subsystem: "com.macrotracker", category: "GeminiClient")
     private let apiKey: String
+    private let model: String
 
-    init(apiKey: String) {
+    init(apiKey: String, model: String) {
         self.apiKey = apiKey
+        self.model = model
     }
 
     // MARK: - One-Shot Analysis
@@ -34,7 +36,6 @@ class GeminiClient {
     /// Sends a food description directly to Gemini and receives complete macro
     /// estimates in a single round-trip.
     func analyzeFood(userText: String) async throws -> AIAnalysisResult {
-        let model = "gemini-3-flash-preview"
         let urlString =
             "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
@@ -88,7 +89,6 @@ class GeminiClient {
         }
         let base64String = jpegData.base64EncodedString()
 
-        let model = "gemini-3-flash-preview"
         let urlString =
             "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
@@ -145,7 +145,6 @@ class GeminiClient {
         }
         let base64String = jpegData.base64EncodedString()
 
-        let model = "gemini-3-flash-preview"
         let urlString =
             "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
@@ -207,7 +206,8 @@ class GeminiClient {
 
         if let httpResponse = response as? HTTPURLResponse {
             if httpResponse.statusCode == 429 {
-                logger.warning("Rate Limited.")
+                let body = String(data: data, encoding: .utf8) ?? "<unreadable>"
+                logger.warning("Rate Limited. Response: \(body)")
                 throw URLError(
                     .badServerResponse,
                     userInfo: [

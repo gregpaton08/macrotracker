@@ -32,9 +32,11 @@ class MacroViewModel: ObservableObject {
     /// Called on init and before each API request so key changes take effect immediately.
     private func setupClient() {
         let defaults = UserDefaults.standard
-        if let googleKey = defaults.string(forKey: "google_api_key"), !googleKey.isEmpty {
-            self.geminiClient = GeminiClient(apiKey: googleKey)
+        guard let googleKey = defaults.string(forKey: "google_api_key"), !googleKey.isEmpty else {
+            return
         }
+        let model = defaults.string(forKey: "gemini_model") ?? "gemini-2.0-flash"
+        self.geminiClient = GeminiClient(apiKey: googleKey, model: model)
     }
 
     // MARK: - AI Macro Analysis

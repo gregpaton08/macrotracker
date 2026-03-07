@@ -15,6 +15,16 @@ struct SettingsView: View {
     // MARK: - Persisted Settings
 
     @AppStorage("google_api_key") var googleKey: String = ""
+    @AppStorage("gemini_model") var geminiModel: String = "gemini-2.0-flash"
+
+    private let geminiModels: [(id: String, name: String)] = [
+        ("gemini-3-flash-preview", "Gemini 3 Flash Preview"),
+        ("gemini-2.5-pro-preview", "Gemini 2.5 Pro"),
+        ("gemini-2.0-flash", "Gemini 2.0 Flash"),
+        ("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite"),
+        ("gemini-1.5-pro", "Gemini 1.5 Pro"),
+        ("gemini-1.5-flash", "Gemini 1.5 Flash"),
+    ]
     @AppStorage("goal_f_min") var fMin: Double = 60
     @AppStorage("goal_f_max") var fMax: Double = 80
     @AppStorage("goal_c_min") var cMin: Double = 200
@@ -114,9 +124,12 @@ struct SettingsView: View {
 
             Section(header: Text("Gemini API Key")) {
                 SecureField("Google Gemini Key", text: $googleKey)
+                Picker("Model", selection: $geminiModel) {
+                    ForEach(geminiModels, id: \.id) { model in
+                        Text(model.name).tag(model.id)
+                    }
+                }
             }
-
-            // TODO: add option to choose model?
 
             // MARK: - Import / Export
             Section(header: Text("Backup & Restore")) {
