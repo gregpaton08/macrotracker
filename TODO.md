@@ -40,3 +40,4 @@
 ## Nice-to-have
 
 - [ ] Add a food database. Either embed something in the app, find a free third-party, or host something myself.
+- [ ] Hook up open food facts to the auto complete description in the add meals view

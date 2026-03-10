@@ -100,7 +100,11 @@ struct DescribeMealView: View {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
-        .onAppear { inputFocused = true }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                inputFocused = true
+            }
+        }
     }
 
     private var canSend: Bool {

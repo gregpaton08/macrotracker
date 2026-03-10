@@ -32,9 +32,11 @@ log stream --predicate 'subsystem == "com.macrotracker" AND category == "Barcode
 
 https://fdc.nal.usda.gov/api-guide
 https://app.swaggerhub.com/apis/fdcnal/food-data_central_api/1.0.1#/FDC/getFoodsSearch
+https://aistudio.google.com
 
 ```bash
 curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}" | grep "name" | sort
+curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview?key=${GEMINI_API_KEY}"
 
 curl -s "https://api.nal.usda.gov/fdc/v1/foods/search?query=honey&dataType=Foundation,SR%20Legacy&pageSize=1&api_key=$USDA_API_KEY" | jq '.foods[]' | select(any(.foodNutrients[]; .nutrientName == "Protein"))'
 
