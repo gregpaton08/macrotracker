@@ -13,6 +13,8 @@ import Foundation
 
 // MARK: - MealEntity
 
+// extension MealEntity: Identifiable {}
+
 extension MealEntity {
     /// Calories computed from macros using Atwater factors: P*4 + C*4 + F*9.
     var totalCalories: Double {

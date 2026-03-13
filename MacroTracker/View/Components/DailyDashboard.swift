@@ -23,6 +23,7 @@ struct DailyDashboard: View {
     /// Meals for this specific day, fetched via a date-range predicate.
     @FetchRequest var meals: FetchedResults<MealEntity>
 
+    @State private var mealToAddMore: MealEntity?
     @State private var caloriesBurned: Double = 0.0
     #if os(iOS)
         @State private var workouts: [HKWorkout] = []
@@ -231,6 +232,13 @@ struct DailyDashboard: View {
                             }
                         }
                         .contextMenu {
+                            if meal.portion > 0 {
+                                Button {
+                                    mealToAddMore = meal
+                                } label: {
+                                    Label("Add More", systemImage: "plus.circle")
+                                }
+                            }
                             Button(role: .destructive) {
                                 withAnimation {
                                     viewContext.delete(meal)
@@ -246,6 +254,9 @@ struct DailyDashboard: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
+        .sheet(item: $mealToAddMore) { meal in
+            AddMoreView(meal: meal)
+        }
         .task(id: date) {
             caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
             basalEnergy = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
