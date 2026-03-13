@@ -49,39 +49,18 @@ struct DescribeMealView: View {
                     }
                     .padding()
                 }
+                // MARK: - Input Bar
+                // safeAreaInset pins the bar above the keyboard (including the QuickType row)
+                // without disabling SwiftUI's automatic keyboard avoidance.
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    inputBar
+                }
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: messages.count) { _ in
                     withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
                 .onChange(of: viewModel.isLoading) { _ in
                     withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-                }
-                // MARK: - Input Bar
-                // safeAreaInset ensures the bar always sits above the keyboard
-                // (including the QuickType suggestions row) without clipping.
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    VStack(spacing: 0) {
-                        Divider()
-                        HStack(alignment: .bottom, spacing: 10) {
-                            TextField("Describe your meal…", text: $inputText, axis: .vertical)
-                                .focused($inputFocused)
-                                .lineLimit(1...5)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-                            Button(action: send) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 34))
-                                    .foregroundColor(canSend ? Theme.tint : Color(.systemGray4))
-                            }
-                            .disabled(!canSend)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(.ultraThinMaterial)
-                    }
                 }
             }
             .navigationTitle("Describe Meal")
@@ -100,11 +79,38 @@ struct DescribeMealView: View {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                inputFocused = true
+        .onAppear { inputFocused = true }
+    }
+
+    // MARK: - Input Bar
+
+    private var inputBar: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            TextField("Describe your meal…", text: $inputText, axis: .vertical)
+                .focused($inputFocused)
+                .lineLimit(1...5)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+
+            Button(action: send) {
+                Image(systemName: "arrow.up.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+                    .background(canSend ? Theme.tint : Color(.systemGray4))
+                    .clipShape(Circle())
             }
+            .disabled(!canSend)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.bar)
     }
 
     private var canSend: Bool {

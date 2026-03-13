@@ -13,7 +13,10 @@ import SwiftUI
 
 struct SettingsView: View {
     // MARK: - Persisted Settings
-
+    
+    // AI Configuration
+    @AppStorage("use_aws_proxy") var useAWSProxy: Bool = false
+    @AppStorage("aws_proxy_url") var awsProxyURL: String = ""
     @AppStorage("google_api_key") var googleKey: String = ""
     @AppStorage("gemini_model") var geminiModel: String = "gemini-2.0-flash"
 
@@ -96,8 +99,8 @@ struct SettingsView: View {
                 Toggle("Swim", isOn: $filterSwim)
                 Toggle("Other", isOn: $filterOther)
             }
-
-            // ... (Goal Sections) ...
+            
+            // Goals Sections
             Section(header: Text("Fat Goals (g)")) {
                 HStack {
                     TextField("Min", value: $fMin, format: .number)
@@ -105,7 +108,6 @@ struct SettingsView: View {
                     TextField("Max", value: $fMax, format: .number)
                 }
             }
-
             Section(header: Text("Carb Goals (g)")) {
                 HStack {
                     TextField("Min", value: $cMin, format: .number)
@@ -113,12 +115,27 @@ struct SettingsView: View {
                     TextField("Max", value: $cMax, format: .number)
                 }
             }
-
             Section(header: Text("Protein Goals (g)")) {
                 HStack {
                     TextField("Min", value: $pMin, format: .number)
                     Text("-")
                     TextField("Max", value: $pMax, format: .number)
+                }
+            }
+            
+            Section(
+                header: Text("AI Configuration"),
+                footer: Text("Toggle off to use your local API key. Toggle on to route through your secure backend proxy.")
+            ) {
+                Toggle("Use AWS Proxy Backend", isOn: $useAWSProxy)
+                
+                if useAWSProxy {
+                    TextField("AWS Proxy URL (e.g. .../analyze)", text: $awsProxyURL)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                } else {
+                    SecureField("Google Gemini Key", text: $googleKey)
                 }
             }
 
