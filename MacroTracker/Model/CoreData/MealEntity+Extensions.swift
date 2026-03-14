@@ -24,18 +24,6 @@ extension MealEntity {
     /// Allowed portion unit strings displayed in pickers throughout the app.
     static let validUnits = ["", "g", "ml", "oz", "fl oz", "cups", "tbsp", "tsp", "piece", "slice"]
 
-    /// The slot this meal belongs to. Returns `mealSlot` if the user has explicitly set one,
-    /// otherwise auto-assigns from the meal's hour: breakfast 0–10, lunch 11–14, dinner 15–23.
-    var effectiveSlot: String {
-        if let slot = mealSlot, !slot.isEmpty { return slot }
-        let hour = Calendar.current.component(.hour, from: timestamp ?? Date())
-        switch hour {
-        case 0..<11:  return "breakfast"
-        case 11..<15: return "lunch"
-        case 15..<24: return "dinner"
-        default:      return "evening"
-        }
-    }
 }
 
 // MARK: - CachedMealEntity

@@ -9,34 +9,32 @@
 //    - Calorie math row (Eaten − Burned = Net)
 //    - Three macro progress rings (Fat / Carbs / Protein)
 //    - HealthKit workout breakdown (iOS only)
-//    - Meal list grouped into time slots (Breakfast / Lunch / Dinner / Evening)
-//      with drag-and-drop between slots and a "Move to Slot" context menu
+//    - Meal list grouped by time proximity: meals within 20 minutes of each
+//      other form a group, with a header showing the time range.
 //
 
 import Foundation
 import HealthKit
 import SwiftUI
 
-// MARK: - Slot Definitions
+// MARK: - Time-Proximity Meal Group
 
-private struct SlotInfo: Identifiable {
-    let id: String
-    let name: String
-    let icon: String
-}
-
-private let mealSlots: [SlotInfo] = [
-    SlotInfo(id: "breakfast", name: "Breakfast", icon: "sunrise.fill"),
-    SlotInfo(id: "lunch",     name: "Lunch",     icon: "sun.max.fill"),
-    SlotInfo(id: "dinner",    name: "Dinner",    icon: "sunset.fill"),
-    SlotInfo(id: "evening",   name: "Evening",   icon: "moon.fill"),
-]
-
-private struct SlotGroup: Identifiable {
-    let slot: SlotInfo
+private struct MealGroup: Identifiable {
+    let id: UUID = UUID()
     let meals: [MealEntity]
-    var id: String { slot.id }
+
+    var startTime: Date { meals.first?.timestamp ?? Date() }
+    var endTime:   Date { meals.last?.timestamp  ?? Date() }
     var kcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
+
+    /// "12:00 PM" for a single meal, "12:00 PM – 12:35 PM" for multiple.
+    var timeLabel: String {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        let start = f.string(from: startTime)
+        guard meals.count > 1 else { return start }
+        return "\(start) – \(f.string(from: endTime))"
+    }
 }
 
 // MARK: - DailyDashboard
@@ -45,38 +43,35 @@ struct DailyDashboard: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.scenePhase) private var scenePhase
 
-    /// Meals for this specific day, fetched via a date-range predicate.
-    /// Sorted ascending so each slot's meals appear in chronological order.
+    /// Meals for this specific day, sorted oldest-first so the grouping
+    /// algorithm visits them in chronological order.
     @FetchRequest var meals: FetchedResults<MealEntity>
 
     @State private var mealToAddMore: MealEntity?
+    @State private var mealToRetime: MealEntity?
+    @State private var retimeDate: Date = Date()
     @State private var caloriesBurned: Double = 0.0
     #if os(iOS)
         @State private var workouts: [HKWorkout] = []
     #endif
 
-    /// When `true`, HealthKit active-energy and workout calories are combined.
     @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
-
-    /// `"active"` uses active energy only; `"total"` adds basal (resting) energy.
     @AppStorage("energy_source") var energySource: String = "active"
-    /// When in total-energy mode, controls whether workouts are shown in the dashboard.
     @AppStorage("show_workouts_total_energy") var showWorkoutsInTotalMode: Bool = false
-
     @State private var basalEnergy: Double = 0.0
 
     // MARK: - Workout Type Filters
 
-    @AppStorage("workout_filter_run") var filterRun: Bool = true
-    @AppStorage("workout_filter_cycle") var filterCycle: Bool = true
-    @AppStorage("workout_filter_walk") var filterWalk: Bool = true
+    @AppStorage("workout_filter_run")      var filterRun:      Bool = true
+    @AppStorage("workout_filter_cycle")    var filterCycle:    Bool = true
+    @AppStorage("workout_filter_walk")     var filterWalk:     Bool = true
     @AppStorage("workout_filter_strength") var filterStrength: Bool = true
-    @AppStorage("workout_filter_hiit") var filterHIIT: Bool = true
-    @AppStorage("workout_filter_yoga") var filterYoga: Bool = true
-    @AppStorage("workout_filter_swim") var filterSwim: Bool = true
-    @AppStorage("workout_filter_other") var filterOther: Bool = true
+    @AppStorage("workout_filter_hiit")     var filterHIIT:     Bool = true
+    @AppStorage("workout_filter_yoga")     var filterYoga:     Bool = true
+    @AppStorage("workout_filter_swim")     var filterSwim:     Bool = true
+    @AppStorage("workout_filter_other")    var filterOther:    Bool = true
 
-    // MARK: - Goal Ranges (synced via @AppStorage with SettingsView)
+    // MARK: - Goal Ranges
 
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
@@ -91,37 +86,35 @@ struct DailyDashboard: View {
         self.date = date
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        let endOfDay   = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
         _meals = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: true)],
             predicate: NSPredicate(
-                format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate,
-                endOfDay as NSDate),
+                format: "timestamp >= %@ AND timestamp < %@",
+                startOfDay as NSDate, endOfDay as NSDate),
             animation: .default
         )
     }
 
     // MARK: - Computed Totals
 
-    var totalP: Double { meals.reduce(0) { $0 + $1.totalProtein } }
-    var totalC: Double { meals.reduce(0) { $0 + $1.totalCarbs } }
-    var totalF: Double { meals.reduce(0) { $0 + $1.totalFat } }
+    var totalP:    Double { meals.reduce(0) { $0 + $1.totalProtein } }
+    var totalC:    Double { meals.reduce(0) { $0 + $1.totalCarbs   } }
+    var totalF:    Double { meals.reduce(0) { $0 + $1.totalFat     } }
     var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
 
     #if os(iOS)
-        /// Workouts filtered by user-enabled workout types.
         var filteredWorkouts: [HKWorkout] {
             let enabled: [String: Bool] = [
                 "run": filterRun, "cycle": filterCycle, "walk": filterWalk,
-                "strength": filterStrength, "hiit": filterHIIT, "yoga": filterYoga,
-                "swim": filterSwim, "other": filterOther,
+                "strength": filterStrength, "hiit": filterHIIT,
+                "yoga": filterYoga, "swim": filterSwim, "other": filterOther,
             ]
             return workouts.filter { enabled[$0.workoutActivityType.filterKey] ?? true }
         }
     #endif
 
-    /// Total calories from HealthKit workout samples (iOS only).
     var workoutKcal: Double {
         #if os(iOS)
             return filteredWorkouts.reduce(0) {
@@ -132,44 +125,42 @@ struct DailyDashboard: View {
         #endif
     }
 
-    /// Active energy to display — varies by energy source setting.
     var finalBurned: Double {
-        if energySource == "total" {
-            return caloriesBurned + basalEnergy
-        } else if combineSources {
-            return caloriesBurned + workoutKcal
-        } else {
-            return caloriesBurned
-        }
+        if energySource == "total"  { return caloriesBurned + basalEnergy }
+        if combineSources           { return caloriesBurned + workoutKcal }
+        return caloriesBurned
     }
 
-    // MARK: - Slot Grouping
+    // MARK: - Time-Proximity Grouping
 
-    private var groupedMeals: [SlotGroup] {
-        mealSlots.compactMap { slot in
-            let ms = meals.filter { $0.effectiveSlot == slot.id }
-            return ms.isEmpty ? nil : SlotGroup(slot: slot, meals: ms)
-        }
-    }
+    /// Groups meals so that consecutive meals within 20 minutes of each other
+    /// form a single group. The FetchRequest is sorted ascending, so meals
+    /// arrive in chronological order.
+    private var mealGroups: [MealGroup] {
+        var result: [MealGroup] = []
+        var batch:  [MealEntity] = []
 
-    /// Moves meals identified by UUID strings to the given slot and saves.
-    @discardableResult
-    private func assign(_ ids: [String], to slotID: String) -> Bool {
-        var changed = false
-        for idString in ids {
-            guard let uuid = UUID(uuidString: idString),
-                  let meal = meals.first(where: { $0.id == uuid }) else { continue }
-            meal.mealSlot = slotID
-            changed = true
+        for meal in meals {
+            guard let ts = meal.timestamp else { continue }
+            if batch.isEmpty {
+                batch = [meal]
+            } else if let lastTs = batch.last?.timestamp,
+                      ts.timeIntervalSince(lastTs) <= 20 * 60 {
+                batch.append(meal)
+            } else {
+                result.append(MealGroup(meals: batch))
+                batch = [meal]
+            }
         }
-        if changed { try? viewContext.save() }
-        return changed
+        if !batch.isEmpty { result.append(MealGroup(meals: batch)) }
+        return result
     }
 
     // MARK: - Body
 
     var body: some View {
         List {
+            // Summary card (calorie math + rings + workouts)
             Section {
                 VStack(spacing: 20) {
 
@@ -185,16 +176,10 @@ struct DailyDashboard: View {
                             VStack(spacing: 2) {
                                 HStack(spacing: 2) {
                                     Text("Burned")
-                                    if energySource == "total" {
-                                        Image(systemName: "bolt.fill")
-                                            .font(.caption2)
-                                    } else {
-                                        Image(
-                                            systemName: combineSources
-                                                ? "plus.circle.fill" : "flame.fill"
-                                        )
+                                    Image(systemName: energySource == "total"
+                                          ? "bolt.fill"
+                                          : (combineSources ? "plus.circle.fill" : "flame.fill"))
                                         .font(.caption2)
-                                    }
                                 }
                                 .font(.caption).bold().foregroundColor(.secondary)
 
@@ -209,14 +194,14 @@ struct DailyDashboard: View {
 
                         statColumn(
                             title: "Net", value: totalKcal - finalBurned,
-                            color: (totalKcal - finalBurned < 0 ? Theme.good : .primary))
+                            color: totalKcal - finalBurned < 0 ? Theme.good : .primary)
                     }
                     .padding(.bottom, 5)
 
                     // 2. RINGS
                     HStack(spacing: 15) {
-                        ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
-                        ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
+                        ProgressRing(label: "Fat",     value: totalF, min: fMin, max: fMax)
+                        ProgressRing(label: "Carbs",   value: totalC, min: cMin, max: cMax)
                         ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
                     }
                     .padding(.horizontal, 10)
@@ -229,21 +214,19 @@ struct DailyDashboard: View {
                             Divider()
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Workouts")
-                                    .font(.caption).bold().foregroundColor(.secondary).textCase(
-                                        .uppercase)
+                                    .font(.caption).bold().foregroundColor(.secondary)
+                                    .textCase(.uppercase)
 
                                 ForEach(filteredWorkouts, id: \.uuid) { workout in
                                     HStack {
                                         Image(systemName: workout.workoutActivityType.icon)
                                             .foregroundColor(.orange)
-                                        Text(workout.workoutActivityType.name).font(.subheadline)
-                                            .bold()
+                                        Text(workout.workoutActivityType.name)
+                                            .font(.subheadline).bold()
                                         Spacer()
                                         if let energy = workout.totalEnergyBurned {
-                                            Text(
-                                                "\(Int(energy.doubleValue(for: .kilocalorie()))) kcal"
-                                            )
-                                            .font(.subheadline).bold().monospacedDigit()
+                                            Text("\(Int(energy.doubleValue(for: .kilocalorie()))) kcal")
+                                                .font(.subheadline).bold().monospacedDigit()
                                         }
                                     }
                                 }
@@ -256,7 +239,7 @@ struct DailyDashboard: View {
             .listRowBackground(Theme.secondaryBackground)
             .listRowInsets(EdgeInsets())
 
-            // 4. MEALS — grouped by time slot
+            // 4. MEALS — grouped by time proximity
             if meals.isEmpty {
                 Section {
                     Text("No meals logged yet.")
@@ -264,13 +247,13 @@ struct DailyDashboard: View {
                         .listRowBackground(Color.clear)
                 }
             } else {
-                ForEach(groupedMeals) { group in
+                ForEach(mealGroups) { group in
                     Section {
                         ForEach(group.meals) { meal in
                             mealRow(meal)
                         }
                     } header: {
-                        slotHeader(group)
+                        groupHeader(group)
                     }
                 }
             }
@@ -280,9 +263,32 @@ struct DailyDashboard: View {
         .sheet(item: $mealToAddMore) { meal in
             AddMoreView(meal: meal)
         }
+        .sheet(item: $mealToRetime) { meal in
+            NavigationStack {
+                DatePicker("Time", selection: $retimeDate, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding()
+                    .navigationTitle("Change Time")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { mealToRetime = nil }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                updateTime(of: meal, to: retimeDate)
+                                mealToRetime = nil
+                            }
+                            .fontWeight(.semibold)
+                        }
+                    }
+            }
+            .presentationDetents([.height(280)])
+        }
         .task(id: date) {
             caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
-            basalEnergy = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
+            basalEnergy    = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
             #if os(iOS)
                 workouts = await HealthManager.shared.fetchWorkouts(for: date)
             #endif
@@ -292,7 +298,7 @@ struct DailyDashboard: View {
             if newPhase == .active {
                 Task {
                     caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
-                    basalEnergy = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
+                    basalEnergy    = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
                     #if os(iOS)
                         workouts = await HealthManager.shared.fetchWorkouts(for: date)
                     #endif
@@ -301,24 +307,18 @@ struct DailyDashboard: View {
         }
     }
 
-    // MARK: - Slot Header
+    // MARK: - Group Header
 
-    /// Section header for a meal slot — shows icon, name, total kcal, and acts as a drop target.
     @ViewBuilder
-    private func slotHeader(_ group: SlotGroup) -> some View {
+    private func groupHeader(_ group: MealGroup) -> some View {
         HStack {
-            Label(group.slot.name, systemImage: group.slot.icon)
+            Text(group.timeLabel)
                 .font(.caption).fontWeight(.semibold)
             Spacer()
             Text("\(Int(group.kcal)) kcal")
                 .font(.caption).monospacedDigit()
         }
         .foregroundStyle(.secondary)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .dropDestination(for: String.self) { ids, _ in
-            assign(ids, to: group.slot.id)
-        }
     }
 
     // MARK: - Meal Row
@@ -331,8 +331,8 @@ struct DailyDashboard: View {
                     Text(meal.summary ?? "Meal").font(.headline)
                     Text(
                         String(
-                            format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat),
-                            Int(meal.totalCarbs), Int(meal.totalProtein))
+                            format: "F:%3d  C:%3d  P:%3d",
+                            Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein))
                     )
                     .font(.caption).foregroundColor(.secondary).monospacedDigit()
                 }
@@ -343,12 +343,6 @@ struct DailyDashboard: View {
                 }
             }
         }
-        // Long-press to drag; tap navigates normally.
-        .draggable(meal.id?.uuidString ?? "")
-        // Drop onto an existing meal to join its slot.
-        .dropDestination(for: String.self) { ids, _ in
-            assign(ids, to: meal.effectiveSlot)
-        }
         .contextMenu {
             if meal.portion > 0 {
                 Button {
@@ -357,23 +351,12 @@ struct DailyDashboard: View {
                     Label("Add More", systemImage: "plus.circle")
                 }
             }
-
-            // Move to a different slot
-            Menu {
-                ForEach(mealSlots) { slot in
-                    Button {
-                        meal.mealSlot = slot.id
-                        try? viewContext.save()
-                    } label: {
-                        Label(slot.name, systemImage: slot.icon)
-                    }
-                }
+            Button {
+                retimeDate = meal.timestamp ?? Date()
+                mealToRetime = meal
             } label: {
-                Label("Move to Slot", systemImage: "arrow.up.arrow.down")
+                Label("Change Time", systemImage: "clock")
             }
-
-            Divider()
-
             Button(role: .destructive) {
                 withAnimation {
                     viewContext.delete(meal)
@@ -387,61 +370,67 @@ struct DailyDashboard: View {
 
     // MARK: - Helpers
 
-    /// Small vertical label + number used in the calorie math row.
+    /// Updates the time portion of a meal's timestamp while keeping its date unchanged.
+    private func updateTime(of meal: MealEntity, to newTime: Date) {
+        guard let existing = meal.timestamp else { return }
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: existing)
+        let time = calendar.dateComponents([.hour, .minute], from: newTime)
+        components.hour   = time.hour
+        components.minute = time.minute
+        meal.timestamp = calendar.date(from: components) ?? existing
+        try? viewContext.save()
+    }
+
     private func statColumn(title: String, value: Double, color: Color) -> some View {
         VStack(spacing: 2) {
             Text(title).font(.caption).bold().foregroundColor(.secondary)
             Text("\(Int(value))").font(.title3).bold().foregroundColor(color)
         }
     }
-
 }
 
-// MARK: - HKWorkoutActivityType Display Name
+// MARK: - HKWorkoutActivityType Helpers
 
 #if os(iOS)
     import HealthKit
     extension HKWorkoutActivityType {
-        /// UserDefaults key suffix used for per-type workout filtering.
         var filterKey: String {
             switch self {
-            case .running: return "run"
-            case .cycling: return "cycle"
-            case .walking: return "walk"
+            case .running:  return "run"
+            case .cycling:  return "cycle"
+            case .walking:  return "walk"
             case .traditionalStrengthTraining, .functionalStrengthTraining: return "strength"
             case .highIntensityIntervalTraining: return "hiit"
-            case .yoga: return "yoga"
+            case .yoga:     return "yoga"
             case .swimming: return "swim"
-            default: return "other"
+            default:        return "other"
             }
         }
 
-        /// SF Symbol name for each workout type.
         var icon: String {
             switch self {
-            case .running: return "figure.run.circle.fill"
-            case .cycling: return "figure.outdoor.cycle"
-            case .walking: return "figure.walk.circle.fill"
+            case .running:  return "figure.run.circle.fill"
+            case .cycling:  return "figure.outdoor.cycle"
+            case .walking:  return "figure.walk.circle.fill"
             case .traditionalStrengthTraining, .functionalStrengthTraining: return "dumbbell.fill"
             case .highIntensityIntervalTraining: return "bolt.heart.fill"
-            case .yoga: return "figure.yoga"
+            case .yoga:     return "figure.yoga"
             case .swimming: return "figure.pool.swim"
-            default: return "figure.run.circle.fill"
+            default:        return "figure.run.circle.fill"
             }
         }
 
-        /// Human-readable short name for common workout types.
         var name: String {
             switch self {
-            case .running: return "Run"
-            case .cycling: return "Cycle"
-            case .walking: return "Walk"
-            case .traditionalStrengthTraining: return "Strength"
-            case .functionalStrengthTraining: return "Strength"
+            case .running:  return "Run"
+            case .cycling:  return "Cycle"
+            case .walking:  return "Walk"
+            case .traditionalStrengthTraining, .functionalStrengthTraining: return "Strength"
             case .highIntensityIntervalTraining: return "HIIT"
-            case .yoga: return "Yoga"
+            case .yoga:     return "Yoga"
             case .swimming: return "Swim"
-            default: return "Workout"
+            default:        return "Workout"
             }
         }
     }
