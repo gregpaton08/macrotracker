@@ -215,19 +215,34 @@ class GeminiClient {
 
     // MARK: - Shared Helpers
 
-    /// Sends an encoded request body to the Gemini API and returns the raw response data.
+    /// Sends an encoded request body to the Gemini API (or proxy) and returns the raw response data.
     /// Handles 429 rate-limiting and other HTTP errors with descriptive messages.
     private func performRequest(url: URL, body: GeminiRequest) async throws -> Data {
-        logger.debug("performRequest called with url: \(url.absoluteString) body: \(String(describing: body))")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        
-        // // Send the verification headers
-        // request.addValue(appSecret, forHTTPHeaderField: "X-App-Secret")
-        // request.addValue(deviceId, forHTTPHeaderField: "X-Device-Id")
-        
+        let useProxy = UserDefaults.standard.bool(forKey: "use_aws_proxy")
+        let proxyURLString = UserDefaults.standard.string(forKey: "aws_proxy_url") ?? ""
+
+        var targetURL = url
+        var request: URLRequest
+
+        if useProxy, !proxyURLString.isEmpty, var components = URLComponents(string: proxyURLString) {
+            // Append the model as a query param so the proxy can forward to the right endpoint.
+            var queryItems = components.queryItems ?? []
+            queryItems.append(URLQueryItem(name: "model", value: model))
+            components.queryItems = queryItems
+            targetURL = components.url ?? url
+            request = URLRequest(url: targetURL)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.addValue(appSecret, forHTTPHeaderField: "X-App-Secret")
+            request.addValue(deviceId, forHTTPHeaderField: "X-Device-Id")
+        } else {
+            request = URLRequest(url: targetURL)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        }
+
+        logger.debug("performRequest → \(targetURL.absoluteString)")
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await session.data(for: request)
