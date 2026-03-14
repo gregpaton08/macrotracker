@@ -31,6 +31,25 @@ class GeminiClient {
         self.model = model
     }
 
+    private let proxyURL = "https://YOUR-AWS-URL.execute-api.us-east-1.amazonaws.com/default/macrotracker-gemini-proxy"
+    
+    // A hardcoded secret. It won't stop a dedicated hacker, but it stops casual internet bots from hitting your API.
+    private let appSecret = "mt_ios_super_secret_v1" 
+
+    // MARK: - Anonymous Identity
+    private var deviceId: String {
+        let key = "anonymous_device_id"
+        if let existingId = UserDefaults.standard.string(forKey: key) {
+            return existingId
+        } else {
+            let newId = UUID().uuidString
+            UserDefaults.standard.set(newId, forKey: key)
+            return newId
+        }
+    }
+
+
+
     // MARK: - One-Shot Analysis
 
     /// Sends a food description directly to Gemini and receives complete macro
@@ -40,6 +59,8 @@ class GeminiClient {
             "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
 
+        // validUnits
+        // \\\"\(validUnits.joined(separator: "\\\", \\\""))\\\"
         let promptText = """
             You are a nutritionist. Analyze this food log: "\(userText)".
 
@@ -48,7 +69,8 @@ class GeminiClient {
             3. If the input clearly states the total portion amount (e.g. "200g chicken", "1 cup oats"), \
             extract the numeric value and unit. Only populate portion fields when unambiguous — \
             if multiple foods are described or the amount is vague, leave them null.
-            4. Return ONLY valid JSON matching this schema:
+            4. Do not include the portion size in the summary.
+            5. Return ONLY valid JSON matching this schema:
             {
                 "summary": "Short readable summary of food",
                 "total_calories": number,
@@ -196,10 +218,16 @@ class GeminiClient {
     /// Sends an encoded request body to the Gemini API and returns the raw response data.
     /// Handles 429 rate-limiting and other HTTP errors with descriptive messages.
     private func performRequest(url: URL, body: GeminiRequest) async throws -> Data {
+        logger.debug("performRequest called with url: \(url.absoluteString) body: \(String(describing: body))")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        
+        // // Send the verification headers
+        // request.addValue(appSecret, forHTTPHeaderField: "X-App-Secret")
+        // request.addValue(deviceId, forHTTPHeaderField: "X-Device-Id")
+        
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await session.data(for: request)
@@ -216,12 +244,19 @@ class GeminiClient {
                     ])
             }
             if httpResponse.statusCode != 200 {
-                logger.error("HTTP \(httpResponse.statusCode)")
+                let responseBody = String(data: data, encoding: .utf8) ?? "Empty/Non-UTF8 Body"
+                
+                logger.error("""
+                    HTTP Error: \(httpResponse.statusCode)
+                    URL: \(httpResponse.url?.absoluteString ?? "Unknown URL")
+                    Body: \(responseBody)
+                    """)
+
                 if let decoded = try? JSONDecoder().decode(ApiResponse.self, from: data) {
-                    throw URLError(
-                        .badServerResponse, userInfo: [NSLocalizedDescriptionKey: decoded.message])
+                    throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: decoded.message])
                 }
-                throw URLError(.badServerResponse)
+                
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Server returned \(httpResponse.statusCode)"])
             }
         }
 
