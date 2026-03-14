@@ -9,18 +9,44 @@
 //    - Calorie math row (Eaten − Burned = Net)
 //    - Three macro progress rings (Fat / Carbs / Protein)
 //    - HealthKit workout breakdown (iOS only)
-//    - Scrollable meal list with context-menu deletion
+//    - Meal list grouped into time slots (Breakfast / Lunch / Dinner / Evening)
+//      with drag-and-drop between slots and a "Move to Slot" context menu
 //
 
 import Foundation
 import HealthKit
 import SwiftUI
 
+// MARK: - Slot Definitions
+
+private struct SlotInfo: Identifiable {
+    let id: String
+    let name: String
+    let icon: String
+}
+
+private let mealSlots: [SlotInfo] = [
+    SlotInfo(id: "breakfast", name: "Breakfast", icon: "sunrise.fill"),
+    SlotInfo(id: "lunch",     name: "Lunch",     icon: "sun.max.fill"),
+    SlotInfo(id: "dinner",    name: "Dinner",    icon: "sunset.fill"),
+    SlotInfo(id: "evening",   name: "Evening",   icon: "moon.fill"),
+]
+
+private struct SlotGroup: Identifiable {
+    let slot: SlotInfo
+    let meals: [MealEntity]
+    var id: String { slot.id }
+    var kcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
+}
+
+// MARK: - DailyDashboard
+
 struct DailyDashboard: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.scenePhase) private var scenePhase
 
     /// Meals for this specific day, fetched via a date-range predicate.
+    /// Sorted ascending so each slot's meals appear in chronological order.
     @FetchRequest var meals: FetchedResults<MealEntity>
 
     @State private var mealToAddMore: MealEntity?
@@ -68,7 +94,7 @@ struct DailyDashboard: View {
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
         _meals = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: false)],
+            sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: true)],
             predicate: NSPredicate(
                 format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate,
                 endOfDay as NSDate),
@@ -116,6 +142,31 @@ struct DailyDashboard: View {
             return caloriesBurned
         }
     }
+
+    // MARK: - Slot Grouping
+
+    private var groupedMeals: [SlotGroup] {
+        mealSlots.compactMap { slot in
+            let ms = meals.filter { $0.effectiveSlot == slot.id }
+            return ms.isEmpty ? nil : SlotGroup(slot: slot, meals: ms)
+        }
+    }
+
+    /// Moves meals identified by UUID strings to the given slot and saves.
+    @discardableResult
+    private func assign(_ ids: [String], to slotID: String) -> Bool {
+        var changed = false
+        for idString in ids {
+            guard let uuid = UUID(uuidString: idString),
+                  let meal = meals.first(where: { $0.id == uuid }) else { continue }
+            meal.mealSlot = slotID
+            changed = true
+        }
+        if changed { try? viewContext.save() }
+        return changed
+    }
+
+    // MARK: - Body
 
     var body: some View {
         List {
@@ -205,49 +256,21 @@ struct DailyDashboard: View {
             .listRowBackground(Theme.secondaryBackground)
             .listRowInsets(EdgeInsets())
 
-            // 4. MEALS
-            Section(header: Text("Meals")) {
-                if meals.isEmpty {
+            // 4. MEALS — grouped by time slot
+            if meals.isEmpty {
+                Section {
                     Text("No meals logged yet.")
                         .italic().foregroundColor(.secondary)
                         .listRowBackground(Color.clear)
-                } else {
-                    ForEach(meals) { meal in
-                        NavigationLink(destination: MealDetailView(meal: meal)) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(meal.summary ?? "Meal").font(.headline)
-                                    Text(
-                                        String(
-                                            format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat),
-                                            Int(meal.totalCarbs), Int(meal.totalProtein))
-                                    )
-                                    .font(.caption).foregroundColor(.secondary).monospacedDigit()
-                                }
-                                Spacer()
-                                VStack(alignment: .trailing) {
-                                    Text("\(Int(meal.totalCalories))").bold()
-                                    Text("kcal").font(.caption2).foregroundColor(.secondary)
-                                }
-                            }
+                }
+            } else {
+                ForEach(groupedMeals) { group in
+                    Section {
+                        ForEach(group.meals) { meal in
+                            mealRow(meal)
                         }
-                        .contextMenu {
-                            if meal.portion > 0 {
-                                Button {
-                                    mealToAddMore = meal
-                                } label: {
-                                    Label("Add More", systemImage: "plus.circle")
-                                }
-                            }
-                            Button(role: .destructive) {
-                                withAnimation {
-                                    viewContext.delete(meal)
-                                    try? viewContext.save()
-                                }
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
+                    } header: {
+                        slotHeader(group)
                     }
                 }
             }
@@ -277,6 +300,92 @@ struct DailyDashboard: View {
             }
         }
     }
+
+    // MARK: - Slot Header
+
+    /// Section header for a meal slot — shows icon, name, total kcal, and acts as a drop target.
+    @ViewBuilder
+    private func slotHeader(_ group: SlotGroup) -> some View {
+        HStack {
+            Label(group.slot.name, systemImage: group.slot.icon)
+                .font(.caption).fontWeight(.semibold)
+            Spacer()
+            Text("\(Int(group.kcal)) kcal")
+                .font(.caption).monospacedDigit()
+        }
+        .foregroundStyle(.secondary)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .dropDestination(for: String.self) { ids, _ in
+            assign(ids, to: group.slot.id)
+        }
+    }
+
+    // MARK: - Meal Row
+
+    @ViewBuilder
+    private func mealRow(_ meal: MealEntity) -> some View {
+        NavigationLink(destination: MealDetailView(meal: meal)) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(meal.summary ?? "Meal").font(.headline)
+                    Text(
+                        String(
+                            format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat),
+                            Int(meal.totalCarbs), Int(meal.totalProtein))
+                    )
+                    .font(.caption).foregroundColor(.secondary).monospacedDigit()
+                }
+                Spacer()
+                VStack(alignment: .trailing) {
+                    Text("\(Int(meal.totalCalories))").bold()
+                    Text("kcal").font(.caption2).foregroundColor(.secondary)
+                }
+            }
+        }
+        // Long-press to drag; tap navigates normally.
+        .draggable(meal.id?.uuidString ?? "")
+        // Drop onto an existing meal to join its slot.
+        .dropDestination(for: String.self) { ids, _ in
+            assign(ids, to: meal.effectiveSlot)
+        }
+        .contextMenu {
+            if meal.portion > 0 {
+                Button {
+                    mealToAddMore = meal
+                } label: {
+                    Label("Add More", systemImage: "plus.circle")
+                }
+            }
+
+            // Move to a different slot
+            Menu {
+                ForEach(mealSlots) { slot in
+                    Button {
+                        meal.mealSlot = slot.id
+                        try? viewContext.save()
+                    } label: {
+                        Label(slot.name, systemImage: slot.icon)
+                    }
+                }
+            } label: {
+                Label("Move to Slot", systemImage: "arrow.up.arrow.down")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                withAnimation {
+                    viewContext.delete(meal)
+                    try? viewContext.save()
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+
+    // MARK: - Helpers
 
     /// Small vertical label + number used in the calorie math row.
     private func statColumn(title: String, value: Double, color: Color) -> some View {

@@ -5,6 +5,7 @@
 - [ ] Add `PrivacyInfo.xcprivacy` manifest — required since April 2024; must declare HealthKit, network API usage (Gemini, Open Food Facts), and CloudKit
 - [ ] Create a public privacy policy and add the URL in App Store Connect — required for any app that collects health data or uses third-party APIs
 - [ ] Resolve API-key UX — Apple rejects apps that require users to supply their own API keys (guideline 4.2 Minimum Functionality). Options: ship a backend proxy, bundle a free tier, or accept the risk
+  - [ ] This is in progress. Proxy is up and running, just needs refinement.
 - [ ] Add a disclaimer: not a dietician, not medical advice, consult your physician, etc.
 
 ## High-impact polish
