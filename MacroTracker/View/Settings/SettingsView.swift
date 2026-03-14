@@ -129,14 +129,10 @@ struct SettingsView: View {
             ) {
                 Toggle("Use AWS Proxy Backend", isOn: $useAWSProxy)
                 
-                if useAWSProxy {
-                    TextField("AWS Proxy URL (e.g. .../analyze)", text: $awsProxyURL)
-                        .keyboardType(.URL)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                } else {
-                    SecureField("Google Gemini Key", text: $googleKey)
-                }
+                TextField("AWS Proxy URL (e.g. .../analyze)", text: $awsProxyURL)
+                    .keyboardType(.URL)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
             }
 
             Section(header: Text("Gemini API Key")) {

@@ -99,7 +99,7 @@ struct DescribeMealView: View {
                 )
 
             Button(action: send) {
-                Image(systemName: "arrow.up.fill")
+                Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(width: 32, height: 32)
