@@ -32,36 +32,35 @@ struct DescribeMealView: View {
 
     var body: some View {
         NavigationStack {
-            // MARK: - Message List
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 16) {
-                        ForEach(messages) { turn in
-                            userBubble(turn.userMessage)
-
-                            if let result = turn.result {
-                                aiResponseBubble(result)
-                            } else if viewModel.isLoading && turn.id == messages.last?.id {
-                                typingIndicator
+            VStack(spacing: 0) {
+                // MARK: - Message List
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 16) {
+                            ForEach(messages) { turn in
+                                userBubble(turn.userMessage)
+                                
+                                if let result = turn.result {
+                                    aiResponseBubble(result)
+                                } else if viewModel.isLoading && turn.id == messages.last?.id {
+                                    typingIndicator
+                                }
                             }
+                            Color.clear.frame(height: 1).id("bottom")
                         }
-                        Color.clear.frame(height: 1).id("bottom")
+                        .padding()
                     }
-                    .padding()
+                    .scrollDismissesKeyboard(.interactively)
+                    .onChange(of: messages.count) { _ in
+                        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                    }
+                    .onChange(of: viewModel.isLoading) { _ in
+                        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                    }
                 }
+                
                 // MARK: - Input Bar
-                // safeAreaInset pins the bar above the keyboard (including the QuickType row)
-                // without disabling SwiftUI's automatic keyboard avoidance.
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    inputBar
-                }
-                .scrollDismissesKeyboard(.interactively)
-                .onChange(of: messages.count) { _ in
-                    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-                }
-                .onChange(of: viewModel.isLoading) { _ in
-                    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-                }
+                inputBar
             }
             .navigationTitle("Describe Meal")
             .navigationBarTitleDisplayMode(.inline)
