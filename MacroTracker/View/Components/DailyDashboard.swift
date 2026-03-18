@@ -25,7 +25,10 @@ private struct MealGroup: Identifiable {
 
     var startTime: Date { meals.first?.timestamp ?? Date() }
     var endTime:   Date { meals.last?.timestamp  ?? Date() }
-    var kcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
+    var kcal:    Double { meals.reduce(0) { $0 + $1.totalCalories } }
+    var fat:     Double { meals.reduce(0) { $0 + $1.totalFat     } }
+    var carbs:   Double { meals.reduce(0) { $0 + $1.totalCarbs   } }
+    var protein: Double { meals.reduce(0) { $0 + $1.totalProtein } }
 
     /// "12:00 PM" for a single meal, "12:00 PM – 12:35 PM" for multiple.
     var timeLabel: String {
@@ -89,7 +92,7 @@ struct DailyDashboard: View {
         let endOfDay   = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
         _meals = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: true)],
+            sortDescriptors: [NSSortDescriptor(keyPath: \MealEntity.timestamp, ascending: false)],
             predicate: NSPredicate(
                 format: "timestamp >= %@ AND timestamp < %@",
                 startOfDay as NSDate, endOfDay as NSDate),
@@ -145,7 +148,7 @@ struct DailyDashboard: View {
             if batch.isEmpty {
                 batch = [meal]
             } else if let lastTs = batch.last?.timestamp,
-                      ts.timeIntervalSince(lastTs) <= 20 * 60 {
+                      abs(ts.timeIntervalSince(lastTs)) <= 20 * 60 {
                 batch.append(meal)
             } else {
                 result.append(MealGroup(meals: batch))
@@ -311,12 +314,17 @@ struct DailyDashboard: View {
 
     @ViewBuilder
     private func groupHeader(_ group: MealGroup) -> some View {
-        HStack {
-            Text(group.timeLabel)
-                .font(.caption).fontWeight(.semibold)
-            Spacer()
-            Text("\(Int(group.kcal)) kcal")
-                .font(.caption).monospacedDigit()
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(group.timeLabel)
+                    .font(.caption).fontWeight(.semibold)
+                Spacer()
+                Text("\(Int(group.kcal)) kcal")
+                    .font(.caption).monospacedDigit()
+            }
+            Text(String(format: "F:%d  C:%d  P:%d",
+                        Int(group.fat), Int(group.carbs), Int(group.protein)))
+                .font(.caption2).monospacedDigit()
         }
         .foregroundStyle(.secondary)
     }
