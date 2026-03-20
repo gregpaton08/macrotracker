@@ -82,8 +82,8 @@ struct TrackerView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .edgesIgnoringSafeArea(.bottom)
-            .background(Theme.background)
+            // Fix: Apply ignoresSafeArea strictly to the background so the List isn't blocked by the TabBar
+            .background(Theme.background.ignoresSafeArea())
 
             // MARK: - Layer 2: Floating Date Header
             VStack(spacing: 0) {
