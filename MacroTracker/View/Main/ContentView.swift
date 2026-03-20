@@ -14,16 +14,16 @@ struct ContentView: View {
     var body: some View {
         TabView {
             NavigationStack { TrackerView() }
-                .tabItem { Label("Tracker", systemImage: "fork.knife") }
+                .tabItem { Label("Tracker", systemImage: "fork.knife.circle.fill") }
 
             NavigationStack { InsightsView() }
-                .tabItem { Label("Calendar", systemImage: "calendar") }
+                .tabItem { Label("Calendar", systemImage: "calendar.circle.fill") }
 
             NavigationStack { TrendsView() }
-                .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
+                .tabItem { Label("Trends", systemImage: "chart.bar.fill") }
 
             NavigationStack { SettingsView() }
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
         .tint(Theme.tint)
     }

@@ -27,8 +27,8 @@ private struct MealGroup: Identifiable {
     var startTime: Date { meals.first?.timestamp ?? Date() }
     var endTime:   Date { meals.last?.timestamp  ?? Date() }
     var kcal:    Double { meals.reduce(0) { $0 + $1.totalCalories } }
-    var fat:     Double { meals.reduce(0) { $0 + $1.totalFat     } }
-    var carbs:   Double { meals.reduce(0) { $0 + $1.totalCarbs   } }
+    var fat:     Double { meals.reduce(0) { $0 + $1.totalFat      } }
+    var carbs:   Double { meals.reduce(0) { $0 + $1.totalCarbs    } }
     var protein: Double { meals.reduce(0) { $0 + $1.totalProtein } }
 
     /// "12:00 PM" for a single meal, "12:00 PM – 12:35 PM" for multiple.
@@ -144,9 +144,6 @@ struct DailyDashboard: View {
 
     // MARK: - Time-Proximity Grouping
 
-    /// Groups meals so that consecutive meals within 20 minutes of each other
-    /// form a single group. The FetchRequest is sorted ascending, so meals
-    /// arrive in chronological order.
     private var mealGroups: [MealGroup] {
         var result: [MealGroup] = []
         var batch:  [MealEntity] = []
@@ -195,7 +192,7 @@ struct DailyDashboard: View {
                                 .font(.caption).bold().foregroundColor(.secondary)
 
                                 Text("\(Int(finalBurned))")
-                                    .font(.title3).bold().foregroundColor(.orange)
+                                    .font(.system(.title3, design: .rounded)).bold().foregroundColor(.orange)
                                     .contentTransition(.numericText())
                             }
                         }
@@ -237,7 +234,7 @@ struct DailyDashboard: View {
                                         Spacer()
                                         if let energy = workout.totalEnergyBurned {
                                             Text("\(Int(energy.doubleValue(for: .kilocalorie()))) kcal")
-                                                .font(.subheadline).bold().monospacedDigit()
+                                                .font(.system(.subheadline, design: .rounded)).bold().monospacedDigit()
                                         }
                                     }
                                 }
@@ -374,11 +371,11 @@ struct DailyDashboard: View {
                     .font(.caption).fontWeight(.semibold)
                 Spacer()
                 Text("\(Int(group.kcal)) kcal")
-                    .font(.caption).monospacedDigit()
+                    .font(.system(.caption, design: .rounded)).monospacedDigit()
             }
             Text(String(format: "F:%d  C:%d  P:%d",
                         Int(group.fat), Int(group.carbs), Int(group.protein)))
-                .font(.caption2).monospacedDigit()
+                .font(.system(.caption2, design: .rounded)).monospacedDigit()
         }
         .foregroundStyle(.secondary)
     }
@@ -434,7 +431,7 @@ struct DailyDashboard: View {
                 switch meal.processingState {
                 case .completed:
                     Text(String(format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein)))
-                        .font(.caption).foregroundColor(.secondary).monospacedDigit()
+                        .font(.system(.caption, design: .rounded)).foregroundColor(.secondary).monospacedDigit()
                 case .pending:
                     Text("Analyzing with AI...").font(.caption).foregroundColor(.secondary)
                 case .failed:
@@ -447,7 +444,8 @@ struct DailyDashboard: View {
             switch meal.processingState {
             case .completed:
                 VStack(alignment: .trailing) {
-                    Text("\(Int(meal.totalCalories))").bold()
+                    Text("\(Int(meal.totalCalories))")
+                        .font(.system(.body, design: .rounded)).bold()
                     Text("kcal").font(.caption2).foregroundColor(.secondary)
                 }
             case .pending:
@@ -502,7 +500,7 @@ struct DailyDashboard: View {
     private func statColumn(title: String, value: Double, color: Color) -> some View {
         VStack(spacing: 2) {
             Text(title).font(.caption).bold().foregroundColor(.secondary)
-            Text("\(Int(value))").font(.title3).bold().foregroundColor(color)
+            Text("\(Int(value))").font(.system(.title3, design: .rounded)).bold().foregroundColor(color)
         }
     }
 }

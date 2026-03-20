@@ -112,9 +112,9 @@ struct ProgressRing: View {
                 // 4. CENTER CONTENT
                 VStack(spacing: 2) {
                     Text("\(Int(sanitize(value)))g")
-                        .font(.headline)
+                        .font(.system(.headline, design: .rounded))
                         .bold()
-                        .minimumScaleFactor(0.6)
+                        .minimumScaleFactor(0.5)
 
                     if state == .over {
                         // FIX: Show "Stop" + Amount Over
@@ -123,7 +123,7 @@ struct ProgressRing: View {
                             Text("+\(Int(sanitize(value) - sanitize(max)))")
                         }
                         .foregroundColor(.red)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
                         .minimumScaleFactor(0.8)
 
                     } else if state == .good {
@@ -133,7 +133,7 @@ struct ProgressRing: View {
                     } else {
                         // Range
                         Text("\(Int(sanitize(min)))-\(Int(sanitize(max)))")
-                            .font(.system(size: 9))
+                            .font(.system(size: 9, design: .rounded))
                             .foregroundColor(.secondary)
                             .minimumScaleFactor(0.8)
                     }
