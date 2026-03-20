@@ -16,6 +16,7 @@ struct InsightsView: View {
     // MARK: - Calendar State
 
     @State private var displayedMonth = Date()
+    @State private var monthOffset: Int = 0
     @State private var dailyTotals: [Date: DailyMacroTotal] = [:]
 
     /// Tapping a calendar day navigates to that date's TrackerView.
@@ -76,7 +77,10 @@ struct InsightsView: View {
 
         // Refresh Logic
         .onAppear { refreshAll() }
-        .onChange(of: displayedMonth) { refreshCalendar() }
+        .onChange(of: monthOffset) { newOffset in
+            displayedMonth = Calendar.current.date(byAdding: .month, value: newOffset, to: Date()) ?? Date()
+            refreshCalendar()
+        }
         .onChange(of: selectedRange) { refreshAverages() }
         .onChange(of: customStart) {
             if selectedRange == .custom { refreshAverages() }
@@ -96,7 +100,8 @@ struct InsightsView: View {
                     Image(systemName: "chevron.left").padding(.horizontal, 8)
                 }
                 Spacer()
-                Text(monthYearString(for: displayedMonth)).font(.headline)
+                Text(monthYearString(for: displayedMonth))
+                    .font(.system(.headline, design: .rounded))
                 Spacer()
                 Button {
                     changeMonth(by: 1)
@@ -106,22 +111,38 @@ struct InsightsView: View {
             }
             .padding(.horizontal)
 
-            MacroCalendarView(
-                month: displayedMonth,
-                dailyTotals: dailyTotals,
-                onSelectDate: { date in
-                    // Trigger Navigation
-                    self.selectedDateToNavigate = date
-                    self.isNavigating = true
-                },
-                pMin: pMin,
-                pMax: pMax,
-                cMin: cMin,
-                cMax: cMax,
-                fMin: fMin,
-                fMax: fMax
-            )
-            .padding(.horizontal, 8)
+            // Wrap the calendar in a TabView to enable native horizontal swiping
+            TabView(selection: $monthOffset) {
+                // Generate a generous scroll range (10 years back and forward)
+                ForEach(-120...120, id: \.self) { offset in
+                    let monthDate = Calendar.current.date(byAdding: .month, value: offset, to: Date()) ?? Date()
+                    
+                    VStack {
+                        MacroCalendarView(
+                            month: monthDate,
+                            // Only pass data to the active month so adjacent pages render instantly while swiping
+                            dailyTotals: offset == monthOffset ? dailyTotals : [:],
+                            onSelectDate: { date in
+                                self.selectedDateToNavigate = date
+                                self.isNavigating = true
+                            },
+                            pMin: pMin,
+                            pMax: pMax,
+                            cMin: cMin,
+                            cMax: cMax,
+                            fMin: fMin,
+                            fMax: fMax
+                        )
+                        // Pushes the calendar to the top so headers don't jump on 5-week vs 6-week months
+                        Spacer(minLength: 0) 
+                    }
+                    .tag(offset)
+                    .padding(.horizontal, 8)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            // Fixed height ensures the ScrollView doesn't break. 340 safely fits 6 rows + headers.
+            .frame(height: 340)
         }
     }
 
@@ -250,12 +271,7 @@ struct InsightsView: View {
     /// Advances or reverses the displayed calendar month.
     private func changeMonth(by value: Int) {
         withAnimation {
-            displayedMonth =
-                Calendar.current.date(
-                    byAdding: .month,
-                    value: value,
-                    to: displayedMonth
-                ) ?? displayedMonth
+            monthOffset += value
         }
     }
 

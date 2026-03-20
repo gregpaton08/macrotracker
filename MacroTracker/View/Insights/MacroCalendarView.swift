@@ -36,7 +36,7 @@ struct MacroCalendarView: View {
             LazyVGrid(columns: columns, spacing: 4) {
                 ForEach(weekdaySymbols, id: \.self) { symbol in
                     Text(symbol)
-                        .font(.caption2)
+                        .font(.system(.caption2, design: .rounded))
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
@@ -73,7 +73,7 @@ struct MacroCalendarView: View {
 
         return VStack(spacing: 3) {
             Text("\(calendar.component(.day, from: cell.date))")
-                .font(.system(size: 14, weight: isToday ? .bold : .regular))
+                .font(.system(size: 14, weight: isToday ? .bold : .regular, design: .rounded))
                 .foregroundColor(
                     isToday
                         ? .blue
