@@ -27,7 +27,7 @@
 
 ## Feature ideas
 
-- [ ] Add option to choose Gemini model from available (hit the API for a list)
+- [ ] Add option to choose Gemini model from available (hit the API for a list and filter for relevant generative models)
 - [ ] Sort meals by macros, e.g. user can see meals high in fat
 - [ ] Option to have Gemini analyze my diet for the past week, or arbitrary time range — actionable insights
 - [ ] Show trends, like in Apple Health, e.g. "you've been eating 12g less fat per week over the past week compared to..."

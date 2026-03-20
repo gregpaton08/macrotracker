@@ -24,7 +24,7 @@ extension MealEntity {
         get { AIProcessingState(rawValue: aiStatus ?? "completed") ?? .completed }
         set { aiStatus = newValue.rawValue }
     }
-    
+
     /// Calories computed from macros using Atwater factors: P*4 + C*4 + F*9.
     var totalCalories: Double {
         (totalProtein * 4) + (totalCarbs * 4) + (totalFat * 9)

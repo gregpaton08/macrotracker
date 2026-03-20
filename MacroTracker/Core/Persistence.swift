@@ -40,7 +40,7 @@ class PersistenceController {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
-        container.loadPersistentStores { [self] (storeDescription, error) in
+        container.loadPersistentStores { [self] (_, error) in
             if let error = error as NSError? {
                 logger.error("CoreData failed to load: \(error), \(error.userInfo)")
                 self.loadError = error

@@ -106,8 +106,7 @@ class OpenFoodFactsClient {
 
         let (sq, squ, f, c, p) =
             if nuts.fat_serving != nil, nuts.carbohydrates_serving != nil,
-                nuts.proteins_serving != nil
-            {
+                nuts.proteins_serving != nil {
                 (
                     sq: product.serving_quantity ?? 0,
                     squ: product.serving_quantity_unit ?? "", f: nuts.fat_serving!,

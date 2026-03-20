@@ -99,8 +99,7 @@ struct InfinitePageView<Content: View>: UIViewControllerRepresentable {
         ) {
             if completed,
                 let visibleVC = pageViewController.viewControllers?.first
-                    as? IndexedHostingController
-            {
+                    as? IndexedHostingController {
                 // IMPORTANT: Tell SwiftUI that the user swiped to a new index
                 // We do this async to avoid modifying state during view update
                 DispatchQueue.main.async {

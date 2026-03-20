@@ -42,8 +42,7 @@ class MacroViewModel: ObservableObject {
     // MARK: - AI Macro Analysis
 
     /// Sends a food description to Gemini and returns estimated macros in one round-trip.
-    func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)?
-    {
+    func calculateMacros(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {
         setupClient()
 
         guard let gemini = geminiClient else {
@@ -224,25 +223,25 @@ class MacroViewModel: ObservableObject {
         newMeal.portion = Double(portion) ?? 0
         newMeal.portionUnit = unit
         newMeal.processingState = .pending // Flag it as loading
-        
+
         try? context.save()
-        
+
         let objectID = newMeal.objectID // Thread-safe reference for the background task
         let query = portion.isEmpty ? description : "\(portion) \(unit) \(description)"
-        
+
         Task {
             let result = await self.fetchMacrosQuietly(description: query)
-            
+
             await MainActor.run {
                 // Re-fetch the object on the main thread
                 guard let savedMeal = try? self.context.existingObject(with: objectID) as? MealEntity else { return }
-                
+
                 if let res = result {
                     savedMeal.totalProtein = res.p
                     savedMeal.totalCarbs = res.c
                     savedMeal.totalFat = res.f
                     savedMeal.processingState = .completed
-                    
+
                     MealCacheManager.shared.cacheMeal(
                         name: description, p: res.p, f: res.f, c: res.c,
                         portion: portion, unit: unit
@@ -260,12 +259,12 @@ class MacroViewModel: ObservableObject {
         guard let summary = meal.summary else { return }
         meal.processingState = .pending
         try? context.save()
-        
+
         let portion = meal.portion > 0 ? String(meal.portion) : ""
         let unit = meal.portionUnit ?? ""
         let query = portion.isEmpty ? summary : "\(portion) \(unit) \(summary)"
         let objectID = meal.objectID
-        
+
         Task {
             let result = await self.fetchMacrosQuietly(description: query)
             await MainActor.run {

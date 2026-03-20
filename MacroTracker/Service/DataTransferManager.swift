@@ -128,7 +128,7 @@ class DataTransferManager: ObservableObject {
     func importJSON(from url: URL) async throws -> Int {
         // 1. Read & Decode
         // (Security scoped resource access is handled by the View modifier usually, but good practice to check)
-        let _ = url.startAccessingSecurityScopedResource()
+        _ = url.startAccessingSecurityScopedResource()
         defer { url.stopAccessingSecurityScopedResource() }
 
         let data = try Data(contentsOf: url)

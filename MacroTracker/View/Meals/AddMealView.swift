@@ -56,7 +56,7 @@ struct AddMealView: View {
     private let logger = Logger(subsystem: "com.macrotracker", category: "BarcodeScanner")
 
     /// The cached template currently driving portion-based macro scaling (if any).
-    @State private var activeCachedMeal: CachedMealEntity? = nil
+    @State private var activeCachedMeal: CachedMealEntity?
 
     // MARK: - Focus
 
@@ -180,8 +180,7 @@ struct AddMealView: View {
                             }
                         }
                         .disabled(!geminiKeyConfigured || viewModel.isLoading)
-                        .confirmationDialog("Choose Scan Type", isPresented: $showImageSourcePicker)
-                        {
+                        .confirmationDialog("Choose Scan Type", isPresented: $showImageSourcePicker) {
                             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                                 Button("Nutrition Label — Take Photo") {
                                     scanMode = .label

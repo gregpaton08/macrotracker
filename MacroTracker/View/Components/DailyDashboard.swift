@@ -25,10 +25,10 @@ private struct MealGroup: Identifiable {
     let meals: [MealEntity]
 
     var startTime: Date { meals.first?.timestamp ?? Date() }
-    var endTime:   Date { meals.last?.timestamp  ?? Date() }
-    var kcal:    Double { meals.reduce(0) { $0 + $1.totalCalories } }
-    var fat:     Double { meals.reduce(0) { $0 + $1.totalFat      } }
-    var carbs:   Double { meals.reduce(0) { $0 + $1.totalCarbs    } }
+    var endTime: Date { meals.last?.timestamp  ?? Date() }
+    var kcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
+    var fat: Double { meals.reduce(0) { $0 + $1.totalFat      } }
+    var carbs: Double { meals.reduce(0) { $0 + $1.totalCarbs    } }
     var protein: Double { meals.reduce(0) { $0 + $1.totalProtein } }
 
     /// "12:00 PM" for a single meal, "12:00 PM – 12:35 PM" for multiple.
@@ -72,14 +72,14 @@ struct DailyDashboard: View {
 
     // MARK: - Workout Type Filters
 
-    @AppStorage("workout_filter_run")      var filterRun:      Bool = true
-    @AppStorage("workout_filter_cycle")    var filterCycle:    Bool = true
-    @AppStorage("workout_filter_walk")     var filterWalk:     Bool = true
+    @AppStorage("workout_filter_run")      var filterRun: Bool = true
+    @AppStorage("workout_filter_cycle")    var filterCycle: Bool = true
+    @AppStorage("workout_filter_walk")     var filterWalk: Bool = true
     @AppStorage("workout_filter_strength") var filterStrength: Bool = true
-    @AppStorage("workout_filter_hiit")     var filterHIIT:     Bool = true
-    @AppStorage("workout_filter_yoga")     var filterYoga:     Bool = true
-    @AppStorage("workout_filter_swim")     var filterSwim:     Bool = true
-    @AppStorage("workout_filter_other")    var filterOther:    Bool = true
+    @AppStorage("workout_filter_hiit")     var filterHIIT: Bool = true
+    @AppStorage("workout_filter_yoga")     var filterYoga: Bool = true
+    @AppStorage("workout_filter_swim")     var filterSwim: Bool = true
+    @AppStorage("workout_filter_other")    var filterOther: Bool = true
 
     // MARK: - Goal Ranges
 
@@ -110,9 +110,9 @@ struct DailyDashboard: View {
 
     // MARK: - Computed Totals
 
-    var totalP:    Double { meals.reduce(0) { $0 + $1.totalProtein } }
-    var totalC:    Double { meals.reduce(0) { $0 + $1.totalCarbs   } }
-    var totalF:    Double { meals.reduce(0) { $0 + $1.totalFat     } }
+    var totalP: Double { meals.reduce(0) { $0 + $1.totalProtein } }
+    var totalC: Double { meals.reduce(0) { $0 + $1.totalCarbs   } }
+    var totalF: Double { meals.reduce(0) { $0 + $1.totalFat     } }
     var totalKcal: Double { meals.reduce(0) { $0 + $1.totalCalories } }
 
     #if os(iOS)
@@ -120,7 +120,7 @@ struct DailyDashboard: View {
             let enabled: [String: Bool] = [
                 "run": filterRun, "cycle": filterCycle, "walk": filterWalk,
                 "strength": filterStrength, "hiit": filterHIIT,
-                "yoga": filterYoga, "swim": filterSwim, "other": filterOther,
+                "yoga": filterYoga, "swim": filterSwim, "other": filterOther
             ]
             return workouts.filter { enabled[$0.workoutActivityType.filterKey] ?? true }
         }
@@ -137,8 +137,8 @@ struct DailyDashboard: View {
     }
 
     var finalBurned: Double {
-        if energySource == "total"  { return caloriesBurned + basalEnergy }
-        if combineSources           { return caloriesBurned + workoutKcal }
+        if energySource == "total" { return caloriesBurned + basalEnergy }
+        if combineSources { return caloriesBurned + workoutKcal }
         return caloriesBurned
     }
 
@@ -146,7 +146,7 @@ struct DailyDashboard: View {
 
     private var mealGroups: [MealGroup] {
         var result: [MealGroup] = []
-        var batch:  [MealEntity] = []
+        var batch: [MealEntity] = []
 
         for meal in meals {
             guard let ts = meal.timestamp else { continue }
@@ -208,8 +208,8 @@ struct DailyDashboard: View {
 
                     // 2. RINGS
                     HStack(spacing: 15) {
-                        ProgressRing(label: "Fat",     value: totalF, min: fMin, max: fMax)
-                        ProgressRing(label: "Carbs",   value: totalC, min: cMin, max: cMax)
+                        ProgressRing(label: "Fat", value: totalF, min: fMin, max: fMax)
+                        ProgressRing(label: "Carbs", value: totalC, min: cMin, max: cMax)
                         ProgressRing(label: "Protein", value: totalP, min: pMin, max: pMax)
                     }
                     .padding(.horizontal, 10)
@@ -217,8 +217,7 @@ struct DailyDashboard: View {
                     // 3. WORKOUTS (iOS only)
                     #if os(iOS)
                         if !filteredWorkouts.isEmpty
-                            && (energySource != "total" || showWorkoutsInTotalMode)
-                        {
+                            && (energySource != "total" || showWorkoutsInTotalMode) {
                             Divider()
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Workouts")
@@ -427,7 +426,7 @@ struct DailyDashboard: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(meal.summary ?? "Meal").font(.headline)
-                
+
                 switch meal.processingState {
                 case .completed:
                     Text(String(format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein)))
@@ -438,9 +437,9 @@ struct DailyDashboard: View {
                     Text("Analysis failed. Tap to retry.").font(.caption).foregroundColor(Theme.over)
                 }
             }
-            
+
             Spacer()
-            
+
             switch meal.processingState {
             case .completed:
                 VStack(alignment: .trailing) {

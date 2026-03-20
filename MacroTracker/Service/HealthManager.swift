@@ -76,7 +76,7 @@ class HealthManager: ObservableObject {
                 let query = HKStatisticsQuery(
                     quantityType: calorieType, quantitySamplePredicate: predicate,
                     options: .cumulativeSum
-                ) { _, result, error in
+                ) { _, result, _ in
                     guard let result = result, let sum = result.sumQuantity() else {
                         continuation.resume(returning: 0.0)
                         return
@@ -107,7 +107,7 @@ class HealthManager: ObservableObject {
                 let query = HKStatisticsQuery(
                     quantityType: basalType, quantitySamplePredicate: predicate,
                     options: .cumulativeSum
-                ) { _, result, error in
+                ) { _, result, _ in
                     guard let result = result, let sum = result.sumQuantity() else {
                         continuation.resume(returning: 0.0)
                         return
@@ -143,7 +143,7 @@ class HealthManager: ObservableObject {
                 let query = HKSampleQuery(
                     sampleType: .workoutType(), predicate: predicate, limit: HKObjectQueryNoLimit,
                     sortDescriptors: [sortDescriptor]
-                ) { _, samples, error in
+                ) { _, samples, _ in
 
                     guard let workouts = samples as? [HKWorkout] else {
                         continuation.resume(returning: [])

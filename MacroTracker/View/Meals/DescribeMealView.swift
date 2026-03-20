@@ -36,7 +36,7 @@ struct DescribeMealView: View {
     let onApply: (_ fat: Double, _ carbs: Double, _ protein: Double, _ summary: String, _ portionSize: String?, _ portionUnit: String?) -> Void
 
     /// If set, shows an "Add Meal" button that saves directly and closes everything.
-    var onSave: ((_ result: AIAnalysisResult) -> Void)? = nil
+    var onSave: ((_ result: AIAnalysisResult) -> Void)?
 
     @State private var messages: [ChatTurn] = []
     @State private var inputText = ""

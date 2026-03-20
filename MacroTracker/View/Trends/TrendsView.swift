@@ -11,7 +11,7 @@ import SwiftUI
 
 enum TrendDirection {
     case up, down, flat
-    
+
     var icon: String {
         switch self {
         case .up: return "arrow.up.right"
@@ -23,7 +23,7 @@ enum TrendDirection {
 
 enum TrendType {
     case good, bad, neutral
-    
+
     var color: Color {
         switch self {
         case .good: return Theme.good
@@ -38,11 +38,11 @@ struct TrendItem: Identifiable {
     let title: String
     let icon: String
     let iconColor: Color
-    
+
     let currentAvg: Double
     let previousAvg: Double
     let unit: String
-    
+
     let direction: TrendDirection
     let type: TrendType
     let message: String
@@ -52,14 +52,14 @@ struct TrendItem: Identifiable {
 
 struct TrendsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+
     // Read the user's energy settings so the math matches the DailyDashboard
     @AppStorage("energy_source") var energySource: String = "active"
     @AppStorage("combine_workouts_and_steps") var combineSources: Bool = false
-    
+
     @State private var isLoading = true
     @State private var trends: [TrendItem] = []
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -76,7 +76,7 @@ struct TrendsView: View {
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal)
-                    
+
                     ForEach(trends) { trend in
                         TrendCard(trend: trend)
                     }
@@ -90,38 +90,38 @@ struct TrendsView: View {
             await calculateTrends()
         }
     }
-    
+
     // MARK: - Trend Engine Math
-    
+
     /// Pulls 14 days of data, splits it into two 7-day chunks, and generates the UI cards.
     private func calculateTrends() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        
+
         // Define our windows:
         // Current: Last 7 days (Days -6 to 0)
         // Previous: Prior 7 days (Days -13 to -7)
         let windowEnd = calendar.date(byAdding: .day, value: 1, to: today)!
         let windowMid = calendar.date(byAdding: .day, value: -6, to: today)!
         let windowStart = calendar.date(byAdding: .day, value: -13, to: today)!
-        
+
         // 1. Fetch Core Data Meals
         let currentMeals = MacroStatsService.dailyTotals(from: windowMid, to: windowEnd, context: viewContext)
         let previousMeals = MacroStatsService.dailyTotals(from: windowStart, to: windowMid, context: viewContext)
-        
+
         // 2. Fetch HealthKit Burned Calories
         var currentBurned = [Double]()
         var previousBurned = [Double]()
-        
+
         for i in 0..<14 {
             let targetDate = calendar.date(byAdding: .day, value: -i, to: today)!
             let active = await HealthManager.shared.fetchCaloriesBurned(for: targetDate)
-            
+
             var totalForDay = active
-            
+
             // Replicate the math logic from DailyDashboard based on user settings
             if energySource == "total" {
                 let basal = await HealthManager.shared.fetchBasalEnergyBurned(for: targetDate)
@@ -133,36 +133,36 @@ struct TrendsView: View {
                 totalForDay += workoutKcal
                 #endif
             }
-            
+
             if i < 7 {
                 currentBurned.append(totalForDay)
             } else {
                 previousBurned.append(totalForDay)
             }
         }
-        
+
         // 3. Aggregate Averages (/ 7 days)
         let curEaten = currentMeals.values.reduce(0) { $0 + $1.calories } / 7.0
         let prevEaten = previousMeals.values.reduce(0) { $0 + $1.calories } / 7.0
-        
+
         let curBurned = currentBurned.reduce(0, +) / 7.0
         let prevBurned = previousBurned.reduce(0, +) / 7.0
-        
+
         let curNet = curEaten - curBurned
         let prevNet = prevEaten - prevBurned
-        
+
         let curP = currentMeals.values.reduce(0) { $0 + $1.protein } / 7.0
         let prevP = previousMeals.values.reduce(0) { $0 + $1.protein } / 7.0
-        
+
         let curC = currentMeals.values.reduce(0) { $0 + $1.carbs } / 7.0
         let prevC = previousMeals.values.reduce(0) { $0 + $1.carbs } / 7.0
-        
+
         let curF = currentMeals.values.reduce(0) { $0 + $1.fat } / 7.0
         let prevF = previousMeals.values.reduce(0) { $0 + $1.fat } / 7.0
-        
+
         // 4. Build Cards
         var newTrends: [TrendItem] = []
-        
+
         // Active Energy
         newTrends.append(buildCard(
             title: "Active Energy", icon: "flame.fill", iconColor: .orange,
@@ -171,7 +171,7 @@ struct TrendsView: View {
             msgUp: "You're burning more energy a day on average.",
             msgDown: "You're burning less energy a day on average."
         ))
-        
+
         // Net Calories
         newTrends.append(buildCard(
             title: "Net Calories", icon: "bolt.fill", iconColor: .yellow,
@@ -180,7 +180,7 @@ struct TrendsView: View {
             msgUp: "Your net energy intake is trending higher.",
             msgDown: "Your net energy intake is trending lower."
         ))
-        
+
         // Protein
         newTrends.append(buildCard(
             title: "Protein", icon: "fish.fill", iconColor: Theme.good,
@@ -189,7 +189,7 @@ struct TrendsView: View {
             msgUp: "You're eating more protein a day on average.",
             msgDown: "You're eating less protein a day on average."
         ))
-        
+
         // Carbs
         newTrends.append(buildCard(
             title: "Carbs", icon: "leaf.fill", iconColor: Theme.tint,
@@ -198,7 +198,7 @@ struct TrendsView: View {
             msgUp: "Your carbohydrate intake is trending up.",
             msgDown: "Your carbohydrate intake is trending down."
         ))
-        
+
         // Fat
         newTrends.append(buildCard(
             title: "Fat", icon: "drop.fill", iconColor: Theme.over,
@@ -207,25 +207,23 @@ struct TrendsView: View {
             msgUp: "Your fat intake is trending up.",
             msgDown: "Your fat intake is trending down."
         ))
-        
+
         await MainActor.run {
             withAnimation {
                 self.trends = newTrends
             }
         }
     }
-    
+
     /// Helper to evaluate the math and generate the formatted TrendItem
     private func buildCard(title: String, icon: String, iconColor: Color, cur: Double, prev: Double, unit: String, higherIsBetter: Bool?, msgUp: String, msgDown: String) -> TrendItem {
-        
+
         let diff = cur - prev
         let threshold = 2.0 // Ignore tiny fluctuations
-        
+
         let direction: TrendDirection
-        if diff > threshold { direction = .up }
-        else if diff < -threshold { direction = .down }
-        else { direction = .flat }
-        
+        if diff > threshold { direction = .up } else if diff < -threshold { direction = .down } else { direction = .flat }
+
         let type: TrendType
         if direction == .flat {
             type = .neutral
@@ -238,12 +236,10 @@ struct TrendsView: View {
         } else {
             type = .neutral // Neutral metrics (like carbs) just get default coloring
         }
-        
+
         let message: String
-        if direction == .up { message = msgUp }
-        else if direction == .down { message = msgDown }
-        else { message = "Your average has remained consistent." }
-        
+        if direction == .up { message = msgUp } else if direction == .down { message = msgDown } else { message = "Your average has remained consistent." }
+
         return TrendItem(title: title, icon: icon, iconColor: iconColor, currentAvg: cur, previousAvg: prev, unit: unit, direction: direction, type: type, message: message)
     }
 }
@@ -252,7 +248,7 @@ struct TrendsView: View {
 
 struct TrendCard: View {
     let trend: TrendItem
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
@@ -265,14 +261,14 @@ struct TrendCard: View {
                     .fontWeight(.semibold)
                     .foregroundColor(trend.iconColor)
             }
-            
+
             // Insight Message
             Text(trend.message)
                 .font(.body)
                 .foregroundColor(.primary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             // Metrics & Arrow
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -290,17 +286,17 @@ struct TrendCard: View {
                         .foregroundColor(.secondary)
                         .textCase(.uppercase)
                 }
-                
+
                 Spacer()
-                
+
                 // Big Trend Arrow
                 Image(systemName: trend.direction.icon)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(trend.type.color)
                     .padding(.horizontal, 16)
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(Int(trend.previousAvg))")

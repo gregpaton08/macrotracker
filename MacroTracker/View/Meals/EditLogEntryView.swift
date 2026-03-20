@@ -259,7 +259,7 @@ struct EditLogEntryView: View {
         }
 
         // Offer to sync the saved meal template if values changed and one exists.
-        if (macrosChanged || portionAddedFromZero),
+        if macrosChanged || portionAddedFromZero,
            MealCacheManager.shared.find(named: summary) != nil {
             pendingCacheP       = newP
             pendingCacheF       = newF

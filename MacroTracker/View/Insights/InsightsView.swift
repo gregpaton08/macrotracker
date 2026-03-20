@@ -116,7 +116,7 @@ struct InsightsView: View {
                 // Generate a generous scroll range (10 years back and forward)
                 ForEach(-120...120, id: \.self) { offset in
                     let monthDate = Calendar.current.date(byAdding: .month, value: offset, to: Date()) ?? Date()
-                    
+
                     VStack {
                         MacroCalendarView(
                             month: monthDate,
@@ -134,7 +134,7 @@ struct InsightsView: View {
                             fMax: fMax
                         )
                         // Pushes the calendar to the top so headers don't jump on 5-week vs 6-week months
-                        Spacer(minLength: 0) 
+                        Spacer(minLength: 0)
                     }
                     .tag(offset)
                     .padding(.horizontal, 8)

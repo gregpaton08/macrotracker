@@ -13,7 +13,7 @@ import SwiftUI
 
 struct SettingsView: View {
     // MARK: - Persisted Settings
-    
+
     // AI Configuration
     @AppStorage("use_aws_proxy") var useAWSProxy: Bool = false
     @AppStorage("aws_proxy_url") var awsProxyURL: String = ""
@@ -26,7 +26,7 @@ struct SettingsView: View {
         ("gemini-2.0-flash", "Gemini 2.0 Flash"),
         ("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite"),
         ("gemini-1.5-pro", "Gemini 1.5 Pro"),
-        ("gemini-1.5-flash", "Gemini 1.5 Flash"),
+        ("gemini-1.5-flash", "Gemini 1.5 Flash")
     ]
     @AppStorage("goal_f_min") var fMin: Double = 60
     @AppStorage("goal_f_max") var fMax: Double = 80
@@ -99,7 +99,7 @@ struct SettingsView: View {
                 Toggle("Swim", isOn: $filterSwim)
                 Toggle("Other", isOn: $filterOther)
             }
-            
+
             // Goals Sections
             Section(header: Text("Fat Goals (g)")) {
                 HStack {
@@ -122,13 +122,13 @@ struct SettingsView: View {
                     TextField("Max", value: $pMax, format: .number)
                 }
             }
-            
+
             Section(
                 header: Text("AI Configuration"),
                 footer: Text("Toggle off to use your local API key. Toggle on to route through your secure backend proxy.")
             ) {
                 Toggle("Use AWS Proxy Backend", isOn: $useAWSProxy)
-                
+
                 TextField("AWS Proxy URL (e.g. .../analyze)", text: $awsProxyURL)
                     .keyboardType(.URL)
                     .autocapitalization(.none)

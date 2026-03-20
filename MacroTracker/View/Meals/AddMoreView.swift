@@ -48,8 +48,8 @@ struct AddMoreView: View {
         guard originalPortion > 0 else { return 1 }
         return totalValue / originalPortion
     }
-    private var newFat: Double     { originalFat     * scale }
-    private var newCarbs: Double   { originalCarbs   * scale }
+    private var newFat: Double { originalFat     * scale }
+    private var newCarbs: Double { originalCarbs   * scale }
     private var newProtein: Double { originalProtein * scale }
     private var newCalories: Double {
         caloriesFromMacros(fat: newFat, carbohydrates: newCarbs, protein: newProtein)
@@ -123,9 +123,9 @@ struct AddMoreView: View {
                     }
                     HStack(spacing: 0) {
                         Spacer()
-                        macroCol("Fat",     value: newFat)
+                        macroCol("Fat", value: newFat)
                         Spacer()
-                        macroCol("Carbs",   value: newCarbs)
+                        macroCol("Carbs", value: newCarbs)
                         Spacer()
                         macroCol("Protein", value: newProtein)
                         Spacer()

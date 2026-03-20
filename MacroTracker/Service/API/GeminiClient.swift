@@ -32,9 +32,9 @@ class GeminiClient {
     }
 
     private let proxyURL = "https://YOUR-AWS-URL.execute-api.us-east-1.amazonaws.com/default/macrotracker-gemini-proxy"
-    
+
     // A hardcoded secret. It won't stop a dedicated hacker, but it stops casual internet bots from hitting your API.
-    private let appSecret = "mt_ios_super_secret_v1" 
+    private let appSecret = "mt_ios_super_secret_v1"
 
     // MARK: - Anonymous Identity
     private var deviceId: String {
@@ -47,8 +47,6 @@ class GeminiClient {
             return newId
         }
     }
-
-
 
     // MARK: - One-Shot Analysis
 
@@ -134,7 +132,7 @@ class GeminiClient {
             contents: [
                 .init(parts: [
                     .init(text: prompt, inlineData: nil),
-                    .init(text: nil, inlineData: .init(mimeType: "image/jpeg", data: base64String)),
+                    .init(text: nil, inlineData: .init(mimeType: "image/jpeg", data: base64String))
                 ])
             ],
             generationConfig: .init(response_mime_type: "application/json")
@@ -194,7 +192,7 @@ class GeminiClient {
             contents: [
                 .init(parts: [
                     .init(text: prompt, inlineData: nil),
-                    .init(text: nil, inlineData: .init(mimeType: "image/jpeg", data: base64String)),
+                    .init(text: nil, inlineData: .init(mimeType: "image/jpeg", data: base64String))
                 ])
             ],
             generationConfig: .init(response_mime_type: "application/json")
@@ -260,7 +258,7 @@ class GeminiClient {
             }
             if httpResponse.statusCode != 200 {
                 let responseBody = String(data: data, encoding: .utf8) ?? "Empty/Non-UTF8 Body"
-                
+
                 logger.error("""
                     HTTP Error: \(httpResponse.statusCode)
                     URL: \(httpResponse.url?.absoluteString ?? "Unknown URL")
@@ -270,7 +268,7 @@ class GeminiClient {
                 if let decoded = try? JSONDecoder().decode(ApiResponse.self, from: data) {
                     throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: decoded.message])
                 }
-                
+
                 throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Server returned \(httpResponse.statusCode)"])
             }
         }
