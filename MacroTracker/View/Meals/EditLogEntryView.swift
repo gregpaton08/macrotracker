@@ -21,6 +21,12 @@ struct EditLogEntryView: View {
     // MARK: - Form State
 
     @State private var showSaveError = false
+    @State private var showUpdateCachePrompt = false
+    @State private var pendingCacheP: Double = 0
+    @State private var pendingCacheF: Double = 0
+    @State private var pendingCacheC: Double = 0
+    @State private var pendingCachePortion: String = ""
+    @State private var pendingCacheUnit: String = ""
     @State private var summary: String = ""
     @State private var timestamp: Date = Date()
     @State private var protein: String = ""
@@ -122,6 +128,24 @@ struct EditLogEntryView: View {
             } message: {
                 Text("Could not save changes. Please try again.")
             }
+            .alert(
+                "Update saved meal with new values?",
+                isPresented: $showUpdateCachePrompt
+            ) {
+                Button("Yes") {
+                    MealCacheManager.shared.update(
+                        named: summary,
+                        p: pendingCacheP, f: pendingCacheF, c: pendingCacheC,
+                        portion: pendingCachePortion, unit: pendingCacheUnit
+                    )
+                    presentationMode.wrappedValue.dismiss()
+                }
+                Button("No", role: .cancel) {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } message: {
+                Text("The saved meal template will be updated with the new macro values.")
+            }
         }
     }
 
@@ -176,23 +200,48 @@ struct EditLogEntryView: View {
     // MARK: - Save
 
     /// Writes form values back to the MealEntity and saves the context.
+    /// If macros or portion changed and a saved meal template exists, prompts
+    /// the user to update the template as well.
     private func saveChanges() {
-        meal.summary = summary
-        meal.timestamp = timestamp
-        meal.totalProtein = max(0, Double(protein) ?? 0)
-        meal.totalCarbs = max(0, Double(carbs) ?? 0)
-        meal.totalFat = max(0, Double(fat) ?? 0)
+        let newP       = max(0, Double(protein) ?? 0)
+        let newC       = max(0, Double(carbs)   ?? 0)
+        let newF       = max(0, Double(fat)      ?? 0)
+        let newPortion = max(0, Double(portion)  ?? 0)
 
-        // Save new portion data
-        meal.portion = max(0, Double(portion) ?? 0)
-        meal.portionUnit = portionUnit
+        // Detect meaningful changes (0.1g threshold to avoid floating-point noise).
+        let macrosChanged =
+            abs(newP - meal.totalProtein) > 0.1 ||
+            abs(newC - meal.totalCarbs)   > 0.1 ||
+            abs(newF - meal.totalFat)     > 0.1
+        let portionAddedFromZero = meal.portion == 0 && newPortion > 0
+
+        meal.summary      = summary
+        meal.timestamp    = timestamp
+        meal.totalProtein = newP
+        meal.totalCarbs   = newC
+        meal.totalFat     = newF
+        meal.portion      = newPortion
+        meal.portionUnit  = portionUnit
 
         do {
             try viewContext.save()
-            presentationMode.wrappedValue.dismiss()
         } catch {
             viewContext.rollback()
             showSaveError = true
+            return
+        }
+
+        // Offer to sync the saved meal template if values changed and one exists.
+        if (macrosChanged || portionAddedFromZero),
+           MealCacheManager.shared.find(named: summary) != nil {
+            pendingCacheP       = newP
+            pendingCacheF       = newF
+            pendingCacheC       = newC
+            pendingCachePortion = String(format: "%.1f", newPortion)
+            pendingCacheUnit    = portionUnit
+            showUpdateCachePrompt = true
+        } else {
+            presentationMode.wrappedValue.dismiss()
         }
     }
 

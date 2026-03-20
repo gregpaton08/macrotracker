@@ -43,6 +43,7 @@ struct TrackerView: View {
 
     @State private var showCalendar = false
     @State private var showAddMeal = false
+    @State private var isEditing = false
 
     // MARK: - Initializer
 
@@ -75,7 +76,7 @@ struct TrackerView: View {
             TabView(selection: $selectedIndex) {
                 // TODO: NOTE: this might cause serious lag when swiping since the range is huge.
                 ForEach(pageRangeStart...pageRangeEnd, id: \.self) { index in
-                LazyView(DailyDashboard(date: dateFromIndex(index)))
+                LazyView(DailyDashboard(date: dateFromIndex(index), isEditing: $isEditing))
                     .tag(index)
                     .padding(.top, 60)  // Push content below floating header
                 }
@@ -154,6 +155,11 @@ struct TrackerView: View {
                                 withAnimation { selectedIndex = centerIndex }
                             }
                         }
+                        Button(action: {
+                            withAnimation { isEditing.toggle() }
+                        }) {
+                            Image(systemName: isEditing ? "pencil.slash" : "pencil")
+                        }
                         Button(action: { showAddMeal = true }) {
                             Image(systemName: "plus")
                         }
@@ -179,6 +185,7 @@ struct TrackerView: View {
         // Logic Sync
         .onChange(of: selectedIndex) { newIndex in
             selectedDate = dateFromIndex(newIndex)
+            isEditing = false
         }
         .onChange(of: selectedDate) { newDate in
             let newIndex = indexFromDate(newDate)

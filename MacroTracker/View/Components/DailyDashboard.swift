@@ -13,6 +13,7 @@
 //      other form a group, with a header showing the time range.
 //
 
+import CoreData
 import Foundation
 import HealthKit
 import SwiftUI
@@ -50,9 +51,15 @@ struct DailyDashboard: View {
     /// algorithm visits them in chronological order.
     @FetchRequest var meals: FetchedResults<MealEntity>
 
+    @Binding var isEditing: Bool
+
     @State private var mealToAddMore: MealEntity?
     @State private var mealToRetime: MealEntity?
     @State private var retimeDate: Date = Date()
+    // Bulk edit
+    @State private var selectedMealIDs: Set<NSManagedObjectID> = []
+    @State private var showBulkRetime = false
+    @State private var bulkRetimeDate: Date = Date()
     @State private var caloriesBurned: Double = 0.0
     #if os(iOS)
         @State private var workouts: [HKWorkout] = []
@@ -85,8 +92,9 @@ struct DailyDashboard: View {
 
     let date: Date
 
-    init(date: Date) {
+    init(date: Date, isEditing: Binding<Bool>) {
         self.date = date
+        self._isEditing = isEditing
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay   = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -263,6 +271,27 @@ struct DailyDashboard: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
+        .safeAreaInset(edge: .bottom) {
+            if isEditing && !selectedMealIDs.isEmpty {
+                Button {
+                    let first = meals.first { selectedMealIDs.contains($0.objectID) }
+                    bulkRetimeDate = first?.timestamp ?? Date()
+                    showBulkRetime = true
+                } label: {
+                    Label(
+                        "Change Time for \(selectedMealIDs.count) Meal\(selectedMealIDs.count == 1 ? "" : "s")",
+                        systemImage: "clock"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding()
+                .background(.bar)
+            }
+        }
+        .onChange(of: isEditing) { newValue in
+            if !newValue { selectedMealIDs.removeAll() }
+        }
         .sheet(item: $mealToAddMore) { meal in
             AddMoreView(meal: meal)
         }
@@ -282,6 +311,31 @@ struct DailyDashboard: View {
                             Button("Done") {
                                 updateTime(of: meal, to: retimeDate)
                                 mealToRetime = nil
+                            }
+                            .fontWeight(.semibold)
+                        }
+                    }
+            }
+            .presentationDetents([.height(280)])
+        }
+        .sheet(isPresented: $showBulkRetime) {
+            NavigationStack {
+                DatePicker("Time", selection: $bulkRetimeDate, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding()
+                    .navigationTitle("Change Time")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showBulkRetime = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                bulkUpdateTime(to: bulkRetimeDate)
+                                showBulkRetime = false
+                                isEditing = false
+                                selectedMealIDs.removeAll()
                             }
                             .fontWeight(.semibold)
                         }
@@ -333,8 +387,18 @@ struct DailyDashboard: View {
 
     @ViewBuilder
     private func mealRow(_ meal: MealEntity) -> some View {
-        if meal.processingState == .failed {
-            // Failed State: Tap to retry
+        if isEditing {
+            Button(action: { toggleSelection(meal) }) {
+                HStack(spacing: 12) {
+                    Image(systemName: selectedMealIDs.contains(meal.objectID)
+                          ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(selectedMealIDs.contains(meal.objectID) ? Theme.tint : .secondary)
+                        .font(.title3)
+                    mealRowContent(meal)
+                }
+            }
+            .buttonStyle(.plain)
+        } else if meal.processingState == .failed {
             Button(action: {
                 MacroViewModel(context: viewContext).retryAnalysis(for: meal)
             }) {
@@ -342,12 +406,10 @@ struct DailyDashboard: View {
             }
             .contextMenu { deleteContextMenu(for: meal) }
         } else {
-            // Normal / Pending State: Tap to view details
             NavigationLink(destination: MealDetailView(meal: meal)) {
                 mealRowContent(meal)
             }
             .contextMenu {
-                // Only allow Add/Retime if it's completed
                 if meal.processingState == .completed {
                     if meal.portion > 0 {
                         Button { mealToAddMore = meal } label: { Label("Add More", systemImage: "plus.circle") }
@@ -410,6 +472,20 @@ struct DailyDashboard: View {
     }
 
     // MARK: - Helpers
+
+    private func toggleSelection(_ meal: MealEntity) {
+        if selectedMealIDs.contains(meal.objectID) {
+            selectedMealIDs.remove(meal.objectID)
+        } else {
+            selectedMealIDs.insert(meal.objectID)
+        }
+    }
+
+    private func bulkUpdateTime(to newTime: Date) {
+        for meal in meals where selectedMealIDs.contains(meal.objectID) {
+            updateTime(of: meal, to: newTime)
+        }
+    }
 
     /// Updates the time portion of a meal's timestamp while keeping its date unchanged.
     private func updateTime(of meal: MealEntity, to newTime: Date) {

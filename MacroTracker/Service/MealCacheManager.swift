@@ -80,6 +80,32 @@ struct MealCacheManager {
         }
     }
 
+    // MARK: - Lookup
+
+    /// Returns the cached meal template whose name matches (case-insensitive), or `nil`.
+    func find(named name: String) -> CachedMealEntity? {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
+        guard !cleanName.isEmpty else { return nil }
+        let fetch: NSFetchRequest<CachedMealEntity> = CachedMealEntity.fetchRequest()
+        fetch.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
+        fetch.fetchLimit = 1
+        return try? viewContext.fetch(fetch).first
+    }
+
+    // MARK: - Update
+
+    /// Overwrites the macro and portion values of an existing cached meal template.
+    func update(named name: String, p: Double, f: Double, c: Double, portion: String, unit: String) {
+        guard let existing = find(named: name) else { return }
+        existing.protein = p
+        existing.fat = f
+        existing.carbs = c
+        existing.portionSize = portion
+        existing.unit = unit
+        existing.lastUsed = Date()
+        try? viewContext.save()
+    }
+
     // MARK: - Delete
 
     /// Removes a cached meal template from the persistent store.
