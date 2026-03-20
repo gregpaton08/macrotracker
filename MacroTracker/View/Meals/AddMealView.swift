@@ -300,15 +300,39 @@ struct AddMealView: View {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
             .sheet(isPresented: $showDescribeSheet) {
-                DescribeMealView(viewModel: viewModel) { fat, carbs, protein, summary, portionSz, portionUt in
-                    self.fat = String(format: "%.1f", fat)
-                    self.carbs = String(format: "%.1f", carbs)
-                    self.protein = String(format: "%.1f", protein)
-                    if self.description.isEmpty { self.description = summary }
-                    if let ps = portionSz, !ps.isEmpty { self.portionSize = ps }
-                    if let pu = portionUt, MealEntity.validUnits.contains(pu) { self.selectedUnit = pu }
-                    activeCachedMeal = nil
-                }
+                DescribeMealView(
+                    viewModel: viewModel,
+                    onApply: { fat, carbs, protein, summary, portionSz, portionUt in
+                        self.fat = String(format: "%.1f", fat)
+                        self.carbs = String(format: "%.1f", carbs)
+                        self.protein = String(format: "%.1f", protein)
+                        if self.description.isEmpty { self.description = summary }
+                        if let ps = portionSz, !ps.isEmpty { self.portionSize = ps }
+                        if let pu = portionUt, MealEntity.validUnits.contains(pu) { self.selectedUnit = pu }
+                        activeCachedMeal = nil
+                    },
+                    onSave: { result in
+                        let p = result.total_protein
+                        let f = result.total_fat
+                        let c = result.total_carbs
+                        let portion = result.portion_size ?? ""
+                        let unit = result.portion_unit ?? "g"
+                        let success = viewModel.saveMeal(
+                            description: result.summary,
+                            p: p, f: f, c: c,
+                            portion: Double(portion) ?? 0,
+                            portionUnit: unit,
+                            date: targetDate
+                        )
+                        if success {
+                            MealCacheManager.shared.cacheMeal(
+                                name: result.summary, p: p, f: f, c: c,
+                                portion: portion, unit: unit
+                            )
+                        }
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                )
             }
             .sheet(isPresented: $showCamera) {
                 CameraPicker(sourceType: .camera, isPresented: $showCamera) { image in

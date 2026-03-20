@@ -8,22 +8,35 @@
 //  Each message is sent to Gemini independently; responses appear as
 //  AI bubbles with macro estimates, a per-item breakdown, and a
 //  "Use These Macros" button to apply the result to AddMealView.
+//  Chat history is persisted to UserDefaults so conversations survive
+//  dismissal and can be continued from the edit meal screen.
 //
 
 import SwiftUI
 
-private struct ChatTurn: Identifiable {
-    let id = UUID()
+private struct ChatTurn: Identifiable, Codable {
+    let id: UUID
     let userMessage: String
     var result: AIAnalysisResult?
+
+    init(userMessage: String, result: AIAnalysisResult? = nil) {
+        self.id = UUID()
+        self.userMessage = userMessage
+        self.result = result
+    }
 }
+
+private let chatHistoryKey = "ai_chat_history"
 
 struct DescribeMealView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MacroViewModel
 
-    /// Called when the user accepts a result.
+    /// Called when the user taps "Use These Macros" to fill in the calling form.
     let onApply: (_ fat: Double, _ carbs: Double, _ protein: Double, _ summary: String, _ portionSize: String?, _ portionUnit: String?) -> Void
+
+    /// If set, shows an "Add Meal" button that saves directly and closes everything.
+    var onSave: ((_ result: AIAnalysisResult) -> Void)? = nil
 
     @State private var messages: [ChatTurn] = []
     @State private var inputText = ""
@@ -39,7 +52,7 @@ struct DescribeMealView: View {
                         LazyVStack(alignment: .leading, spacing: 16) {
                             ForEach(messages) { turn in
                                 userBubble(turn.userMessage)
-                                
+
                                 if let result = turn.result {
                                     aiResponseBubble(result)
                                 } else if viewModel.isLoading && turn.id == messages.last?.id {
@@ -58,7 +71,7 @@ struct DescribeMealView: View {
                         withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                     }
                 }
-                
+
                 // MARK: - Input Bar
                 inputBar
             }
@@ -71,6 +84,14 @@ struct DescribeMealView: View {
                         dismiss()
                     }
                 }
+                if !messages.isEmpty {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("Clear") {
+                            messages = []
+                            UserDefaults.standard.removeObject(forKey: chatHistoryKey)
+                        }
+                    }
+                }
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) {}
@@ -78,7 +99,21 @@ struct DescribeMealView: View {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
-        .onAppear { inputFocused = true }
+        .onAppear {
+            inputFocused = true
+            if let data = UserDefaults.standard.data(forKey: chatHistoryKey),
+               let saved = try? JSONDecoder().decode([ChatTurn].self, from: data) {
+                messages = saved
+            }
+        }
+    }
+
+    // MARK: - Persistence
+
+    private func persistMessages() {
+        if let data = try? JSONEncoder().encode(messages) {
+            UserDefaults.standard.set(data, forKey: chatHistoryKey)
+        }
     }
 
     // MARK: - Input Bar
@@ -170,15 +205,32 @@ struct DescribeMealView: View {
                     }
                 }
 
-                Button {
-                    onApply(
-                        result.total_fat, result.total_carbs, result.total_protein, result.summary,
-                        result.portion_size, result.portion_unit)
-                    dismiss()
-                } label: {
-                    Text("Use These Macros").bold().frame(maxWidth: .infinity)
+                // Action buttons
+                HStack(spacing: 8) {
+                    Button {
+                        onApply(
+                            result.total_fat, result.total_carbs, result.total_protein,
+                            result.summary, result.portion_size, result.portion_unit)
+                        dismiss()
+                    } label: {
+                        Text("Use Macros")
+                            .bold()
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    if let save = onSave {
+                        Button {
+                            save(result)
+                            dismiss()
+                        } label: {
+                            Text("Add Meal")
+                                .bold()
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
                 .padding(.top, 2)
             }
 
@@ -222,11 +274,13 @@ struct DescribeMealView: View {
 
         let turn = ChatTurn(userMessage: trimmed, result: nil)
         messages.append(turn)
+        persistMessages()
 
         analysisTask = Task {
             if let result = await viewModel.analyzeDescription(text: trimmed) {
                 if let idx = messages.firstIndex(where: { $0.id == turn.id }) {
                     messages[idx].result = result
+                    persistMessages()
                 }
             }
         }

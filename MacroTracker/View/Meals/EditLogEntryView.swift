@@ -18,8 +18,12 @@ struct EditLogEntryView: View {
 
     @ObservedObject var meal: MealEntity
 
+    @StateObject private var aiViewModel = MacroViewModel(
+        context: PersistenceController.shared.container.viewContext)
+
     // MARK: - Form State
 
+    @State private var showDescribeSheet = false
     @State private var showSaveError = false
     @State private var showUpdateCachePrompt = false
     @State private var pendingCacheP: Double = 0
@@ -48,6 +52,14 @@ struct EditLogEntryView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section {
+                    Button(action: { showDescribeSheet = true }) {
+                        Label("Describe to AI", systemImage: "text.bubble")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
                 Section(header: Text("Meal Info")) {
                     TextField("Summary", text: $summary).focused($focusedField, equals: .summary)
                     DatePicker(
@@ -127,6 +139,21 @@ struct EditLogEntryView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Could not save changes. Please try again.")
+            }
+            .sheet(isPresented: $showDescribeSheet) {
+                DescribeMealView(
+                    viewModel: aiViewModel,
+                    onApply: { fat, carbs, protein, summary, portionSz, portionUt in
+                        self.fat = String(format: "%.1f", fat)
+                        self.carbs = String(format: "%.1f", carbs)
+                        self.protein = String(format: "%.1f", protein)
+                        if self.summary.isEmpty { self.summary = summary }
+                        if let ps = portionSz, !ps.isEmpty { self.portion = ps }
+                        if let pu = portionUt, MealEntity.validUnits.contains(pu) {
+                            self.portionUnit = pu
+                        }
+                    }
+                )
             }
             .alert(
                 "Update saved meal with new values?",
