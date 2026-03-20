@@ -200,4 +200,86 @@ class MacroViewModel: ObservableObject {
                 second: timeComponents.second))
             ?? date
     }
+
+    // MARK: - Background Analysis
+
+    /// Fetches macros without triggering the global isLoading or showError UI overlays.
+    private func fetchMacrosQuietly(description: String) async -> (p: Double, c: Double, f: Double, k: Double)? {
+        setupClient()
+        guard let gemini = geminiClient else { return nil }
+        do {
+            let result = try await gemini.analyzeFood(userText: description)
+            return (result.total_protein, result.total_carbs, result.total_fat, result.total_calories)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Immediately saves a placeholder meal and spawns a detached task to fetch macros.
+    func saveAndAnalyzeInBackground(description: String, portion: String, unit: String, date: Date) {
+        let newMeal = MealEntity(context: context)
+        newMeal.id = UUID()
+        newMeal.timestamp = combineDate(date, withTime: Date())
+        newMeal.summary = description
+        newMeal.portion = Double(portion) ?? 0
+        newMeal.portionUnit = unit
+        newMeal.processingState = .pending // Flag it as loading
+        
+        try? context.save()
+        
+        let objectID = newMeal.objectID // Thread-safe reference for the background task
+        let query = portion.isEmpty ? description : "\(portion) \(unit) \(description)"
+        
+        Task {
+            let result = await self.fetchMacrosQuietly(description: query)
+            
+            await MainActor.run {
+                // Re-fetch the object on the main thread
+                guard let savedMeal = try? self.context.existingObject(with: objectID) as? MealEntity else { return }
+                
+                if let res = result {
+                    savedMeal.totalProtein = res.p
+                    savedMeal.totalCarbs = res.c
+                    savedMeal.totalFat = res.f
+                    savedMeal.processingState = .completed
+                    
+                    MealCacheManager.shared.cacheMeal(
+                        name: description, p: res.p, f: res.f, c: res.c,
+                        portion: portion, unit: unit
+                    )
+                } else {
+                    savedMeal.processingState = .failed
+                }
+                try? self.context.save()
+            }
+        }
+    }
+
+    /// Retries a failed background analysis.
+    func retryAnalysis(for meal: MealEntity) {
+        guard let summary = meal.summary else { return }
+        meal.processingState = .pending
+        try? context.save()
+        
+        let portion = meal.portion > 0 ? String(meal.portion) : ""
+        let unit = meal.portionUnit ?? ""
+        let query = portion.isEmpty ? summary : "\(portion) \(unit) \(summary)"
+        let objectID = meal.objectID
+        
+        Task {
+            let result = await self.fetchMacrosQuietly(description: query)
+            await MainActor.run {
+                guard let savedMeal = try? self.context.existingObject(with: objectID) as? MealEntity else { return }
+                if let res = result {
+                    savedMeal.totalProtein = res.p
+                    savedMeal.totalCarbs = res.c
+                    savedMeal.totalFat = res.f
+                    savedMeal.processingState = .completed
+                } else {
+                    savedMeal.processingState = .failed
+                }
+                try? self.context.save()
+            }
+        }
+    }
 }

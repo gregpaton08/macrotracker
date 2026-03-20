@@ -527,15 +527,27 @@ struct AddMealView: View {
         }
     }
 
-    // MARK: - Save
+// MARK: - Save
 
-    /// Validates inputs, persists the meal, caches the template, and dismisses.
     private func saveMeal() {
         let p = max(0, Double(protein) ?? 0)
         let f = max(0, Double(fat) ?? 0)
         let c = max(0, Double(carbs) ?? 0)
         let amount = max(0, Double(portionSize) ?? 0)
 
+        // Optimistic UI: If macros are 0 and AI is configured, do a background fetch!
+        if p == 0 && f == 0 && c == 0 && apiKeyConfigured {
+            viewModel.saveAndAnalyzeInBackground(
+                description: description,
+                portion: portionSize,
+                unit: selectedUnit,
+                date: targetDate
+            )
+            presentationMode.wrappedValue.dismiss()
+            return
+        }
+
+        // Standard Save logic...
         let success = viewModel.saveMeal(
             description: description,
             p: p, f: f, c: c,
@@ -545,11 +557,9 @@ struct AddMealView: View {
         )
 
         guard success else { return }
-
         MealCacheManager.shared.cacheMeal(
             name: description, p: p, f: f, c: c, portion: portionSize, unit: selectedUnit
         )
-
         presentationMode.wrappedValue.dismiss()
     }
 }

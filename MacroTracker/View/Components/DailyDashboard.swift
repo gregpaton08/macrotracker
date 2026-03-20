@@ -329,50 +329,83 @@ struct DailyDashboard: View {
         .foregroundStyle(.secondary)
     }
 
-    // MARK: - Meal Row
+// MARK: - Meal Row
 
     @ViewBuilder
     private func mealRow(_ meal: MealEntity) -> some View {
-        NavigationLink(destination: MealDetailView(meal: meal)) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(meal.summary ?? "Meal").font(.headline)
-                    Text(
-                        String(
-                            format: "F:%3d  C:%3d  P:%3d",
-                            Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein))
-                    )
-                    .font(.caption).foregroundColor(.secondary).monospacedDigit()
+        if meal.processingState == .failed {
+            // Failed State: Tap to retry
+            Button(action: {
+                MacroViewModel(context: viewContext).retryAnalysis(for: meal)
+            }) {
+                mealRowContent(meal)
+            }
+            .contextMenu { deleteContextMenu(for: meal) }
+        } else {
+            // Normal / Pending State: Tap to view details
+            NavigationLink(destination: MealDetailView(meal: meal)) {
+                mealRowContent(meal)
+            }
+            .contextMenu {
+                // Only allow Add/Retime if it's completed
+                if meal.processingState == .completed {
+                    if meal.portion > 0 {
+                        Button { mealToAddMore = meal } label: { Label("Add More", systemImage: "plus.circle") }
+                    }
+                    Button {
+                        retimeDate = meal.timestamp ?? Date()
+                        mealToRetime = meal
+                    } label: { Label("Change Time", systemImage: "clock") }
                 }
-                Spacer()
+                deleteContextMenu(for: meal)
+            }
+        }
+    }
+
+    /// The visual layout for the meal row, handling all 3 AI states
+    @ViewBuilder
+    private func mealRowContent(_ meal: MealEntity) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(meal.summary ?? "Meal").font(.headline)
+                
+                switch meal.processingState {
+                case .completed:
+                    Text(String(format: "F:%3d  C:%3d  P:%3d", Int(meal.totalFat), Int(meal.totalCarbs), Int(meal.totalProtein)))
+                        .font(.caption).foregroundColor(.secondary).monospacedDigit()
+                case .pending:
+                    Text("Analyzing with AI...").font(.caption).foregroundColor(.secondary)
+                case .failed:
+                    Text("Analysis failed. Tap to retry.").font(.caption).foregroundColor(Theme.over)
+                }
+            }
+            
+            Spacer()
+            
+            switch meal.processingState {
+            case .completed:
                 VStack(alignment: .trailing) {
                     Text("\(Int(meal.totalCalories))").bold()
                     Text("kcal").font(.caption2).foregroundColor(.secondary)
                 }
+            case .pending:
+                ProgressView()
+            case .failed:
+                Image(systemName: "exclamationmark.circle.fill").foregroundColor(Theme.over)
             }
         }
-        .contextMenu {
-            if meal.portion > 0 {
-                Button {
-                    mealToAddMore = meal
-                } label: {
-                    Label("Add More", systemImage: "plus.circle")
-                }
+    }
+
+    /// Extracts the delete button so it can be reused in both row states
+    @ViewBuilder
+    private func deleteContextMenu(for meal: MealEntity) -> some View {
+        Button(role: .destructive) {
+            withAnimation {
+                viewContext.delete(meal)
+                try? viewContext.save()
             }
-            Button {
-                retimeDate = meal.timestamp ?? Date()
-                mealToRetime = meal
-            } label: {
-                Label("Change Time", systemImage: "clock")
-            }
-            Button(role: .destructive) {
-                withAnimation {
-                    viewContext.delete(meal)
-                    try? viewContext.save()
-                }
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
+        } label: {
+            Label("Delete", systemImage: "trash")
         }
     }
 

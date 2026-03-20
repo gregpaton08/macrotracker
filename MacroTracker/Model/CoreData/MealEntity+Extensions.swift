@@ -13,9 +13,18 @@ import Foundation
 
 // MARK: - MealEntity
 
-// extension MealEntity: Identifiable {}
+enum AIProcessingState: String {
+    case completed = "completed"
+    case pending = "pending"
+    case failed = "failed"
+}
 
 extension MealEntity {
+    var processingState: AIProcessingState {
+        get { AIProcessingState(rawValue: aiStatus ?? "completed") ?? .completed }
+        set { aiStatus = newValue.rawValue }
+    }
+    
     /// Calories computed from macros using Atwater factors: P*4 + C*4 + F*9.
     var totalCalories: Double {
         (totalProtein * 4) + (totalCarbs * 4) + (totalFat * 9)
