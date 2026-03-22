@@ -143,6 +143,7 @@ struct EditLogEntryView: View {
             .sheet(isPresented: $showDescribeSheet) {
                 DescribeMealView(
                     viewModel: aiViewModel,
+                    contextID: meal.id?.uuidString ?? "edit_fallback",
                     onApply: { fat, carbs, protein, summary, portionSz, portionUt in
                         self.fat = String(format: "%.1f", fat)
                         self.carbs = String(format: "%.1f", carbs)

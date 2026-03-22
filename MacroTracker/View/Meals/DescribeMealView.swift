@@ -26,11 +26,12 @@ private struct ChatTurn: Identifiable, Codable {
     }
 }
 
-private let chatHistoryKey = "ai_chat_history"
-
 struct DescribeMealView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MacroViewModel
+
+    /// A unique identifier for this meal or session, used to persist chat history independently.
+    let contextID: String
 
     /// Called when the user taps "Use These Macros" to fill in the calling form.
     let onApply: (_ fat: Double, _ carbs: Double, _ protein: Double, _ summary: String, _ portionSize: String?, _ portionUnit: String?) -> Void
@@ -42,6 +43,10 @@ struct DescribeMealView: View {
     @State private var inputText = ""
     @State private var analysisTask: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
+
+    private var chatHistoryKey: String {
+        "ai_chat_history_\(contextID)"
+    }
 
     var body: some View {
         NavigationStack {

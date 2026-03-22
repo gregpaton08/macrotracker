@@ -47,6 +47,7 @@ struct AddMealView: View {
     @State private var showImageSourcePicker = false
     @State private var showScanner = false
     @State private var showDescribeSheet = false
+    @State private var sessionID = UUID().uuidString
 
     private enum ScanMode { case label, recipe }
     @State private var scanMode: ScanMode = .label
@@ -301,6 +302,7 @@ struct AddMealView: View {
             .sheet(isPresented: $showDescribeSheet) {
                 DescribeMealView(
                     viewModel: viewModel,
+                    contextID: sessionID,
                     onApply: { fat, carbs, protein, summary, portionSz, portionUt in
                         self.fat = String(format: "%.1f", fat)
                         self.carbs = String(format: "%.1f", carbs)
