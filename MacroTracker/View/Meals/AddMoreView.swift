@@ -29,7 +29,7 @@ struct AddMoreView: View {
     @State private var addText: String = "0"
     @State private var totalText: String
     @FocusState private var focused: Field?
-    private enum Field { case add, total }
+    private enum Field: Int, CaseIterable { case add, total }
 
     init(meal: MealEntity) {
         self.meal = meal
@@ -143,6 +143,22 @@ struct AddMoreView: View {
                     Button("Save") { save() }
                         .disabled(!canSave)
                 }
+
+                ToolbarItemGroup(placement: .keyboard) {
+                    Button(action: { moveFocus(-1) }) { Image(systemName: "chevron.up") }
+                    Button(action: { moveFocus(1) }) { Image(systemName: "chevron.down") }
+                    Spacer()
+                    Button("Done") { focused = nil }
+                }
+            }
+            .onAppear {
+                focused = .add
+            }
+            .onChange(of: focused) { newValue in
+                guard newValue != nil else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
+                }
             }
         }
     }
@@ -163,6 +179,17 @@ struct AddMoreView: View {
         VStack(spacing: 2) {
             Text(label).font(.caption).foregroundColor(.secondary)
             Text("\(Int(value))g").bold()
+        }
+    }
+
+    private func moveFocus(_ direction: Int) {
+        let all = Field.allCases
+        guard let current = focused,
+              let index = all.firstIndex(of: current) else { return }
+
+        let nextIndex = index + direction
+        if nextIndex >= 0 && nextIndex < all.count {
+            focused = all[nextIndex]
         }
     }
 
