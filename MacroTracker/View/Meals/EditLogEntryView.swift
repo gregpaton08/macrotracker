@@ -231,25 +231,28 @@ struct EditLogEntryView: View {
     /// If macros or portion changed and a saved meal template exists, prompts
     /// the user to update the template as well.
     private func saveChanges() {
-        let newP       = max(0, Double(protein) ?? 0)
-        let newC       = max(0, Double(carbs)   ?? 0)
-        let newF       = max(0, Double(fat)      ?? 0)
-        let newPortion = max(0, Double(portion)  ?? 0)
+        let newP = max(0, Double(protein) ?? 0)
+        let newC = max(0, Double(carbs) ?? 0)
+        let newF = max(0, Double(fat) ?? 0)
+        let newPortion = max(0, Double(portion) ?? 0)
 
-        // Detect meaningful changes (0.1g threshold to avoid floating-point noise).
-        let macrosChanged =
-            abs(newP - meal.totalProtein) > 0.1 ||
-            abs(newC - meal.totalCarbs)   > 0.1 ||
-            abs(newF - meal.totalFat)     > 0.1
+        // Detect if macros were changed MANUALLY (not just via scaling).
+        // If the new macro value differs from (newPortion * density), the user tweaked the numbers.
+        let densityChanged =
+            abs(newP - (newPortion * densityP)) > 0.1 ||
+            abs(newC - (newPortion * densityC)) > 0.1 ||
+            abs(newF - (newPortion * densityF)) > 0.1
+
+        // If the original meal had no portion (0), adding one is also considered a density change.
         let portionAddedFromZero = meal.portion == 0 && newPortion > 0
 
-        meal.summary      = summary
-        meal.timestamp    = timestamp
+        meal.summary = summary
+        meal.timestamp = timestamp
         meal.totalProtein = newP
-        meal.totalCarbs   = newC
-        meal.totalFat     = newF
-        meal.portion      = newPortion
-        meal.portionUnit  = portionUnit
+        meal.totalCarbs = newC
+        meal.totalFat = newF
+        meal.portion = newPortion
+        meal.portionUnit = portionUnit
 
         do {
             try viewContext.save()
@@ -259,14 +262,17 @@ struct EditLogEntryView: View {
             return
         }
 
-        // Offer to sync the saved meal template if values changed and one exists.
-        if macrosChanged || portionAddedFromZero,
-           MealCacheManager.shared.find(named: summary) != nil {
-            pendingCacheP       = newP
-            pendingCacheF       = newF
-            pendingCacheC       = newC
+        // Offer to sync the saved meal template if density changed and one exists.
+        // Pure scaling (changing portion without changing the macro-per-unit ratio)
+        // should NOT trigger this prompt.
+        if (densityChanged || portionAddedFromZero),
+            MealCacheManager.shared.find(named: summary) != nil
+        {
+            pendingCacheP = newP
+            pendingCacheF = newF
+            pendingCacheC = newC
             pendingCachePortion = String(format: "%.1f", newPortion)
-            pendingCacheUnit    = portionUnit
+            pendingCacheUnit = portionUnit
             showUpdateCachePrompt = true
         } else {
             presentationMode.wrappedValue.dismiss()
