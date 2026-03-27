@@ -35,6 +35,23 @@ struct SettingsView: View {
     @AppStorage("goal_p_min") var pMin: Double = 150
     @AppStorage("goal_p_max") var pMax: Double = 180
 
+    // MARK: - Body Profile & g/kg Goals
+
+    @AppStorage("bodyweight") var bodyweight: Double = 180
+    @AppStorage("bodyweight_unit") var bodyweightUnit: String = "lbs"
+
+    @AppStorage("goal_f_mode") var fMode: String = "grams"
+    @AppStorage("goal_f_min_g_kg") var fMinGKg: Double = 0.8
+    @AppStorage("goal_f_max_g_kg") var fMaxGKg: Double = 1.0
+
+    @AppStorage("goal_c_mode") var cMode: String = "grams"
+    @AppStorage("goal_c_min_g_kg") var cMinGKg: Double = 2.0
+    @AppStorage("goal_c_max_g_kg") var cMaxGKg: Double = 3.0
+
+    @AppStorage("goal_p_mode") var pMode: String = "grams"
+    @AppStorage("goal_p_min_g_kg") var pMinGKg: Double = 1.8
+    @AppStorage("goal_p_max_g_kg") var pMaxGKg: Double = 2.2
+
     // MARK: - Energy Source
 
     @AppStorage("energy_source") var energySource: String = "active"
@@ -62,11 +79,44 @@ struct SettingsView: View {
         DataTransferManager.shared.generateJSON()
     }
 
+    private func recalculateGoals() {
+        let weightInKg = bodyweightUnit == "kg" ? bodyweight : bodyweight / 2.20462
+
+        if fMode == "g_kg" {
+            fMin = (fMinGKg * weightInKg).rounded()
+            fMax = (fMaxGKg * weightInKg).rounded()
+        }
+        if cMode == "g_kg" {
+            cMin = (cMinGKg * weightInKg).rounded()
+            cMax = (cMaxGKg * weightInKg).rounded()
+        }
+        if pMode == "g_kg" {
+            pMin = (pMinGKg * weightInKg).rounded()
+            pMax = (pMaxGKg * weightInKg).rounded()
+        }
+    }
+
     var body: some View {
         Form {
             Section(header: Text("Data Management")) {
                 NavigationLink(destination: SavedMealsView()) {
                     Label("Manage Saved Meals", systemImage: "archivebox")
+                }
+            }
+
+            Section(header: Text("Body Profile")) {
+                HStack {
+                    Text("Weight")
+                    Spacer()
+                    TextField("Weight", value: $bodyweight, format: .number)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                    Picker("Unit", selection: $bodyweightUnit) {
+                        Text("lbs").tag("lbs")
+                        Text("kg").tag("kg")
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 90)
                 }
             }
 
@@ -101,25 +151,84 @@ struct SettingsView: View {
             }
 
             // Goals Sections
-            Section(header: Text("Fat Goals (g)")) {
-                HStack {
-                    TextField("Min", value: $fMin, format: .number)
-                    Text("-")
-                    TextField("Max", value: $fMax, format: .number)
+            Section(header: Text("Fat Goals")) {
+                Picker("Mode", selection: $fMode) {
+                    Text("Grams").tag("grams")
+                    Text("g/kg").tag("g_kg")
+                }
+                .pickerStyle(.segmented)
+
+                if fMode == "grams" {
+                    HStack {
+                        TextField("Min", value: $fMin, format: .number)
+                        Text("-")
+                        TextField("Max", value: $fMax, format: .number)
+                        Text("g")
+                    }
+                } else {
+                    HStack {
+                        TextField("Min", value: $fMinGKg, format: .number)
+                        Text("-")
+                        TextField("Max", value: $fMaxGKg, format: .number)
+                        Text("g/kg")
+                    }
+                    Text("Result: \(Int(fMin)) - \(Int(fMax)) g")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
-            Section(header: Text("Carb Goals (g)")) {
-                HStack {
-                    TextField("Min", value: $cMin, format: .number)
-                    Text("-")
-                    TextField("Max", value: $cMax, format: .number)
+
+            Section(header: Text("Carb Goals")) {
+                Picker("Mode", selection: $cMode) {
+                    Text("Grams").tag("grams")
+                    Text("g/kg").tag("g_kg")
+                }
+                .pickerStyle(.segmented)
+
+                if cMode == "grams" {
+                    HStack {
+                        TextField("Min", value: $cMin, format: .number)
+                        Text("-")
+                        TextField("Max", value: $cMax, format: .number)
+                        Text("g")
+                    }
+                } else {
+                    HStack {
+                        TextField("Min", value: $cMinGKg, format: .number)
+                        Text("-")
+                        TextField("Max", value: $cMaxGKg, format: .number)
+                        Text("g/kg")
+                    }
+                    Text("Result: \(Int(cMin)) - \(Int(cMax)) g")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
-            Section(header: Text("Protein Goals (g)")) {
-                HStack {
-                    TextField("Min", value: $pMin, format: .number)
-                    Text("-")
-                    TextField("Max", value: $pMax, format: .number)
+
+            Section(header: Text("Protein Goals")) {
+                Picker("Mode", selection: $pMode) {
+                    Text("Grams").tag("grams")
+                    Text("g/kg").tag("g_kg")
+                }
+                .pickerStyle(.segmented)
+
+                if pMode == "grams" {
+                    HStack {
+                        TextField("Min", value: $pMin, format: .number)
+                        Text("-")
+                        TextField("Max", value: $pMax, format: .number)
+                        Text("g")
+                    }
+                } else {
+                    HStack {
+                        TextField("Min", value: $pMinGKg, format: .number)
+                        Text("-")
+                        TextField("Max", value: $pMaxGKg, format: .number)
+                        Text("g/kg")
+                    }
+                    Text("Result: \(Int(pMin)) - \(Int(pMax)) g")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
 
@@ -164,6 +273,17 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .onChange(of: bodyweight) { _ in recalculateGoals() }
+        .onChange(of: bodyweightUnit) { _ in recalculateGoals() }
+        .onChange(of: fMode) { _ in recalculateGoals() }
+        .onChange(of: fMinGKg) { _ in recalculateGoals() }
+        .onChange(of: fMaxGKg) { _ in recalculateGoals() }
+        .onChange(of: cMode) { _ in recalculateGoals() }
+        .onChange(of: cMinGKg) { _ in recalculateGoals() }
+        .onChange(of: cMaxGKg) { _ in recalculateGoals() }
+        .onChange(of: pMode) { _ in recalculateGoals() }
+        .onChange(of: pMinGKg) { _ in recalculateGoals() }
+        .onChange(of: pMaxGKg) { _ in recalculateGoals() }
         #if os(iOS)
             .scrollDismissesKeyboard(.immediately)
         #endif
