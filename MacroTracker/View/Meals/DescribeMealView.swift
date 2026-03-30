@@ -41,6 +41,7 @@ struct DescribeMealView: View {
 
     @State private var messages: [ChatTurn] = []
     @State private var inputText = ""
+    @State private var autoAccept = false
     @State private var analysisTask: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
 
@@ -50,35 +51,34 @@ struct DescribeMealView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // MARK: - Message List
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 16) {
-                            ForEach(messages) { turn in
-                                userBubble(turn.userMessage)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 16) {
+                        ForEach(messages) { turn in
+                            userBubble(turn.userMessage)
 
-                                if let result = turn.result {
-                                    aiResponseBubble(result)
-                                } else if viewModel.isLoading && turn.id == messages.last?.id {
-                                    typingIndicator
-                                }
+                            if let result = turn.result {
+                                aiResponseBubble(result)
+                            } else if viewModel.isLoading && turn.id == messages.last?.id {
+                                typingIndicator
                             }
-                            Color.clear.frame(height: 1).id("bottom")
                         }
-                        .padding()
+                        Color.clear.frame(height: 1).id("bottom")
                     }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onChange(of: messages.count) { _ in
-                        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-                    }
-                    .onChange(of: viewModel.isLoading) { _ in
-                        withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                    .padding()
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .safeAreaInset(edge: .bottom) {
+                    inputBar
+                }
+                .onChange(of: messages.count) { _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: viewModel.isLoading) { isLoading in
+                    if isLoading {
+                        scrollToBottom(proxy: proxy)
                     }
                 }
-
-                // MARK: - Input Bar
-                inputBar
             }
             .navigationTitle("Describe Meal")
             .navigationBarTitleDisplayMode(.inline)
@@ -113,6 +113,12 @@ struct DescribeMealView: View {
         }
     }
 
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        withAnimation {
+            proxy.scrollTo("bottom", anchor: .bottom)
+        }
+    }
+
     // MARK: - Persistence
 
     private func persistMessages() {
@@ -124,32 +130,32 @@ struct DescribeMealView: View {
     // MARK: - Input Bar
 
     private var inputBar: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            TextField("Describe your meal…", text: $inputText, axis: .vertical)
-                .focused($inputFocused)
-                .lineLimit(1...5)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
+        VStack(spacing: 0) {
+            Divider()
+            HStack(alignment: .bottom, spacing: 8) {
+                TextField("Describe your meal…", text: $inputText, axis: .vertical)
+                    .focused($inputFocused)
+                    .lineLimit(1...5)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
 
-            Button(action: send) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 32, height: 32)
-                    .background(canSend ? Theme.tint : Color(.systemGray4))
-                    .clipShape(Circle())
+                Button(action: send) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 32, weight: .semibold))
+                        .foregroundColor(canSend ? Theme.tint : Color(.systemGray4))
+                }
+                .disabled(!canSend)
             }
-            .disabled(!canSend)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(.bar)
     }
 
     private var canSend: Bool {
@@ -213,10 +219,7 @@ struct DescribeMealView: View {
                 // Action buttons
                 HStack(spacing: 8) {
                     Button {
-                        onApply(
-                            result.total_fat, result.total_carbs, result.total_protein,
-                            result.summary, result.portion_size, result.portion_unit)
-                        dismiss()
+                        applyResult(result)
                     } label: {
                         Text("Use Macros")
                             .bold()
@@ -243,6 +246,13 @@ struct DescribeMealView: View {
         }
     }
 
+    private func applyResult(_ result: AIAnalysisResult) {
+        onApply(
+            result.total_fat, result.total_carbs, result.total_protein,
+            result.summary, result.portion_size, result.portion_unit)
+        dismiss()
+    }
+
     private var typingIndicator: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "sparkles")
@@ -252,9 +262,33 @@ struct DescribeMealView: View {
                 .background(Theme.tint.opacity(0.1))
                 .clipShape(Circle())
                 .padding(.top, 2)
-            ProgressView().padding(.vertical, 8)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("AI is analyzing your meal...")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Button(action: { autoAccept.toggle() }) {
+                    HStack {
+                        Image(systemName: autoAccept ? "checkmark.circle.fill" : "circle")
+                        Text("Auto-Accept Result")
+                    }
+                    .font(.caption)
+                    .bold()
+                    .foregroundColor(autoAccept ? Theme.good : .secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(autoAccept ? Theme.good.opacity(0.1) : Color(.systemGray6))
+                    .clipShape(Capsule())
+                }
+            }
+            
             Spacer()
         }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Macro Pill
@@ -286,6 +320,12 @@ struct DescribeMealView: View {
                 if let idx = messages.firstIndex(where: { $0.id == turn.id }) {
                     messages[idx].result = result
                     persistMessages()
+                    
+                    if autoAccept {
+                        // Small delay so user sees it finished
+                        try? await Task.sleep(nanoseconds: 500_000_000)
+                        applyResult(result)
+                    }
                 }
             }
         }
