@@ -123,12 +123,8 @@ struct MacroCalendarView: View {
 
     /// Returns a colored dot based on whether the value is under/in/over the goal range.
     private func dotView(value: Double, min: Double, max: Double) -> some View {
-        let color: Color = {
-            if value < min { return Theme.under }
-            if value > max { return Theme.over }
-            return Theme.good
-        }()
-        return dotView(color: color)
+        let status = GoalStatus.status(for: value, min: min, max: max)
+        return dotView(color: status.color)
     }
 
     /// Renders a small filled circle with the given color.

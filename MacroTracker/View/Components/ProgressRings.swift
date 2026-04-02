@@ -58,11 +58,8 @@ struct ProgressRing: View {
     }
 
     /// Determines the visual state based on value vs. goal range.
-    var state: RingState {
-        let val = sanitize(value)
-        if val < sanitize(min) { return .under }
-        if val > sanitize(max) { return .over }
-        return .good
+    var status: GoalStatus {
+        GoalStatus.status(for: sanitize(value), min: sanitize(min), max: sanitize(max))
     }
 
     var body: some View {
@@ -84,7 +81,7 @@ struct ProgressRing: View {
                     .foregroundColor(.green)
 
                 // 3. MAIN PROGRESS RING
-                if state == .over {
+                if status == .over {
                     // CASE A: OVER LIMIT
                     // Layer 1: Full Circle (Base Red) represents the Max Limit
                     Circle()
@@ -104,7 +101,7 @@ struct ProgressRing: View {
                     Circle()
                         .trim(from: 0.0, to: currentFraction)
                         .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
-                        .foregroundColor(state.color)
+                        .foregroundColor(status.color)
                         .rotationEffect(Angle(degrees: 270.0))
                         .animation(.spring(), value: value)
                 }
@@ -115,8 +112,13 @@ struct ProgressRing: View {
                         .font(.system(.headline, design: .rounded))
                         .bold()
                         .minimumScaleFactor(0.5)
-
-                    if state == .over {
+                    
+                    // Range
+                    Text("\(Int(sanitize(min)))-\(Int(sanitize(max)))")
+                        .font(.system(size: 9, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .minimumScaleFactor(0.8)
+                    if status == .over {
                         // FIX: Show "Stop" + Amount Over
                         HStack(spacing: 2) {
                             Image(systemName: "xmark.octagon.fill")
@@ -126,16 +128,12 @@ struct ProgressRing: View {
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .minimumScaleFactor(0.8)
 
-                    } else if state == .good {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.subheadline)
-                    } else {
-                        // Range
-                        Text("\(Int(sanitize(min)))-\(Int(sanitize(max)))")
-                            .font(.system(size: 9, design: .rounded))
-                            .foregroundColor(.secondary)
-                            .minimumScaleFactor(0.8)
+                    } else if status == .good {
+                        if let icon = status.icon {
+                            Image(systemName: icon)
+                                .foregroundColor(.green)
+                                .font(.subheadline)
+                        }
                     }
                 }
             }
@@ -146,29 +144,6 @@ struct ProgressRing: View {
                 .bold()
                 .padding(.top, 5)
                 .minimumScaleFactor(0.8)
-        }
-    }
-}
-
-// MARK: - Ring State
-
-/// Visual state of a progress ring relative to the user's goal range.
-enum RingState {
-    case under, good, over
-
-    var color: Color {
-        switch self {
-        case .under: return Theme.under
-        case .good: return Theme.good
-        case .over: return Theme.over
-        }
-    }
-
-    var icon: String? {
-        switch self {
-        case .under: return nil  // Or use "arrow.up" to indicate "eat more"
-        case .good: return "checkmark"
-        case .over: return "xmark.octagon.fill"
         }
     }
 }
