@@ -21,4 +21,28 @@
         <attribute name="totalFat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="totalProtein" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
     </entity>
+    <entity name="DailyGoalEntity" representedClassName="DailyGoalEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="date" optional="NO" attributeType="Date" usesScalarValueType="NO">
+            <userInfo>
+                <entry key="com.apple.syncable" value="YES"/>
+            </userInfo>
+        </attribute>
+        <attribute name="bodyweight" optional="YES" attributeType="Double" defaultValueString="180.0" usesScalarValueType="YES"/>
+        <attribute name="bodyweightUnit" optional="YES" attributeType="String" defaultValueString="lbs"/>
+        <attribute name="fMin" optional="YES" attributeType="Double" defaultValueString="60.0" usesScalarValueType="YES"/>
+        <attribute name="fMax" optional="YES" attributeType="Double" defaultValueString="80.0" usesScalarValueType="YES"/>
+        <attribute name="cMin" optional="YES" attributeType="Double" defaultValueString="200.0" usesScalarValueType="YES"/>
+        <attribute name="cMax" optional="YES" attributeType="Double" defaultValueString="300.0" usesScalarValueType="YES"/>
+        <attribute name="pMin" optional="YES" attributeType="Double" defaultValueString="150.0" usesScalarValueType="YES"/>
+        <attribute name="pMax" optional="YES" attributeType="Double" defaultValueString="180.0" usesScalarValueType="YES"/>
+        <attribute name="fMode" optional="YES" attributeType="String" defaultValueString="grams"/>
+        <attribute name="fMinGKg" optional="YES" attributeType="Double" defaultValueString="0.8" usesScalarValueType="YES"/>
+        <attribute name="fMaxGKg" optional="YES" attributeType="Double" defaultValueString="1.0" usesScalarValueType="YES"/>
+        <attribute name="cMode" optional="YES" attributeType="String" defaultValueString="grams"/>
+        <attribute name="cMinGKg" optional="YES" attributeType="Double" defaultValueString="2.0" usesScalarValueType="YES"/>
+        <attribute name="cMaxGKg" optional="YES" attributeType="Double" defaultValueString="3.0" usesScalarValueType="YES"/>
+        <attribute name="pMode" optional="YES" attributeType="String" defaultValueString="grams"/>
+        <attribute name="pMinGKg" optional="YES" attributeType="Double" defaultValueString="1.8" usesScalarValueType="YES"/>
+        <attribute name="pMaxGKg" optional="YES" attributeType="Double" defaultValueString="2.2" usesScalarValueType="YES"/>
+    </entity>
 </model>

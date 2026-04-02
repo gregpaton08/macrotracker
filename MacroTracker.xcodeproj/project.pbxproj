@@ -45,6 +45,7 @@
 		94CF1DD62F46A4D700780134 /* OpenFoodFactsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */; };
 		94CF1DD82F4E000000780134 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF1DD72F4E000000780134 /* TrendsView.swift */; };
 		94F826FB2F63A379004E0877 /* AddMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F826FA2F63A379004E0877 /* AddMoreView.swift */; };
+		94F827012F7DEA82004E0877 /* DailyGoalEntity+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F827002F7DEA82004E0877 /* DailyGoalEntity+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,6 +108,7 @@
 		94CF1DD52F46A4D700780134 /* OpenFoodFactsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFoodFactsClient.swift; sourceTree = "<group>"; };
 		94CF1DD72F4E000000780134 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
 		94F826FA2F63A379004E0877 /* AddMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMoreView.swift; sourceTree = "<group>"; };
+		94F827002F7DEA82004E0877 /* DailyGoalEntity+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyGoalEntity+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +201,7 @@
 		946AADE02F33FA6200E4F2E4 /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
+				94F827002F7DEA82004E0877 /* DailyGoalEntity+Extensions.swift */,
 				946AADD42F303E7C00E4F2E4 /* MealEntity+Extensions.swift */,
 			);
 			path = CoreData;
@@ -499,6 +502,7 @@
 				9444E0502F2D9523007F24A8 /* SettingsView.swift in Sources */,
 				940AE6692F27F128006A01D1 /* Persistence.swift in Sources */,
 				940AE6632F27F0C9006A01D1 /* MacroViewModel.swift in Sources */,
+				94F827012F7DEA82004E0877 /* DailyGoalEntity+Extensions.swift in Sources */,
 				946AADFD2F39789300E4F2E4 /* MacroStatsService.swift in Sources */,
 				946AADD72F31858700E4F2E4 /* HealthManager.swift in Sources */,
 				94AFB0C32F26F51100ED36F8 /* MacroTrackerApp.swift in Sources */,

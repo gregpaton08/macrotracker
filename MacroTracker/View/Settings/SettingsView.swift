@@ -12,7 +12,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    // MARK: - Persisted Settings
+    @Environment(\.managedObjectContext) var viewContext
+    
+    // MARK: - Persisted Settings (Legacy Fallbacks)
 
     // AI Configuration
     @AppStorage("use_aws_proxy") var useAWSProxy: Bool = false
@@ -28,29 +30,50 @@ struct SettingsView: View {
         ("gemini-1.5-pro", "Gemini 1.5 Pro"),
         ("gemini-1.5-flash", "Gemini 1.5 Flash")
     ]
-    @AppStorage("goal_f_min") var fMin: Double = 60
-    @AppStorage("goal_f_max") var fMax: Double = 80
-    @AppStorage("goal_c_min") var cMin: Double = 200
-    @AppStorage("goal_c_max") var cMax: Double = 300
-    @AppStorage("goal_p_min") var pMin: Double = 150
-    @AppStorage("goal_p_max") var pMax: Double = 180
+    
+    // These are now only used for fallback/initial migration
+    @AppStorage("goal_f_min") var legacyFMin: Double = 60
+    @AppStorage("goal_f_max") var legacyFMax: Double = 80
+    @AppStorage("goal_c_min") var legacyCMin: Double = 200
+    @AppStorage("goal_c_max") var legacyCMax: Double = 300
+    @AppStorage("goal_p_min") var legacyPMin: Double = 150
+    @AppStorage("goal_p_max") var legacyPMax: Double = 180
 
     // MARK: - Body Profile & g/kg Goals
 
-    @AppStorage("bodyweight") var bodyweight: Double = 180
-    @AppStorage("bodyweight_unit") var bodyweightUnit: String = "lbs"
+    @AppStorage("bodyweight") var legacyBodyweight: Double = 180
+    @AppStorage("bodyweight_unit") var legacyBodyweightUnit: String = "lbs"
 
-    @AppStorage("goal_f_mode") var fMode: String = "grams"
-    @AppStorage("goal_f_min_g_kg") var fMinGKg: Double = 0.8
-    @AppStorage("goal_f_max_g_kg") var fMaxGKg: Double = 1.0
+    @AppStorage("goal_f_mode") var legacyFMode: String = "grams"
+    @AppStorage("goal_f_min_g_kg") var legacyFMinGKg: Double = 0.8
+    @AppStorage("goal_f_max_g_kg") var legacyFMaxGKg: Double = 1.0
 
-    @AppStorage("goal_c_mode") var cMode: String = "grams"
-    @AppStorage("goal_c_min_g_kg") var cMinGKg: Double = 2.0
-    @AppStorage("goal_c_max_g_kg") var cMaxGKg: Double = 3.0
+    @AppStorage("goal_c_mode") var legacyCMode: String = "grams"
+    @AppStorage("goal_c_min_g_kg") var legacyCMinGKg: Double = 2.0
+    @AppStorage("goal_c_max_g_kg") var legacyCMaxGKg: Double = 3.0
 
-    @AppStorage("goal_p_mode") var pMode: String = "grams"
-    @AppStorage("goal_p_min_g_kg") var pMinGKg: Double = 1.8
-    @AppStorage("goal_p_max_g_kg") var pMaxGKg: Double = 2.2
+    @AppStorage("goal_p_mode") var legacyPMode: String = "grams"
+    @AppStorage("goal_p_min_g_kg") var legacyPMinGKg: Double = 1.8
+    @AppStorage("goal_p_max_g_kg") var legacyPMaxGKg: Double = 2.2
+
+    // Local state for editing - initialized from DailyGoalEntity
+    @State private var fMin: Double = 60
+    @State private var fMax: Double = 80
+    @State private var cMin: Double = 200
+    @State private var cMax: Double = 300
+    @State private var pMin: Double = 150
+    @State private var pMax: Double = 180
+    @State private var bodyweight: Double = 180
+    @State private var bodyweightUnit: String = "lbs"
+    @State private var fMode: String = "grams"
+    @State private var fMinGKg: Double = 0.8
+    @State private var fMaxGKg: Double = 1.0
+    @State private var cMode: String = "grams"
+    @State private var cMinGKg: Double = 2.0
+    @State private var cMaxGKg: Double = 3.0
+    @State private var pMode: String = "grams"
+    @State private var pMinGKg: Double = 1.8
+    @State private var pMaxGKg: Double = 2.2
 
     // MARK: - Energy Source
 
@@ -79,6 +102,49 @@ struct SettingsView: View {
         DataTransferManager.shared.generateJSON()
     }
 
+    private func loadGoals() {
+        if let currentGoal = DailyGoalEntity.goal(for: Date(), context: viewContext) {
+            bodyweight = currentGoal.bodyweight
+            bodyweightUnit = currentGoal.bodyweightUnit ?? "lbs"
+            fMin = currentGoal.fMin
+            fMax = currentGoal.fMax
+            fMode = currentGoal.fMode ?? "grams"
+            fMinGKg = currentGoal.fMinGKg
+            fMaxGKg = currentGoal.fMaxGKg
+            cMin = currentGoal.cMin
+            cMax = currentGoal.cMax
+            cMode = currentGoal.cMode ?? "grams"
+            cMinGKg = currentGoal.cMinGKg
+            cMaxGKg = currentGoal.cMaxGKg
+            pMin = currentGoal.pMin
+            pMax = currentGoal.pMax
+            pMode = currentGoal.pMode ?? "grams"
+            pMinGKg = currentGoal.pMinGKg
+            pMaxGKg = currentGoal.pMaxGKg
+        } else {
+            // Migration from legacy AppStorage
+            bodyweight = legacyBodyweight
+            bodyweightUnit = legacyBodyweightUnit
+            fMin = legacyFMin
+            fMax = legacyFMax
+            fMode = legacyFMode
+            fMinGKg = legacyFMinGKg
+            fMaxGKg = legacyFMaxGKg
+            cMin = legacyCMin
+            cMax = legacyCMax
+            cMode = legacyCMode
+            cMinGKg = legacyCMinGKg
+            cMaxGKg = legacyCMaxGKg
+            pMin = legacyPMin
+            pMax = legacyPMax
+            pMode = legacyPMode
+            pMinGKg = legacyPMinGKg
+            pMaxGKg = legacyPMaxGKg
+            
+            saveGoalToCoreData()
+        }
+    }
+
     private func recalculateGoals() {
         let weightInKg = bodyweightUnit == "kg" ? bodyweight : bodyweight / 2.20462
 
@@ -94,6 +160,30 @@ struct SettingsView: View {
             pMin = (pMinGKg * weightInKg).rounded()
             pMax = (pMaxGKg * weightInKg).rounded()
         }
+    }
+    
+    private func saveGoalToCoreData() {
+        DailyGoalEntity.updateGoal(
+            for: Date(),
+            in: viewContext,
+            bodyweight: bodyweight,
+            bodyweightUnit: bodyweightUnit,
+            fMin: fMin,
+            fMax: fMax,
+            cMin: cMin,
+            cMax: cMax,
+            pMin: pMin,
+            pMax: pMax,
+            fMode: fMode,
+            fMinGKg: fMinGKg,
+            fMaxGKg: fMaxGKg,
+            cMode: cMode,
+            cMinGKg: cMinGKg,
+            cMaxGKg: cMaxGKg,
+            pMode: pMode,
+            pMinGKg: pMinGKg,
+            pMaxGKg: pMaxGKg
+        )
     }
 
     var body: some View {
@@ -273,17 +363,24 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .onChange(of: bodyweight) { _ in recalculateGoals() }
-        .onChange(of: bodyweightUnit) { _ in recalculateGoals() }
-        .onChange(of: fMode) { _ in recalculateGoals() }
-        .onChange(of: fMinGKg) { _ in recalculateGoals() }
-        .onChange(of: fMaxGKg) { _ in recalculateGoals() }
-        .onChange(of: cMode) { _ in recalculateGoals() }
-        .onChange(of: cMinGKg) { _ in recalculateGoals() }
-        .onChange(of: cMaxGKg) { _ in recalculateGoals() }
-        .onChange(of: pMode) { _ in recalculateGoals() }
-        .onChange(of: pMinGKg) { _ in recalculateGoals() }
-        .onChange(of: pMaxGKg) { _ in recalculateGoals() }
+        .onAppear(perform: loadGoals)
+        .onChange(of: bodyweight) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: bodyweightUnit) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: fMode) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: fMin) { _ in saveGoalToCoreData() }
+        .onChange(of: fMax) { _ in saveGoalToCoreData() }
+        .onChange(of: fMinGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: fMaxGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: cMode) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: cMin) { _ in saveGoalToCoreData() }
+        .onChange(of: cMax) { _ in saveGoalToCoreData() }
+        .onChange(of: cMinGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: cMaxGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: pMode) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: pMin) { _ in saveGoalToCoreData() }
+        .onChange(of: pMax) { _ in saveGoalToCoreData() }
+        .onChange(of: pMinGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
+        .onChange(of: pMaxGKg) { _ in recalculateGoals(); saveGoalToCoreData() }
         #if os(iOS)
             .scrollDismissesKeyboard(.immediately)
         #endif

@@ -81,14 +81,21 @@ struct DailyDashboard: View {
     @AppStorage("workout_filter_swim")     var filterSwim: Bool = true
     @AppStorage("workout_filter_other")    var filterOther: Bool = true
 
-    // MARK: - Goal Ranges
+    // MARK: - Goal Ranges (Fallbacks)
 
-    @AppStorage("goal_p_min") var pMin: Double = 150
-    @AppStorage("goal_p_max") var pMax: Double = 180
-    @AppStorage("goal_c_min") var cMin: Double = 200
-    @AppStorage("goal_c_max") var cMax: Double = 300
-    @AppStorage("goal_f_min") var fMin: Double = 60
-    @AppStorage("goal_f_max") var fMax: Double = 80
+    @AppStorage("goal_p_min") var legacyPMin: Double = 150
+    @AppStorage("goal_p_max") var legacyPMax: Double = 180
+    @AppStorage("goal_c_min") var legacyCMin: Double = 200
+    @AppStorage("goal_c_max") var legacyCMax: Double = 300
+    @AppStorage("goal_f_min") var legacyFMin: Double = 60
+    @AppStorage("goal_f_max") var legacyFMax: Double = 80
+
+    @State private var pMin: Double = 150
+    @State private var pMax: Double = 180
+    @State private var cMin: Double = 200
+    @State private var cMax: Double = 300
+    @State private var fMin: Double = 60
+    @State private var fMax: Double = 80
 
     let date: Date
 
@@ -346,9 +353,13 @@ struct DailyDashboard: View {
                 workouts = await HealthManager.shared.fetchWorkouts(for: date)
             #endif
         }
-        .onAppear { HealthManager.shared.requestAuthorization() }
+        .onAppear { 
+            loadDailyGoals()
+            HealthManager.shared.requestAuthorization() 
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
+                loadDailyGoals()
                 Task {
                     caloriesBurned = await HealthManager.shared.fetchCaloriesBurned(for: date)
                     basalEnergy    = await HealthManager.shared.fetchBasalEnergyBurned(for: date)
@@ -500,6 +511,24 @@ struct DailyDashboard: View {
         VStack(spacing: 2) {
             Text(title).font(.caption).bold().foregroundColor(.secondary)
             Text("\(Int(value))").font(.system(.title3, design: .rounded)).bold().foregroundColor(color)
+        }
+    }
+
+    private func loadDailyGoals() {
+        if let goal = DailyGoalEntity.goal(for: date, context: viewContext) {
+            pMin = goal.pMin
+            pMax = goal.pMax
+            cMin = goal.cMin
+            cMax = goal.cMax
+            fMin = goal.fMin
+            fMax = goal.fMax
+        } else {
+            pMin = legacyPMin
+            pMax = legacyPMax
+            cMin = legacyCMin
+            cMax = legacyCMax
+            fMin = legacyFMin
+            fMax = legacyFMax
         }
     }
 }

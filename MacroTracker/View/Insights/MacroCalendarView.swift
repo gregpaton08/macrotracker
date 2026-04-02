@@ -14,11 +14,12 @@ import SwiftUI
 struct MacroCalendarView: View {
     let month: Date
     let dailyTotals: [Date: DailyMacroTotal]
+    let dailyGoals: [Date: DailyGoalEntity]
 
     /// Called when the user taps a day cell to navigate to that date.
     var onSelectDate: (Date) -> Void
 
-    // Goal ranges (passed in from InsightsView)
+    // Goal ranges (default fallbacks passed in from InsightsView)
     let pMin: Double, pMax: Double
     let cMin: Double, cMax: Double
     let fMin: Double, fMax: Double
@@ -71,6 +72,15 @@ struct MacroCalendarView: View {
         let isToday = calendar.isDateInToday(cell.date)
         let isFuture = cell.date > Date()
 
+        // Get date-specific goals if available, otherwise use defaults
+        let goal = dailyGoals[dayKey]
+        let currentFMin = goal?.fMin ?? fMin
+        let currentFMax = goal?.fMax ?? fMax
+        let currentCMin = goal?.cMin ?? cMin
+        let currentCMax = goal?.cMax ?? cMax
+        let currentPMin = goal?.pMin ?? pMin
+        let currentPMax = goal?.pMax ?? pMax
+
         return VStack(spacing: 3) {
             Text("\(calendar.component(.day, from: cell.date))")
                 .font(.system(size: 14, weight: isToday ? .bold : .regular, design: .rounded))
@@ -87,9 +97,9 @@ struct MacroCalendarView: View {
             if let totals = totals {
                 // Three dots: Fat, Carbs, Protein
                 HStack(spacing: 3) {
-                    dotView(value: totals.fat, min: fMin, max: fMax)
-                    dotView(value: totals.carbs, min: cMin, max: cMax)
-                    dotView(value: totals.protein, min: pMin, max: pMax)
+                    dotView(value: totals.fat, min: currentFMin, max: currentFMax)
+                    dotView(value: totals.carbs, min: currentCMin, max: currentCMax)
+                    dotView(value: totals.protein, min: currentPMin, max: currentPMax)
                 }
             } else {
                 // No data — show neutral gray dots (or nothing for future dates)

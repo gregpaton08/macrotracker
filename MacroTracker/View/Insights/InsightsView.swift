@@ -18,6 +18,7 @@ struct InsightsView: View {
     @State private var displayedMonth = Date()
     @State private var monthOffset: Int = 0
     @State private var dailyTotals: [Date: DailyMacroTotal] = [:]
+    @State private var dailyGoals: [Date: DailyGoalEntity] = [:]
 
     /// Tapping a calendar day navigates to that date's TrackerView.
     @State private var selectedDateToNavigate: Date?
@@ -36,14 +37,21 @@ struct InsightsView: View {
         dayCount: 0
     )
 
-    // MARK: - Goal Ranges (shared with DailyDashboard / SettingsView)
+    // MARK: - Goal Ranges (Fallbacks)
 
-    @AppStorage("goal_p_min") private var pMin: Double = 150
-    @AppStorage("goal_p_max") private var pMax: Double = 180
-    @AppStorage("goal_c_min") private var cMin: Double = 200
-    @AppStorage("goal_c_max") private var cMax: Double = 300
-    @AppStorage("goal_f_min") private var fMin: Double = 60
-    @AppStorage("goal_f_max") private var fMax: Double = 80
+    @AppStorage("goal_p_min") private var legacyPMin: Double = 150
+    @AppStorage("goal_p_max") private var legacyPMax: Double = 180
+    @AppStorage("goal_c_min") private var legacyCMin: Double = 200
+    @AppStorage("goal_c_max") private var legacyCMax: Double = 300
+    @AppStorage("goal_f_min") private var legacyFMin: Double = 60
+    @AppStorage("goal_f_max") private var legacyFMax: Double = 80
+
+    @State private var pMin: Double = 150
+    @State private var pMax: Double = 180
+    @State private var cMin: Double = 200
+    @State private var cMax: Double = 300
+    @State private var fMin: Double = 60
+    @State private var fMax: Double = 80
 
     /// Time period options for the daily averages section.
     enum DateRangeOption: String, CaseIterable, Identifiable {
@@ -122,6 +130,7 @@ struct InsightsView: View {
                             month: monthDate,
                             // Only pass data to the active month so adjacent pages render instantly while swiping
                             dailyTotals: offset == monthOffset ? dailyTotals : [:],
+                            dailyGoals: offset == monthOffset ? dailyGoals : [:],
                             onSelectDate: { date in
                                 self.selectedDateToNavigate = date
                                 self.isNavigating = true
@@ -204,8 +213,28 @@ struct InsightsView: View {
     // MARK: - Data Refresh
 
     private func refreshAll() {
+        loadCurrentGoals()
         refreshCalendar()
         refreshAverages()
+    }
+
+    private func loadCurrentGoals() {
+        // For Insights averages display, we use today's goals as the baseline
+        if let goal = DailyGoalEntity.goal(for: Date(), context: viewContext) {
+            pMin = goal.pMin
+            pMax = goal.pMax
+            cMin = goal.cMin
+            cMax = goal.cMax
+            fMin = goal.fMin
+            fMax = goal.fMax
+        } else {
+            pMin = legacyPMin
+            pMax = legacyPMax
+            cMin = legacyCMin
+            cMax = legacyCMax
+            fMin = legacyFMin
+            fMax = legacyFMax
+        }
     }
 
     private func refreshCalendar() {
@@ -216,11 +245,29 @@ struct InsightsView: View {
                 for: displayedMonth
             )
         else { return }
+        
         dailyTotals = MacroStatsService.dailyTotals(
             from: monthInterval.start,
             to: monthInterval.end,
             context: viewContext
         )
+        
+        // Fetch goals for the month
+        let goalRequest: NSFetchRequest<DailyGoalEntity> = DailyGoalEntity.fetchRequest()
+        goalRequest.predicate = NSPredicate(
+            format: "date >= %@ AND date < %@",
+            monthInterval.start as NSDate,
+            monthInterval.end as NSDate
+        )
+        let fetchedGoals = (try? viewContext.fetch(goalRequest)) ?? []
+        
+        var goalsMap: [Date: DailyGoalEntity] = [:]
+        for goal in fetchedGoals {
+            if let d = goal.date {
+                goalsMap[calendar.startOfDay(for: d)] = goal
+            }
+        }
+        dailyGoals = goalsMap
     }
 
     private func refreshAverages() {
