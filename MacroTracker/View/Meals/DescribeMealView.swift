@@ -39,9 +39,11 @@ struct DescribeMealView: View {
     /// If set, shows an "Add Meal" button that saves directly and closes everything.
     var onSave: ((_ result: AIAnalysisResult) -> Void)?
 
+    /// Called when the user wants to auto-accept the current analysis in the background and exit.
+    var onAutoAccept: ((_ text: String) -> Void)?
+
     @State private var messages: [ChatTurn] = []
     @State private var inputText = ""
-    @State private var autoAccept = false
     @State private var analysisTask: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
 
@@ -271,17 +273,23 @@ struct DescribeMealView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Button(action: { autoAccept.toggle() }) {
+                Button(action: {
+                    if let lastMsg = messages.last?.userMessage {
+                        analysisTask?.cancel()
+                        onAutoAccept?(lastMsg)
+                        dismiss()
+                    }
+                }) {
                     HStack {
-                        Image(systemName: autoAccept ? "checkmark.circle.fill" : "circle")
-                        Text("Auto-Accept Result")
+                        Image(systemName: "bolt.fill")
+                        Text("Auto-Accept & Exit")
                     }
                     .font(.caption)
                     .bold()
-                    .foregroundColor(autoAccept ? Theme.good : .secondary)
+                    .foregroundColor(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(autoAccept ? Theme.good.opacity(0.1) : Color(.systemGray6))
+                    .background(Theme.tint)
                     .clipShape(Capsule())
                 }
             }
@@ -320,12 +328,6 @@ struct DescribeMealView: View {
                 if let idx = messages.firstIndex(where: { $0.id == turn.id }) {
                     messages[idx].result = result
                     persistMessages()
-                    
-                    if autoAccept {
-                        // Small delay so user sees it finished
-                        try? await Task.sleep(nanoseconds: 500_000_000)
-                        applyResult(result)
-                    }
                 }
             }
         }

@@ -332,6 +332,15 @@ struct AddMealView: View {
                             )
                         }
                         presentationMode.wrappedValue.dismiss()
+                    },
+                    onAutoAccept: { text in
+                        viewModel.saveAndAnalyzeInBackground(
+                            description: text,
+                            portion: portionSize,
+                            unit: selectedUnit,
+                            date: targetDate
+                        )
+                        presentationMode.wrappedValue.dismiss()
                     }
                 )
             }
