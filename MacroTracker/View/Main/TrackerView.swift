@@ -41,6 +41,8 @@ struct TrackerView: View {
     @State private var selectedIndex: Int
     @State private var selectedDate: Date
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @State private var showCalendar = false
     @State private var showAddMeal = false
     @State private var isEditing = false
@@ -190,6 +192,12 @@ struct TrackerView: View {
         .onChange(of: selectedDate) { newDate in
             let newIndex = indexFromDate(newDate)
             if newIndex != selectedIndex { selectedIndex = newIndex }
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                // Recalculate selectedDate in case midnight passed while the app was backgrounded
+                selectedDate = dateFromIndex(selectedIndex)
+            }
         }
     }
 
