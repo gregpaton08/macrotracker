@@ -126,8 +126,9 @@ struct AddMealView: View {
                             }
 
                         if !suggestions.isEmpty && focusedField == .description {
+                            let NUM_AUTO_COMPLETE_SUGGESTIONS = 6
                             List {
-                                ForEach(suggestions.prefix(3), id: \.self) { meal in
+                                ForEach(suggestions.prefix(NUM_AUTO_COMPLETE_SUGGESTIONS), id: \.self) { meal in
                                     Button(action: { applyCachedMeal(meal) }) {
                                         VStack(alignment: .leading) {
                                             Text(meal.name ?? "Unknown").foregroundColor(.primary)
