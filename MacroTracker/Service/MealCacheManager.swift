@@ -43,7 +43,7 @@ struct MealCacheManager {
 
         let fetch: NSFetchRequest<CachedMealEntity> =
             CachedMealEntity.fetchRequest()
-        fetch.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
+        fetch.predicate = NSPredicate(format: "name ==[cd] %@ AND unit ==[cd] %@", cleanName, unit)
         fetch.fetchLimit = 1
 
         do {
