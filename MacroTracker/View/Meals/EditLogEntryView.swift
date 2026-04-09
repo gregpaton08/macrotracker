@@ -265,9 +265,8 @@ struct EditLogEntryView: View {
         // Offer to sync the saved meal template if density changed and one exists.
         // Pure scaling (changing portion without changing the macro-per-unit ratio)
         // should NOT trigger this prompt.
-        if (densityChanged || portionAddedFromZero),
-            MealCacheManager.shared.find(named: summary) != nil
-        {
+        if densityChanged || portionAddedFromZero,
+            MealCacheManager.shared.find(named: summary) != nil {
             pendingCacheP = newP
             pendingCacheF = newF
             pendingCacheC = newC

@@ -353,9 +353,9 @@ struct DailyDashboard: View {
                 workouts = await HealthManager.shared.fetchWorkouts(for: date)
             #endif
         }
-        .onAppear { 
+        .onAppear {
             loadDailyGoals()
-            HealthManager.shared.requestAuthorization() 
+            HealthManager.shared.requestAuthorization()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {

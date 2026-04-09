@@ -245,13 +245,13 @@ struct InsightsView: View {
                 for: displayedMonth
             )
         else { return }
-        
+
         dailyTotals = MacroStatsService.dailyTotals(
             from: monthInterval.start,
             to: monthInterval.end,
             context: viewContext
         )
-        
+
         // Fetch goals for the month
         let goalRequest: NSFetchRequest<DailyGoalEntity> = DailyGoalEntity.fetchRequest()
         goalRequest.predicate = NSPredicate(
@@ -260,7 +260,7 @@ struct InsightsView: View {
             monthInterval.end as NSDate
         )
         let fetchedGoals = (try? viewContext.fetch(goalRequest)) ?? []
-        
+
         var goalsMap: [Date: DailyGoalEntity] = [:]
         for goal in fetchedGoals {
             if let d = goal.date {

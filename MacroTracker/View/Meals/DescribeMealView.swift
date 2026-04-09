@@ -264,7 +264,7 @@ struct DescribeMealView: View {
                 .background(Theme.tint.opacity(0.1))
                 .clipShape(Circle())
                 .padding(.top, 2)
-            
+
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     ProgressView()
@@ -272,7 +272,7 @@ struct DescribeMealView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Button(action: {
                     if let lastMsg = messages.last?.userMessage {
                         analysisTask?.cancel()
@@ -293,7 +293,7 @@ struct DescribeMealView: View {
                     .clipShape(Capsule())
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 4)

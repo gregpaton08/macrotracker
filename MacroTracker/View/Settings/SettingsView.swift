@@ -13,7 +13,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.managedObjectContext) var viewContext
-    
+
     // MARK: - Persisted Settings (Legacy Fallbacks)
 
     // AI Configuration
@@ -30,7 +30,7 @@ struct SettingsView: View {
         ("gemini-1.5-pro", "Gemini 1.5 Pro"),
         ("gemini-1.5-flash", "Gemini 1.5 Flash")
     ]
-    
+
     // These are now only used for fallback/initial migration
     @AppStorage("goal_f_min") var legacyFMin: Double = 60
     @AppStorage("goal_f_max") var legacyFMax: Double = 80
@@ -140,7 +140,7 @@ struct SettingsView: View {
             pMode = legacyPMode
             pMinGKg = legacyPMinGKg
             pMaxGKg = legacyPMaxGKg
-            
+
             saveGoalToCoreData()
         }
     }
@@ -161,7 +161,7 @@ struct SettingsView: View {
             pMax = (pMaxGKg * weightInKg).rounded()
         }
     }
-    
+
     private func saveGoalToCoreData() {
         DailyGoalEntity.updateGoal(
             for: Date(),

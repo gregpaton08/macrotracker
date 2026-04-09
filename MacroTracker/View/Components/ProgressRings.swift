@@ -112,7 +112,7 @@ struct ProgressRing: View {
                         .font(.system(.headline, design: .rounded))
                         .bold()
                         .minimumScaleFactor(0.5)
-                    
+
                     // Range
                     Text("\(Int(sanitize(min)))-\(Int(sanitize(max)))")
                         .font(.system(size: 9, design: .rounded))
